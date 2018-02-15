@@ -1,6 +1,6 @@
 use mlvalues;
 use memory;
-use mlvalues::Value;
+use mlvalues::{is_block, Value};
 use alloc;
 use tag::Tag;
 use error::Error;
@@ -53,6 +53,21 @@ impl From<Array> for Value {
     }
 }
 
+impl From<Value> for Array {
+    fn from(v: Value) -> Array {
+        unsafe {
+            if !is_block(v) {
+                let mut arr = Array::new(1);
+                let _ = arr.set(0, v);
+                arr
+            } else {
+                let length = mlvalues::caml_array_length(v);
+                Array(v, length)
+            }
+        }
+    }
+}
+
 impl Array {
     pub unsafe fn new(n: usize) -> Array {
         let val = alloc::caml_alloc(n, Tag::Zero as u8);
@@ -84,4 +99,31 @@ impl Array {
         }
     }
 }
+
+pub struct List(Value, usize);
+
+impl From<List> for Value {
+    fn from(t: List) -> Value {
+        t.0
+    }
+}
+
+pub struct Str(Value, usize);
+
+impl From<Str> for Value {
+    fn from(t: Str) -> Value {
+        t.0
+    }
+}
+
+pub struct Record(Value, usize);
+
+impl From<Record> for Value {
+    fn from(t: Record) -> Value {
+        t.0
+    }
+}
+
+
+
 

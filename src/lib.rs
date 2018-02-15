@@ -88,7 +88,7 @@ pub mod alloc;
 pub mod callback;
 
 pub use error::Error;
-pub use mlvalues::Value;
+pub use mlvalues::{Value, is_block, is_long, empty_list};
 pub use tag::Tag;
-pub use types::{Array, Tuple};
+pub use types::{Array, Tuple, List, Str};
 

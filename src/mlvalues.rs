@@ -1,5 +1,4 @@
 //! Contains OCaml types and conversion functions from runtime representations.
-//!
 
 #[allow(non_camel_case_types)]
 pub type Value = usize;
@@ -69,6 +68,19 @@ macro_rules! int_val {
 ($x:expr) => (long_val!($x));
 }
 
+/// Creates an empty list
+pub fn empty_list() -> Value {
+    val_int!(0)
+}
+
+pub fn is_block(v: Value) -> bool {
+    (v & 1) == 0
+}
+
+pub fn is_long(v: Value) -> bool {
+    (v & 1) != 0
+}
+
 // #define Max_long (((intnat)1 << (8 * sizeof(value) - 2)) - 1)
 // #define Min_long (-((intnat)1 << (8 * sizeof(value) - 2)))
 
@@ -126,4 +138,5 @@ macro_rules! string_val {
 extern "C" {
     /// Returns size of the string in `value` in bytes
     pub fn caml_string_length(value: Value) -> Size;
+    pub fn caml_array_length(value: Value) -> Size;
 }

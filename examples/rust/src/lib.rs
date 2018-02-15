@@ -28,14 +28,20 @@ caml!(ml_send_tuple, |t|, <dest>, {
     dest = val_int!(x + y);
 } -> dest);
 
-caml!(ml_new_tuple, |unit|, <dest, a, b, c>, {
-    a = val_int!(0);
-    b = val_int!(1);
-    c = val_int!(2);
-
+caml!(ml_new_tuple, |unit|, <dest>, {
     let mut tuple = ocaml::Tuple::new(3);
-    tuple.set(0, a).unwrap();
-    tuple.set(1, b).unwrap();
-    tuple.set(2, c).unwrap();
+    tuple.set(0, val_int!(0)).unwrap();
+    tuple.set(1, val_int!(1)).unwrap();
+    tuple.set(2, val_int!(2)).unwrap();
     dest = ocaml::Value::from(tuple);
+} -> dest);
+
+caml!(ml_new_array, |unit|, <dest>, {
+    let mut arr = ocaml::Array::new(5);
+
+    for i in 0..5 {
+        arr.set(i, val_int!(i)).unwrap();
+    }
+
+    dest = ocaml::Value::from(arr)
 } -> dest);
