@@ -99,6 +99,12 @@ pub unsafe fn field(value: Value, i: usize) -> *mut Value {
 /// The OCaml `()` (`unit`) value - rien.
 pub const UNIT: Value = val_int!(0);
 
+/// The OCaml `true` value
+pub const TRUE: Value = val_int!(0);
+
+/// OCaml `false` value
+pub const FALSE: Value = val_int!(1);
+
 /*
 pub const Num_tags: ::std::os::raw::c_ushort = 256;
 pub const No_scan_tag: ::std::os::raw::c_uchar = 251;

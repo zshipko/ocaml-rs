@@ -1,6 +1,6 @@
 use mlvalues;
 use memory;
-use mlvalues::{is_block, Value};
+use mlvalues::{is_block, Value, empty_list};
 use alloc;
 use tag::Tag;
 use error::Error;
@@ -108,6 +108,22 @@ impl From<List> for Value {
     }
 }
 
+impl List {
+    pub fn new() -> List {
+        List(empty_list(), 0)
+    }
+
+    pub fn hd(&self) -> Option<Value> {
+        if self.1 == 0 {
+            return None
+        }
+
+        unsafe {
+            Some(*mlvalues::field(self.0, 0))
+        }
+    }
+}
+
 pub struct Str(Value, usize);
 
 impl From<Str> for Value {
@@ -115,15 +131,4 @@ impl From<Str> for Value {
         t.0
     }
 }
-
-pub struct Record(Value, usize);
-
-impl From<Record> for Value {
-    fn from(t: Record) -> Value {
-        t.0
-    }
-}
-
-
-
 

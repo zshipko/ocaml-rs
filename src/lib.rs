@@ -88,7 +88,30 @@ pub mod alloc;
 pub mod callback;
 
 pub use error::Error;
-pub use mlvalues::{Value, is_block, is_long, empty_list};
+pub use mlvalues::{
+    Value,
+    is_block,
+    is_long,
+    empty_list,
+    UNIT,
+    TRUE,
+    FALSE,
+    field
+};
+pub use memory::{
+    store_field
+};
 pub use tag::Tag;
 pub use types::{Array, Tuple, List, Str};
 
+/// Returns a named value registered by OCaml
+pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {
+    unsafe {
+        let named = callback::caml_named_value(name.as_ref().as_ptr());
+        if named.is_null() {
+            return None
+        }
+
+        Some(*named)
+    }
+}
