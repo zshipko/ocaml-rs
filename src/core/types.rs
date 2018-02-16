@@ -1,9 +1,9 @@
-use core::mlvalues;
-use core::mlvalues::{is_block, Value, empty_list};
-use core::memory;
-use core::alloc;
+use mlvalues;
+use memory;
+use mlvalues::{is_block, Value, empty_list};
+use alloc;
 use tag::Tag;
-use core::error::Error;
+use error::Error;
 
 pub struct Tuple(Value, usize);
 

@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate ocaml;
 
+use ocaml::core::{memory, mlvalues};
+
 // use std::io;
 // use std::io::Write;
 
@@ -12,9 +14,9 @@ caml!(ml_send_int, |v, v2|, <l>, {
 } -> l);
 
 caml!(ml_send_two, |v, v2|, {
-    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &ocaml::memory::caml_local_roots, ocaml::memory::caml_local_roots, v);
+    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &memory::caml_local_roots, memory::caml_local_roots, v);
     let x = int_val!(v);
-    let len = ocaml::mlvalues::caml_string_length(v2);
+    let len = mlvalues::caml_string_length(v2);
     let ptr = string_val!(v2);
     let slice = ::std::slice::from_raw_parts(ptr, len);
     let string = ::std::str::from_utf8_unchecked(slice);

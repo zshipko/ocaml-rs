@@ -44,9 +44,9 @@
 //! } -> l);
 //!
 //! caml!(ml_send_two, |v, v2|, {
-//!     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &ocaml::core::memory::caml_local_roots, ocaml::core::memory::caml_local_roots, v);
+//!     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &ocaml::memory::caml_local_roots, ocaml::memory::caml_local_roots, v);
 //!     let x = int_val!(v);
-//!     let len = ocaml::core::mlvalues::caml_string_length(v2);
+//!     let len = ocaml::mlvalues::caml_string_length(v2);
 //!     let ptr = string_val!(v2);
 //!     let slice = ::std::slice::from_raw_parts(ptr, len);
 //!     let string = ::std::str::from_utf8_unchecked(slice);
@@ -76,14 +76,19 @@
 //! ```
 //!
 
-#[macro_use]
-pub mod core;
 mod tag;
 mod types;
-mod named;
+mod error;
 
-pub use core::error::Error;
-pub use core::mlvalues::{
+#[macro_use]
+pub mod mlvalues;
+#[macro_use]
+pub mod memory;
+pub mod alloc;
+pub mod callback;
+
+pub use error::Error;
+pub use mlvalues::{
     Value,
     is_block,
     is_long,
@@ -93,9 +98,20 @@ pub use core::mlvalues::{
     FALSE,
     field
 };
-pub use core::memory::{
+pub use memory::{
     store_field
 };
 pub use tag::Tag;
 pub use types::{Array, Tuple, List, Str};
-pub use named::named_value;
+
+/// Returns a named value registered by OCaml
+pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {
+    unsafe {
+        let named = callback::caml_named_value(name.as_ref().as_ptr());
+        if named.is_null() {
+            return None
+        }
+
+        Some(*named)
+    }
+}

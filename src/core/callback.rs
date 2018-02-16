@@ -2,7 +2,7 @@
 //! This is also where you initialize the OCaml runtime system via `caml_startup` or `caml_main`
 //!
 
-use mlvalues::Value;
+use core::mlvalues::Value;
 
 extern "C" {
     pub fn caml_callback(closure: Value, arg: Value) -> Value;

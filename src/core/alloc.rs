@@ -1,6 +1,6 @@
 //! External definitions for allocating values in the OCaml runtime
 
-use mlvalues::{Size, Value, Tag};
+use core::mlvalues::{Size, Value, Tag};
 
 extern "C" {
     pub fn caml_alloc(size: Size, tag: Tag) -> Value;

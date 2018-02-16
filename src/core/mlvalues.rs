@@ -88,7 +88,7 @@ pub fn is_long(v: Value) -> bool {
 /// Extracts from the `$block` an OCaml value at the `$ith`-field
 macro_rules! field {
     ($block:expr, $i:expr) => (
-        ($block as *mut $crate::mlvalues::Value).offset($i)
+        ($block as *mut $crate::core::mlvalues::Value).offset($i)
     );
 }
 
