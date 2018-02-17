@@ -1,4 +1,5 @@
 use core;
+use tag::Tag;
 
 pub type Size = core::mlvalues::Size;
 
@@ -12,6 +13,14 @@ impl From<Value> for core::mlvalues::Value {
 }
 
 impl Value {
+    pub fn alloc(n: usize, tag: Tag) -> Value {
+        let x = unsafe  {
+            core::alloc::caml_alloc(n, tag as u8)
+        };
+
+        Value::new(x)
+    }
+
     pub fn new(v: core::mlvalues::Value) -> Value {
         Value(v)
     }
@@ -74,5 +83,11 @@ impl Value {
 
     pub fn ptr_val<T>(&self) -> *const T {
         self.0 as *mut T
+    }
+
+    pub fn call(&self, arg: Value) -> Value {
+        unsafe {
+            Value::new(core::callback::caml_callback(self.0, arg.0))
+        }
     }
 }

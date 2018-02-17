@@ -1,5 +1,5 @@
 use core;
-use core::mlvalues::Value;
+use value::Value;
 
 /// Returns a named value registered by OCaml
 pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {
@@ -9,6 +9,6 @@ pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {
             return None
         }
 
-        Some(*named)
+        Some(Value::new(*named))
     }
 }
