@@ -3,8 +3,10 @@ external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
 external new_tuple : unit -> (int * int * int) = "ml_new_tuple"
 external new_array : unit -> int array = "ml_new_array"
+external new_list : unit -> int list = "ml_new_list"
 
 let f x = x land 0x0000ffff
+
 
 let _ =
   let string = "string thing" in
@@ -19,4 +21,6 @@ let _ =
   let (a, b, c) = new_tuple () in
   Printf.printf "%d %d %d\n" a b c;
   let arr = new_array () in
-  Array.iter (Printf.printf "%d\n") arr
+  Array.iter (Printf.printf "%d\n") arr;
+  let lst = new_list () in
+  List.iter (Printf.printf "%d\n") lst

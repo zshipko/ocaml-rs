@@ -105,30 +105,12 @@ pub const TRUE: Value = val_int!(0);
 /// OCaml `false` value
 pub const FALSE: Value = val_int!(1);
 
-/*
-pub const Num_tags: ::std::os::raw::c_ushort = 256;
-pub const No_scan_tag: ::std::os::raw::c_uchar = 251;
-pub const Forward_tag: ::std::os::raw::c_uchar = 250;
-pub const Infix_tag: ::std::os::raw::c_uchar = 249;
-pub const Object_tag: ::std::os::raw::c_uchar = 248;
-pub const Closure_tag: ::std::os::raw::c_uchar = 247;
-pub const Lazy_tag: ::std::os::raw::c_uchar = 246;
-pub const Abstract_tag: ::std::os::raw::c_uchar = 251;
-pub const String_tag: ::std::os::raw::c_uchar = 252;
-pub const Double_tag: ::std::os::raw::c_uchar = 253;
-pub const Double_array_tag: ::std::os::raw::c_uchar = 254;
-pub const Custom_tag: ::std::os::raw::c_uchar = 255;
-pub const Tag_cons: ::std::os::raw::c_uchar = 0;
-*/
-
 // Strings
-/// The OCaml GC tag for a `string`
-pub const STRING_TAG: u8 = 252;
 
 /// Pointer to the first byte
 #[macro_export]
 macro_rules! bp_val {
-  ($v: ident) => {
+  ($v: expr) => {
       $v as *const u8
   }
 }
@@ -136,7 +118,7 @@ macro_rules! bp_val {
 #[macro_export]
 /// Extracts a machine `ptr` to the bytes making up an OCaml `string`
 macro_rules! string_val {
-  ($v:ident) => {
+  ($v:expr) => {
       bp_val!($v)
   }
 }

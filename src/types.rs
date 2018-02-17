@@ -1,11 +1,15 @@
 use core::mlvalues;
-use core::mlvalues::{is_block, Value, empty_list};
+use core::mlvalues::empty_list;
 use core::memory;
 use core::alloc;
 use tag::Tag;
 use core::error::Error;
 
-pub struct Tuple(Value, usize);
+use std::ptr;
+
+use value::{Size, Value};
+
+pub struct Tuple(Value, Size);
 
 impl From<Tuple> for Value {
     fn from(t: Tuple) -> Value {
@@ -13,39 +17,58 @@ impl From<Tuple> for Value {
     }
 }
 
+impl From<(Value, Value)> for Tuple {
+    fn from(t: (Value, Value)) -> Tuple {
+        let mut dst = Tuple::new(2);
+        let (a, b) = t;
+        let _ = dst.set(0, a);
+        let _ = dst.set(1, b);
+        dst
+    }
+}
+
+impl From<(Value, Value, Value)> for Tuple {
+    fn from(t: (Value, Value, Value)) -> Tuple {
+        let mut dst = Tuple::new(3);
+        let (a, b, c) = t;
+        let _ = dst.set(0, a);
+        let _ = dst.set(1, b);
+        let _ = dst.set(2, c);
+        dst
+    }
+}
+
 impl Tuple {
-    pub unsafe fn new(n: usize) -> Tuple {
-        let val = alloc::caml_alloc_tuple(n);
-        Tuple(val, n)
+    pub fn new(n: Size) -> Tuple {
+        unsafe {
+            let val = Value::new(alloc::caml_alloc_tuple(n));
+            Tuple(val, n)
+        }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> Size {
         self.1
     }
 
-    pub fn value(&self) -> Value {
-        self.0
-    }
-
-    pub unsafe fn set(&mut self, i: usize, v: Value) -> Result<(), Error> {
+    pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
         if i < self.1 {
-            memory::store_field(self.value(), i, v);
+            self.0.store_field(i, v);
             Ok(())
         } else {
             Err(Error::OutOfBounds)
         }
     }
 
-    pub unsafe fn get(&self, i: usize) -> Result<Value, Error> {
+    pub fn get(&self, i: Size) -> Result<Value, Error> {
         if i < self.1 {
-            Ok(*mlvalues::field(self.value(), i))
+            Ok(self.0.field(i))
         } else {
             Err(Error::OutOfBounds)
         }
     }
 }
 
-pub struct Array(Value, usize);
+pub struct Array(Value, Size);
 
 impl From<Array> for Value {
     fn from(t: Array) -> Value {
@@ -55,52 +78,48 @@ impl From<Array> for Value {
 
 impl From<Value> for Array {
     fn from(v: Value) -> Array {
-        unsafe {
-            if !is_block(v) {
-                let mut arr = Array::new(1);
-                let _ = arr.set(0, v);
-                arr
-            } else {
-                let length = mlvalues::caml_array_length(v);
-                Array(v, length)
-            }
+        if !v.is_block() {
+            let mut arr = Array::new(1);
+            let _ = arr.set(0, v);
+            arr
+        } else {
+            let length = unsafe { mlvalues::caml_array_length(v.0) };
+            Array(v, length)
         }
     }
 }
 
 impl Array {
-    pub unsafe fn new(n: usize) -> Array {
-        let val = alloc::caml_alloc(n, Tag::Zero as u8);
-        Array(val, n)
+    pub fn new(n: Size) -> Array {
+        unsafe {
+            let val = alloc::caml_alloc(n, Tag::Zero as u8);
+            Array(Value::new(val), n)
+        }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> Size {
         self.1
     }
 
-    pub fn value(&self) -> Value {
-        self.0
-    }
-
-    pub unsafe fn set(&mut self, i: usize, v: Value) -> Result<(), Error> {
+    pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
         if i < self.1 {
-            memory::store_field(self.value(), i, v);
+            self.0.store_field(i, v);
             Ok(())
         } else {
             Err(Error::OutOfBounds)
         }
     }
 
-    pub unsafe fn get(&self, i: usize) -> Result<Value, Error> {
+    pub fn get(&self, i: Size) -> Result<Value, Error> {
         if i < self.1 {
-            Ok(*mlvalues::field(self.value(), i))
+            Ok(self.0.field(i))
         } else {
             Err(Error::OutOfBounds)
         }
     }
 }
 
-pub struct List(Value, usize);
+pub struct List(Value, Size);
 
 impl From<List> for Value {
     fn from(t: List) -> Value {
@@ -110,7 +129,21 @@ impl From<List> for Value {
 
 impl List {
     pub fn new() -> List {
-        List(empty_list(), 0)
+        List(Value::new(empty_list()), 0)
+    }
+
+    pub fn len(&self) -> Size {
+        self.1
+    }
+
+    pub fn append(&mut self, v: Value) {
+        unsafe {
+            let tmp = alloc::caml_alloc(2, 0);
+            memory::store_field(tmp, 0, v.0);
+            memory::store_field(tmp, 1, (self.0).0);
+            self.0 = Value::new(tmp);
+            self.1 += 1;
+        }
     }
 
     pub fn hd(&self) -> Option<Value> {
@@ -118,13 +151,19 @@ impl List {
             return None
         }
 
-        unsafe {
-            Some(*mlvalues::field(self.0, 0))
+        Some(self.0.field(0))
+    }
+
+    pub fn tl(&self) -> Value {
+        if self.1 == 0 {
+            Value::new(empty_list())
+        } else {
+            self.0.field(1)
         }
     }
 }
 
-pub struct Str(Value, usize);
+pub struct Str(Value, Size);
 
 impl From<Str> for Value {
     fn from(t: Str) -> Value {
@@ -132,3 +171,44 @@ impl From<Str> for Value {
     }
 }
 
+impl <'a> From<&'a str> for Str {
+    fn from(s: &'a str) -> Str {
+        unsafe {
+            let len = s.len();
+            let x = alloc::caml_alloc_string(len);
+            let ptr = string_val!(x) as *mut u8;
+            ptr::copy(s.as_ptr(), ptr, len);
+            Str(Value::new(x), len)
+        }
+    }
+}
+
+impl From<Value> for Str {
+    fn from(v: Value) -> Str {
+        unsafe {
+            let len = mlvalues::caml_string_length(v.0);
+            Str(v, len)
+        }
+    }
+}
+
+impl Str {
+    pub fn new(n: Size) -> Str {
+        unsafe {
+            let s = alloc::caml_alloc_string(n);
+            Str(Value::new(s), n)
+        }
+    }
+
+    pub fn len(&self) -> Size {
+        self.1
+    }
+
+    pub fn as_str(&self) -> &str {
+        let ptr = string_val!((self.0).0);
+        unsafe {
+            let slice = ::std::slice::from_raw_parts(ptr, self.1);
+            ::std::str::from_utf8_unchecked(slice)
+        }
+    }
+}
