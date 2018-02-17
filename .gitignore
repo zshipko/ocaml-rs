@@ -10,3 +10,5 @@ _build
 *.cmi
 *#*
 examples/ocaml/test
+*.merlin
+*.install

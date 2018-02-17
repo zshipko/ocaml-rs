@@ -1,0 +1,11 @@
+opam-version: "1.2"
+version: "1.0"
+maintainer: "zachshipko@gmail.com"
+authors: ["Zach Shipko"]
+homepage: "https://github.com/zshipko/ocaml-rs"
+bug-reports: "https://github.com/zshipko/ocaml-rs/issues"
+dev-repo: "https://github.com/zshipko/ocaml-rs.git"
+license: "ISC"
+build: [
+    ["jbuilder" "build" "--only" "test" "--root" "." "-j" jobs "@install"]
+]

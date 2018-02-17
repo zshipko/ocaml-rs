@@ -5,13 +5,14 @@ RUSTSRC=$(wildcard ../rust/src/*.rs)
 CLIENT=../rust/target/debug/libclient.a
 ARGS=-- -Z unstable-options --pretty=expanded
 
-build: test $(CLIENT)
+build: test.native $(CLIENT)
 
 $(CLIENT): $(RUSTSRC)
 	cd ../rust && cargo build
 
-test: test.ml $(CLIENT)
-	ocamlopt.opt -verbose -cclib -lclient -ccopt -L../rust/target/debug -ccopt '-L ~/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/' -cclib -ldl -cclib -lpthread   test.ml -o test
+test.native: test.ml $(CLIENT)
+	jbuilder build
+	cp _build/default/test.exe ./test
 
 pretty: test
 	cd ../rust && cargo rustc $(ARGS)

@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(executable
+    ((name test)
+     (public_name test)
+     (link_flags (-ccopt -L../../../rust/target/debug -cclib -lclient -cclib -lpthread))))
