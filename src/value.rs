@@ -20,6 +20,10 @@ impl Value {
         self.0
     }
 
+    pub fn ptr<T>(p: *const T) -> Value {
+        Value(p as core::mlvalues::Value)
+    }
+
     pub fn int(i: i32) -> Value {
         Value(val_int!(i))
     }
@@ -60,5 +64,15 @@ impl Value {
 
     pub fn long_val(&self) -> i64 {
         long_val!(self.0) as i64
+    }
+
+    pub fn double_val(&self) -> f64 {
+        unsafe {
+            *self.ptr_val::<f64>()
+        }
+    }
+
+    pub fn ptr_val<T>(&self) -> *const T {
+        self.0 as *mut T
     }
 }
