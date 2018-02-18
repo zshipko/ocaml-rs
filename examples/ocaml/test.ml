@@ -4,9 +4,15 @@ external send_tuple : (int * int) -> int = "ml_send_tuple"
 external new_tuple : unit -> (int * int * int) = "ml_new_tuple"
 external new_array : unit -> int array = "ml_new_array"
 external new_list : unit -> int list = "ml_new_list"
+external testing_callback : int -> int -> unit = "ml_testing_callback"
 
 let f x = x land 0x0000ffff
 
+let print_testing a b =
+    Printf.printf "testing: %d %d\n" a b
+
+let _ =
+    Callback.register "print_testing" print_testing
 
 let _ =
   let string = "string thing" in
@@ -23,4 +29,5 @@ let _ =
   let arr = new_array () in
   Array.iter (Printf.printf "%d\n") arr;
   let lst = new_list () in
-  List.iter (Printf.printf "%d\n") lst
+  List.iter (Printf.printf "%d\n") lst;
+  testing_callback 5 10

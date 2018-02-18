@@ -12,8 +12,10 @@ caml!(ml_send_int, |v|, <l>, {
 caml!(ml_send_two, |v, v2|, {
     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &memory::caml_local_roots, memory::caml_local_roots, v.value());
     let x = v.int_val();
+    println!("string tag: {}", v2.tag() as u8);
     let string = ocaml::Str::from(v2);
     println!("got  0x{:x}, {}", x, string.as_str());
+
 });
 
 caml!(ml_send_tuple, |t|, <dest>, {
@@ -24,26 +26,23 @@ caml!(ml_send_tuple, |t|, <dest>, {
 } -> dest);
 
 caml!(ml_new_tuple, |_unit|, <dest>, {
-    let tuple = ocaml::Tuple::from((Value::int(0), Value::int(1), Value::int(2)));
+    let tuple = ocaml::Tuple::from(vec![Value::int(0), Value::int(1), Value::int(2)]);
     dest = Value::from(tuple);
 } -> dest);
 
 caml!(ml_new_array, |_unit|, <dest>, {
-    let mut arr = ocaml::Array::new(5);
-
-    for i in 0..5 {
-        arr.set(i, Value::int(i as i32)).unwrap();
-    }
-
-    dest = Value::from(arr)
+    let x: Vec<Value> = (0..5).map(|x| Value::int(x)).collect();
+    dest = ocaml::Array::from(x).into();
 } -> dest);
 
 caml!(ml_new_list, |_unit|, <dest>, {
-    let mut list = ocaml::List::new();
-
-    for i in 0..5 {
-        list.append(Value::int(i));
-    }
-
-    dest = ocaml::Value::from(list)
+    let x: Vec<Value> = (0..5).map(|x| Value::int(x)).collect();
+    dest = ocaml::List::from(x).into();
 } -> dest);
+
+caml!(ml_testing_callback, |a, b|, {
+    let f = ocaml::named_value("print_testing")
+        .expect("print_testing not registered");
+
+    f.call_n(vec![a, b]);
+});

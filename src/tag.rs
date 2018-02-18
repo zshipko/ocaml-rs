@@ -27,8 +27,8 @@ pub enum Tag {
 }
 
 impl Tag {
-    pub fn new(i: u32) -> Tag {
-        match i {
+    pub fn new(i: u8) -> Tag {
+        match i as u32 {
             Forward_tag => Tag::Forward,
             Infix_tag => Tag::Infix,
             Object_tag => Tag::Object,

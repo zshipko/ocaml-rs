@@ -18,8 +18,7 @@ pretty: test
 	cd ../rust && cargo rustc $(ARGS)
 
 clean:
-	rm test *.o *.cm*
-	rm -rf _build
+	rm -rf _build test
 	cd ../rust && cargo clean
 
 .PHONY: build clean pretty

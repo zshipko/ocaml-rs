@@ -17,23 +17,14 @@ impl From<Tuple> for Value {
     }
 }
 
-impl From<(Value, Value)> for Tuple {
-    fn from(t: (Value, Value)) -> Tuple {
-        let mut dst = Tuple::new(2);
-        let (a, b) = t;
-        let _ = dst.set(0, a);
-        let _ = dst.set(1, b);
-        dst
-    }
-}
+impl <R: AsRef<[Value]>> From<R> for Tuple {
+    fn from(t: R) -> Tuple {
+        let mut dst = Tuple::new(t.as_ref().len());
 
-impl From<(Value, Value, Value)> for Tuple {
-    fn from(t: (Value, Value, Value)) -> Tuple {
-        let mut dst = Tuple::new(3);
-        let (a, b, c) = t;
-        let _ = dst.set(0, a);
-        let _ = dst.set(1, b);
-        let _ = dst.set(2, c);
+        for (n, item) in t.as_ref().iter().enumerate() {
+            let _ = dst.set(n, item.clone());
+        }
+
         dst
     }
 }
@@ -73,6 +64,18 @@ pub struct Array(Value, Size);
 impl From<Array> for Value {
     fn from(t: Array) -> Value {
         t.0
+    }
+}
+
+impl <R: AsRef<[Value]>> From<R> for Array {
+    fn from(t: R) -> Array {
+        let mut dst = Array::new(t.as_ref().len());
+
+        for (n, item) in t.as_ref().iter().enumerate() {
+            let _ = dst.set(n, item.clone());
+        }
+
+        dst
     }
 }
 
@@ -127,6 +130,18 @@ impl From<List> for Value {
     }
 }
 
+impl <R: AsRef<[Value]>> From<R> for List {
+    fn from(t: R) -> List {
+        let mut dst = List::new();
+
+        for item in t.as_ref().iter().rev() {
+            let _ = dst.push_hd(item.clone());
+        }
+
+        dst
+    }
+}
+
 impl List {
     pub fn new() -> List {
         List(Value::new(empty_list()), 0)
@@ -136,7 +151,7 @@ impl List {
         self.1
     }
 
-    pub fn append(&mut self, v: Value) {
+    pub fn push_hd(&mut self, v: Value) {
         unsafe {
             let tmp = alloc::caml_alloc(2, 0);
             memory::store_field(tmp, 0, v.0);

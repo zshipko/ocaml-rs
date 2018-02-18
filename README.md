@@ -1,10 +1,6 @@
 # ocaml-rs - OCaml FFI for Rust
 
-NOTE: `ocmal-rs` is based on [raml v0.1](https://crates.io/crates/raml) with the goal of creating an even higher-level interface.
-
-Direct OCaml bindings without ever leaving Rust - no C stubs!
-
-Please see the example in `examples` for the Rust code in `rust` for the Rust code that OCaml code will call and the `ocaml` directory for the OCaml code that calls the Rust code.
+NOTE: `ocaml-rs` is based on [raml v0.1](https://crates.io/crates/raml) with the goal of creating a higher-level interface.
 
 ```rust
 caml!(ml_beef, |parameter|, <local>, {
@@ -15,7 +11,9 @@ caml!(ml_beef, |parameter|, <local>, {
 } -> local);
 ```
 
-The macro takes care of _automatically_ declaring `CAMLparam` et. al, as well as `CAMLlocal` and `CAMLreturn`.
+The macro takes care of _automatically_ declaring `CAMLparam` et. al, as well as `CAMLlocal` and `CAMLreturn`
+
+For a working example see `./examples/rust` and `./examples/ocaml`
 
 ### Documentation
 

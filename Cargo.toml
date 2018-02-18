@@ -7,6 +7,6 @@ keywords = ["ocaml", "rust", "ffi"]
 repository = "https://github.com/zshipko/ocaml-rs"
 license = "ISC"
 description = "OCaml bindings for Rust"
-documentation = "https://docs.rs/raml"
+documentation = "https://docs.rs/ocaml"
 
 [dependencies]
