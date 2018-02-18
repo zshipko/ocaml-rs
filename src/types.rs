@@ -3,7 +3,7 @@ use core::mlvalues::empty_list;
 use core::memory;
 use core::alloc;
 use tag::Tag;
-use core::error::Error;
+use error::Error;
 
 use std::ptr;
 

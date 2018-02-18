@@ -11,11 +11,12 @@ mod tag;
 mod types;
 mod named;
 pub mod value;
+mod error;
 
 #[macro_use]
 mod macros;
 
-pub use core::error::Error;
+pub use error::Error;
 pub use tag::Tag;
 pub use types::{Array, Tuple, List, Str};
 pub use named::named_value;

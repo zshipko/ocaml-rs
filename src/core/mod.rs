@@ -4,6 +4,5 @@ pub mod mlvalues;
 pub mod memory;
 pub mod alloc;
 pub mod callback;
-pub mod error;
 
 

@@ -44,5 +44,5 @@ caml!(ml_testing_callback, |a, b|, {
     let f = ocaml::named_value("print_testing")
         .expect("print_testing not registered");
 
-    f.call_n(vec![a, b]);
+    f.call_n(vec![a, b]).unwrap();
 });

@@ -1,5 +1,6 @@
 use core;
 use tag::Tag;
+use error::Error;
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = core::mlvalues::Size;
@@ -112,32 +113,48 @@ impl Value {
     }
 
     /// Call a closure with a single argument
-    pub fn call(&self, arg: Value) -> Value {
+    pub fn call(&self, arg: Value) -> Result<Value, Error> {
+        if self.tag() != Tag::Closure  {
+            return Err(Error::NotCallable)
+        }
+
         unsafe {
-            Value::new(core::callback::caml_callback(self.0, arg.0))
+            Ok(Value::new(core::callback::caml_callback(self.0, arg.0)))
         }
     }
 
     /// Call a closure with two arguments
-    pub fn call2(&self, arg1: Value, arg2: Value) -> Value {
+    pub fn call2(&self, arg1: Value, arg2: Value) -> Result<Value, Error> {
+        if self.tag() != Tag::Closure  {
+            return Err(Error::NotCallable)
+        }
+
         unsafe {
-            Value::new(core::callback::caml_callback2(self.0, arg1.0, arg2.0))
+            Ok(Value::new(core::callback::caml_callback2(self.0, arg1.0, arg2.0)))
         }
     }
 
     /// Call a closure with three arguments
-    pub fn call3(&self, arg1: Value, arg2: Value, arg3: Value) -> Value {
+    pub fn call3(&self, arg1: Value, arg2: Value, arg3: Value) -> Result<Value, Error> {
+        if self.tag() != Tag::Closure  {
+            return Err(Error::NotCallable)
+        }
+
         unsafe {
-            Value::new(core::callback::caml_callback3(self.0, arg1.0, arg2.0, arg3.0))
+            Ok(Value::new(core::callback::caml_callback3(self.0, arg1.0, arg2.0, arg3.0)))
         }
     }
 
     /// Call a closure with `n` arguments
-    pub fn call_n<A: AsRef<[Value]>>(&self, args: A) -> Value {
+    pub fn call_n<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
+        if self.tag() != Tag::Closure  {
+            return Err(Error::NotCallable)
+        }
+
         let n = args.as_ref().len();
         let x: Vec<core::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
         unsafe {
-            Value::new(core::callback::caml_callbackN(self.0, n, x.as_ptr() as *mut core::mlvalues::Value))
+            Ok(Value::new(core::callback::caml_callbackN(self.0, n, x.as_ptr() as *mut core::mlvalues::Value)))
         }
     }
 }

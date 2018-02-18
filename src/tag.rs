@@ -11,7 +11,7 @@ pub const Double_tag: ::std::os::raw::c_uint = 253;
 pub const Double_array_tag: ::std::os::raw::c_uint = 254;
 pub const Custom_tag: ::std::os::raw::c_uint = 255;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum Tag {
     Zero = 0,
     Forward = Forward_tag as isize,
