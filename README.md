@@ -1,6 +1,6 @@
 # ocaml-rs - OCaml FFI for Rust
 
-NOTE: `ocaml-rs` is based on [raml v0.1](https://crates.io/crates/raml) with the goal of creating a higher-level interface.
+NOTE: `ocaml-rs` is forked from [raml v0.1](https://crates.io/crates/raml) with the goal of creating a higher-level interface.
 
 ```rust
 caml!(ml_beef, |parameter|, <local>, {
