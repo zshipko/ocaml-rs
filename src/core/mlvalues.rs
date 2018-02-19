@@ -36,8 +36,6 @@ pub type Mark = Uintnat;
 ///
 pub struct Header {}
 
-pub const VALUE_SIZE: isize = ::std::mem::size_of::<Value>() as isize;
-
 /// #ifdef ARCH_BIG_ENDIAN
 /// #define Tag_val(val) (((unsigned char *) (val)) [-1])
 /// #else
@@ -53,8 +51,8 @@ macro_rules! tag_val {
 #[cfg(target_endian = "little")]
 #[macro_export]
 macro_rules! tag_val {
-($x:expr) => (*(($x as *const u8).offset(-$crate::core::mlvalues::VALUE_SIZE)));
-($x:ident) => (*(($x as *const u8).offset(-$crate::core::mlvalues::VALUE_SIZE)));
+($x:expr) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
+($x:ident) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
 }
 
 #[macro_export]
