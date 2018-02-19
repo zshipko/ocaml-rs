@@ -9,6 +9,7 @@ use std::ptr;
 
 use value::{Size, Value};
 
+/// OCaml Tuple type
 pub struct Tuple(Value, Size);
 
 impl From<Tuple> for Value {
@@ -30,6 +31,7 @@ impl <R: AsRef<[Value]>> From<R> for Tuple {
 }
 
 impl Tuple {
+    /// Create a new tuple
     pub fn new(n: Size) -> Tuple {
         unsafe {
             let val = Value::new(alloc::caml_alloc_tuple(n));
@@ -37,10 +39,12 @@ impl Tuple {
         }
     }
 
+    /// Tuple length
     pub fn len(&self) -> Size {
         self.1
     }
 
+    /// Set tuple index
     pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
         if i < self.1 {
             self.0.store_field(i, v);
@@ -50,6 +54,7 @@ impl Tuple {
         }
     }
 
+    /// Get tuple index
     pub fn get(&self, i: Size) -> Result<Value, Error> {
         if i < self.1 {
             Ok(self.0.field(i))
@@ -59,6 +64,8 @@ impl Tuple {
     }
 }
 
+
+/// OCaml Array type
 pub struct Array(Value, Size);
 
 impl From<Array> for Value {
@@ -93,6 +100,7 @@ impl From<Value> for Array {
 }
 
 impl Array {
+    /// Create a new array of the given size
     pub fn new(n: Size) -> Array {
         unsafe {
             let val = alloc::caml_alloc(n, Tag::Zero as u8);
@@ -100,10 +108,12 @@ impl Array {
         }
     }
 
+    /// Array length
     pub fn len(&self) -> Size {
         self.1
     }
 
+    /// Set array index
     pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
         if i < self.1 {
             self.0.store_field(i, v);
@@ -113,6 +123,7 @@ impl Array {
         }
     }
 
+    /// Get array index
     pub fn get(&self, i: Size) -> Result<Value, Error> {
         if i < self.1 {
             Ok(self.0.field(i))
@@ -122,6 +133,7 @@ impl Array {
     }
 }
 
+/// OCaml list type
 pub struct List(Value, Size);
 
 impl From<List> for Value {
@@ -143,14 +155,17 @@ impl <R: AsRef<[Value]>> From<R> for List {
 }
 
 impl List {
+    /// Create a new OCaml list
     pub fn new() -> List {
         List(Value::new(empty_list()), 0)
     }
 
+    /// List length
     pub fn len(&self) -> Size {
         self.1
     }
 
+    /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: Value) {
         unsafe {
             let tmp = alloc::caml_alloc(2, 0);
@@ -161,6 +176,7 @@ impl List {
         }
     }
 
+    /// List head
     pub fn hd(&self) -> Option<Value> {
         if self.1 == 0 {
             return None
@@ -169,6 +185,7 @@ impl List {
         Some(self.0.field(0))
     }
 
+    /// List tail
     pub fn tl(&self) -> Value {
         if self.1 == 0 {
             Value::new(empty_list())
@@ -178,6 +195,7 @@ impl List {
     }
 }
 
+/// OCaml String type
 pub struct Str(Value, Size);
 
 impl From<Str> for Value {
@@ -208,6 +226,7 @@ impl From<Value> for Str {
 }
 
 impl Str {
+    /// Create a new string of a given length
     pub fn new(n: Size) -> Str {
         unsafe {
             let s = alloc::caml_alloc_string(n);
@@ -215,15 +234,26 @@ impl Str {
         }
     }
 
+    /// String length
     pub fn len(&self) -> Size {
         self.1
     }
 
+    /// Access OCaml string as `&str`
     pub fn as_str(&self) -> &str {
         let ptr = string_val!((self.0).0);
         unsafe {
             let slice = ::std::slice::from_raw_parts(ptr, self.1);
             ::std::str::from_utf8_unchecked(slice)
+        }
+    }
+
+    /// Access OCaml string as `&mut str`
+    pub fn as_str_mut(&mut self) -> &mut str {
+        let ptr = string_val!((self.0).0) as *mut u8;
+        unsafe {
+            let slice = ::std::slice::from_raw_parts_mut(ptr, self.1);
+            ::std::str::from_utf8_unchecked_mut(slice)
         }
     }
 }

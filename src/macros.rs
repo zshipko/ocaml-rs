@@ -132,6 +132,7 @@ macro_rules! caml {
 }
 
 #[macro_export]
+/// Create an OCaml tuple
 macro_rules! tuple {
     ($($x:expr),*) => {
         $crate::Tuple::from(&[$($x.to_value(),)*]).into()
@@ -139,6 +140,7 @@ macro_rules! tuple {
 }
 
 #[macro_export]
+/// Create an OCaml array
 macro_rules! array {
     ($($x:expr),*) => {
         $crate::Array::from(&[$($x.to_value(),)*]).into()
@@ -146,6 +148,7 @@ macro_rules! array {
 }
 
 #[macro_export]
+/// Create an OCaml list
 macro_rules! list {
     ($($x:expr),*) => {
         $crate::List::from(&[$($x.to_value(),)*]).into()

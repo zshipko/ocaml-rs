@@ -11,6 +11,8 @@ pub const Double_tag: ::std::os::raw::c_uint = 253;
 pub const Double_array_tag: ::std::os::raw::c_uint = 254;
 pub const Custom_tag: ::std::os::raw::c_uint = 255;
 
+/// Tags are used to determine the type of value that is stored
+/// in an OCaml value
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum Tag {
     Zero = 0,
@@ -27,7 +29,8 @@ pub enum Tag {
 }
 
 impl Tag {
-    pub fn new(i: u8) -> Tag {
+    /// Create a `Tag` from the given `u8`
+   pub fn new(i: u8) -> Tag {
         match i as u32 {
             Forward_tag => Tag::Forward,
             Infix_tag => Tag::Infix,
