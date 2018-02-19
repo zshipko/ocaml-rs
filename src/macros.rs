@@ -130,3 +130,24 @@ macro_rules! caml {
     };
 
 }
+
+#[macro_export]
+macro_rules! tuple {
+    ($($x:expr),*) => {
+        $crate::Tuple::from(&[$($x.to_value(),)*]).into()
+    }
+}
+
+#[macro_export]
+macro_rules! array {
+    ($($x:expr),*) => {
+        $crate::Array::from(&[$($x.to_value(),)*]).into()
+    }
+}
+
+#[macro_export]
+macro_rules! list {
+    ($($x:expr),*) => {
+        $crate::List::from(&[$($x.to_value(),)*]).into()
+    }
+}

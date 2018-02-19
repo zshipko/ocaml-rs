@@ -12,6 +12,7 @@ mod types;
 mod named;
 pub mod value;
 mod error;
+pub mod conv;
 
 #[macro_use]
 mod macros;
@@ -20,4 +21,4 @@ pub use error::Error;
 pub use tag::Tag;
 pub use types::{Array, Tuple, List, Str};
 pub use named::named_value;
-pub use value::Value;
+pub use value::{ToValue, FromValue, Value};

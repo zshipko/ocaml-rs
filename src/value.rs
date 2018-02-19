@@ -15,11 +15,40 @@ impl From<Value> for core::mlvalues::Value {
     }
 }
 
+pub trait ToValue {
+    fn to_value(&self) -> Value;
+}
+
+pub trait FromValue {
+    fn from_value(v: Value) -> Self;
+}
+
+impl ToValue for Value {
+    fn to_value(&self) -> Value {
+        self.clone()
+    }
+}
+
+impl FromValue for Value {
+    fn from_value(v: Value) -> Value {
+        v
+    }
+}
+
 impl Value {
     /// Allocate a new value with the given size and tag
     pub fn alloc(n: usize, tag: Tag) -> Value {
         let x = unsafe  {
             core::alloc::caml_alloc(n, tag as u8)
+        };
+
+        Value::new(x)
+    }
+
+    /// Allocate a new small value with the given size and tag
+    pub fn alloc_small(n: usize, tag: Tag) -> Value {
+        let x = unsafe  {
+            core::alloc::caml_alloc_small(n, tag as u8)
         };
 
         Value::new(x)
@@ -84,9 +113,9 @@ impl Value {
     }
 
     /// Set index of underlying OCaml block value
-    pub fn store_field(&mut self, i: Size, val: Value) {
+    pub fn store_field<V: ToValue>(&mut self, i: Size, val: V) {
         unsafe {
-            core::memory::store_field(self.0, i, val.0)
+            core::memory::store_field(self.0, i, val.to_value().0)
         }
     }
 
@@ -113,35 +142,35 @@ impl Value {
     }
 
     /// Call a closure with a single argument
-    pub fn call(&self, arg: Value) -> Result<Value, Error> {
+    pub fn call<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
         if self.tag() != Tag::Closure  {
             return Err(Error::NotCallable)
         }
 
         unsafe {
-            Ok(Value::new(core::callback::caml_callback(self.0, arg.0)))
+            Ok(Value::new(core::callback::caml_callback(self.0, arg.to_value().0)))
         }
     }
 
     /// Call a closure with two arguments
-    pub fn call2(&self, arg1: Value, arg2: Value) -> Result<Value, Error> {
+    pub fn call2<A: ToValue, B: ToValue>(&self, arg1: A, arg2: B) -> Result<Value, Error> {
         if self.tag() != Tag::Closure  {
             return Err(Error::NotCallable)
         }
 
         unsafe {
-            Ok(Value::new(core::callback::caml_callback2(self.0, arg1.0, arg2.0)))
+            Ok(Value::new(core::callback::caml_callback2(self.0, arg1.to_value().0, arg2.to_value().0)))
         }
     }
 
     /// Call a closure with three arguments
-    pub fn call3(&self, arg1: Value, arg2: Value, arg3: Value) -> Result<Value, Error> {
+    pub fn call3<A: ToValue, B: ToValue, C: ToValue>(&self, arg1: A, arg2: B, arg3: C) -> Result<Value, Error> {
         if self.tag() != Tag::Closure  {
             return Err(Error::NotCallable)
         }
 
         unsafe {
-            Ok(Value::new(core::callback::caml_callback3(self.0, arg1.0, arg2.0, arg3.0)))
+            Ok(Value::new(core::callback::caml_callback3(self.0, arg1.to_value().0, arg2.to_value().0, arg3.to_value().0)))
         }
     }
 
@@ -155,6 +184,12 @@ impl Value {
         let x: Vec<core::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
         unsafe {
             Ok(Value::new(core::callback::caml_callbackN(self.0, n, x.as_ptr() as *mut core::mlvalues::Value)))
+        }
+    }
+
+    pub fn modify<V: ToValue>(&mut self, v: V) {
+        unsafe {
+            core::memory::caml_modify(&mut self.0, v.to_value().0)
         }
     }
 }

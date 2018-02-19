@@ -3,11 +3,15 @@
 NOTE: `ocaml-rs` is forked from [raml v0.1](https://crates.io/crates/raml) with the goal of creating a higher-level interface.
 
 ```rust
+#[macro_use]
+use ocaml;
+use ocaml::ToValue;
+
 caml!(ml_beef, |parameter|, <local>, {
     let i = parameter.val_int();
     let res = 0xbeef * i;
     println!("about to return  0x{:x} to OCaml runtime", res);
-    local = Value::int(res);
+    local = res.to_value();
 } -> local);
 ```
 
