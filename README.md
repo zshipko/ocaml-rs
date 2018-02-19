@@ -1,6 +1,6 @@
-# ocaml-rs - OCaml FFI for Rust
+# ocaml-rs - OCaml extensions in Rust
 
-NOTE: `ocaml-rs` is forked from [raml v0.1](https://crates.io/crates/raml) with the goal of creating a higher-level interface.
+`ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was forked from [raml](https://crates.io/crates/raml) with the goal of creating a safer, high-level interface.
 
 ```rust
 #[macro_use]
@@ -15,7 +15,7 @@ caml!(ml_beef, |parameter|, <local>, {
 } -> local);
 ```
 
-The macro takes care of _automatically_ declaring `CAMLparam` et. al, as well as `CAMLlocal` and `CAMLreturn`
+This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn)
 
 For a working example see `./examples/rust` and `./examples/ocaml`
 
