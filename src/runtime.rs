@@ -43,6 +43,32 @@ pub fn invalid_argument_value(msg: Value) {
     }
 }
 
+pub fn raise(bucket: Value){
+    unsafe {
+        core::fail::caml_raise(bucket.value())
+    }
+}
+
+pub fn raise_constant(tag: Value) {
+    unsafe {
+        core::fail::caml_raise_constant(tag.value())
+    }
+}
+
+pub fn raise_with_arg(tag: Value, arg: Value) {
+    unsafe {
+        core::fail::caml_raise_with_arg(tag.value(), arg.value())
+    }
+}
+
+pub fn raise_with_string<S: AsRef<str>>(tag: Value, msg: S) {
+    let s = CString::new(msg.as_ref()).unwrap();
+    unsafe {
+        core::fail::caml_raise_with_string(tag.value(), s.as_ptr())
+    }
+}
+
+
 pub fn raise_out_of_memory(){
     unsafe {
         core::fail::caml_raise_out_of_memory()
