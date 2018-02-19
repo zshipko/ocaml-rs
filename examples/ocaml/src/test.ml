@@ -5,6 +5,7 @@ external new_tuple : unit -> (int * int * int) = "ml_new_tuple"
 external new_array : unit -> int array = "ml_new_array"
 external new_list : unit -> int list = "ml_new_list"
 external testing_callback : int -> int -> unit = "ml_testing_callback"
+external raise_not_found : unit -> unit = "ml_raise_not_found"
 
 let f x = x land 0x0000ffff
 
@@ -49,4 +50,8 @@ let _ =
     assert (lst = [0; 1; 2; 3; 4]);
 
     (* testing_callback *)
-    testing_callback 5 10
+    testing_callback 5 10;
+
+    (* raise Not_found *)
+    try raise_not_found ()
+    with Not_found -> print_endline "Got Not_found"

@@ -42,34 +42,29 @@ pub struct Header {}
 /// #define Tag_val(val) (((unsigned char *) (val)) [-sizeof(value)])
 /// #endif
 #[cfg(target_endian = "big")]
-#[macro_export]
 macro_rules! tag_val {
 ($x:expr) => (*(($x as *const u8).offset(-1)));
 ($x:ident) => (*(($x as *const u8).offset(-1)));
 }
 
 #[cfg(target_endian = "little")]
-#[macro_export]
 macro_rules! tag_val {
 ($x:expr) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
 ($x:ident) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
 }
 
-#[macro_export]
 /// `(((intnat)(x) << 1) + 1)`
 macro_rules! val_long {
 ($x:expr) => ((($x as usize) << 1) + 1);
 ($x:ident) => ((($x as usize) << 1) + 1);
 }
 
-#[macro_export]
 /// `Long_val(x)     ((x) >> 1)`
 macro_rules! long_val {
 ($x:ident) => ($x as usize >> 1);
 ($x:expr) => ($x as usize >> 1);
 }
 
-#[macro_export]
 /// Converts a machine `usize` into an OCaml `int`
 ///
 /// `Val_int(x) Val_long(x)`
@@ -78,7 +73,6 @@ macro_rules! val_int {
 ($x:ident) => ( val_long!($x) );
 }
 
-#[macro_export]
 /// Converts an OCaml `int` into a `usize`
 ///
 /// `Int_val(x) ((int) Long_val(x))`
@@ -103,7 +97,6 @@ pub fn is_long(v: Value) -> bool {
 // #define Max_long (((intnat)1 << (8 * sizeof(value) - 2)) - 1)
 // #define Min_long (-((intnat)1 << (8 * sizeof(value) - 2)))
 
-#[macro_export]
 /// Extracts from the `$block` an OCaml value at the `$ith`-field
 macro_rules! field {
     ($block:expr, $i:expr) => (
@@ -127,14 +120,12 @@ pub const FALSE: Value = val_int!(1);
 // Strings
 
 /// Pointer to the first byte
-#[macro_export]
 macro_rules! bp_val {
   ($v: expr) => {
       $v as *const u8
   }
 }
 
-#[macro_export]
 /// Extracts a machine `ptr` to the bytes making up an OCaml `string`
 macro_rules! string_val {
   ($v:expr) => {

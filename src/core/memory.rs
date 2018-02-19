@@ -67,23 +67,6 @@ extern "C" {
     pub fn caml_modify(addr: *mut Value, value: Value);
 }
 
-/// Returns an OCaml `unit` value
-///
-/// ## Original C code
-///
-/// ```c
-/// #define CAMLreturn0 do{ \
-///   caml_local_roots = caml__frame; \
-///   return; \
-/// }while (0)
-/// ```
-///
-#[macro_export]
-macro_rules! return0 {
-  () => (caml_local_roots = caml_frame; return);
-}
-
-#[macro_export]
 /// Stores the `$val` at `$offset` in the `$block`.
 ///
 /// # Example
@@ -110,8 +93,12 @@ macro_rules! store_field {
 /// ```
 ///
 pub unsafe fn store_field(block: Value, offset: Size, value: Value) {
-    let contents = ((block as *mut Value).offset(offset as isize)) as *mut Value;
-    caml_modify(contents, value);
+    store_field!(block, offset as isize, value);
+}
+
+extern "C" {
+    pub fn caml_enter_blocking_section();
+    pub fn caml_leave_blocking_section();
 }
 
 

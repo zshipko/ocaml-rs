@@ -1,3 +1,5 @@
+use value::Value;
+
 /// Error returned by `ocaml-rs` functions
 #[derive(Debug)]
 pub enum Error {
@@ -5,5 +7,8 @@ pub enum Error {
     OutOfBounds,
 
     /// A value cannot be called using callback functions
-    NotCallable
+    NotCallable,
+
+    /// An OCaml exception
+    Exception(Value)
 }

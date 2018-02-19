@@ -22,28 +22,15 @@ extern "C" {
     pub static mut caml_callback_depth: usize;
 }
 
-#[macro_export]
-macro_rules! make_exception_result {
-  ($v:ident) => {
-    (v as usize) | 2
-  }
-}
-
-#[macro_export]
 macro_rules! is_exception_result {
-  ($v:ident) => {
-    (v as usize) & 3 == 2
+  ($v:expr) => {
+    ($v as usize) & 3 == 2
   }
 }
 
-#[macro_export]
 macro_rules! extract_exception {
-  ($v:ident) => {
-    (v as usize) & !3
+  ($v:expr) => {
+    ($v as usize) & !3
   }
 }
 
-/*
-typedef void (*caml_named_action) (value*, char *);
-CAMLextern void caml_iterate_named_values(caml_named_action f);
-*/
