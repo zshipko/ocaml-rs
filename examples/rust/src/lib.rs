@@ -4,23 +4,23 @@ use ocaml::{ToValue, Value};
 use ocaml::core::memory;
 
 caml!(ml_send_int, |v|, <l>, {
-    let x = v.int_val();
+    let x = v.i32_val();
     l = 0xbeef.to_value();
     println!("send_int  0x{:x}", x);
 } -> l);
 
 caml!(ml_send_two, |v, v2|, {
     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &memory::caml_local_roots, memory::caml_local_roots, v.value());
-    let x = v.int_val();
     let tag: u8 = v2.tag().into();
     println!("string tag: {}", tag);
+    let x = v.i32_val();
     let string = ocaml::Str::from(v2);
     println!("got  0x{:x}, {}", x, string.as_str());
 });
 
 caml!(ml_send_tuple, |t|, <dest>, {
-    let x = t.field(0).int_val();
-    let y = t.field(1).int_val();
+    let x = t.field(0).i32_val();
+    let y = t.field(1).i32_val();
 
     dest = (x + y).to_value()
 } -> dest);

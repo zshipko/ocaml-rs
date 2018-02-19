@@ -76,18 +76,28 @@ impl Value {
         Value(p as core::mlvalues::Value)
     }
 
-    /// Create an integer Value
-    pub fn int(i: i32) -> Value {
+    /// Create an integer Value from `i32`
+    pub fn i32(i: i32) -> Value {
         Value(val_int!(i))
     }
 
-    /// Create a long Value
-    pub fn long(i: i64) -> Value {
+    /// Create an integer Value from `i64`
+    pub fn i64(i: i64) -> Value {
+        Value(val_int!(i))
+    }
+
+    /// Create a long Value from `isize`
+    pub fn isize(i: isize) -> Value {
         Value(val_long!(i))
     }
 
-    /// Create a double Value
-    pub fn double(d: f64) -> Value {
+    /// Create a value from `usize`
+    pub fn usize(u: usize) -> Value {
+        Value(val_long!(u))
+    }
+
+    /// Create a value from `f64`
+    pub fn f64(d: f64) -> Value {
         unsafe {
             Value(core::alloc::caml_copy_double(d))
         }
@@ -120,17 +130,27 @@ impl Value {
     }
 
     /// Convert an OCaml integer to `i32`
-    pub fn int_val(&self) -> i32 {
+    pub fn i32_val(&self) -> i32 {
         int_val!(self.0) as i32
     }
 
     /// Convert an OCaml integer to `i64`
-    pub fn long_val(&self) -> i64 {
-        long_val!(self.0) as i64
+    pub fn i64_val(&self) -> i64 {
+        int_val!(self.0) as i64
+    }
+
+    /// Convert an OCaml integer to `isize`
+    pub fn isize_val(&self) -> isize {
+        long_val!(self.0) as isize
+    }
+
+    /// Convert an OCaml integer to `usize`
+    pub fn usize_val(&self) -> usize {
+        long_val!(self.0) as usize
     }
 
     /// Convert an OCaml float to `f64`
-    pub fn double_val(&self) -> f64 {
+    pub fn f64_val(&self) -> f64 {
         unsafe {
             *self.ptr_val::<f64>()
         }
@@ -187,6 +207,7 @@ impl Value {
         }
     }
 
+    /// Modify an OCaml value in place
     pub fn modify<V: ToValue>(&mut self, v: V) {
         unsafe {
             core::memory::caml_modify(&mut self.0, v.to_value().0)
