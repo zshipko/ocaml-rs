@@ -10,9 +10,9 @@ build: test.native $(CLIENT)
 $(CLIENT): $(RUSTSRC)
 	cd ../rust && cargo build
 
-test.native: test.ml $(CLIENT)
+test.native: src/test.ml $(CLIENT)
 	jbuilder build
-	cp _build/default/test.exe ./test
+	cp _build/default/src/test.exe ./test
 
 pretty: test
 	cd ../rust && cargo rustc $(ARGS)
