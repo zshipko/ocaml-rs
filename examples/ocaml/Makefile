@@ -8,7 +8,7 @@ ARGS=-- -Z unstable-options --pretty=expanded
 build: test.native $(CLIENT)
 
 $(CLIENT): $(RUSTSRC)
-	cd ../rust && cargo build
+	cd ../rust && cargo update && cargo build
 
 test.native: src/test.ml $(CLIENT)
 	jbuilder build

@@ -12,7 +12,8 @@ caml!(ml_send_int, |v|, <l>, {
 caml!(ml_send_two, |v, v2|, {
     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &memory::caml_local_roots, memory::caml_local_roots, v.value());
     let x = v.int_val();
-    println!("string tag: {}", v2.tag() as u8);
+    let tag: u8 = v2.tag().into();
+    println!("string tag: {}", tag);
     let string = ocaml::Str::from(v2);
     println!("got  0x{:x}, {}", x, string.as_str());
 });

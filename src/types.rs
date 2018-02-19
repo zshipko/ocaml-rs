@@ -103,7 +103,7 @@ impl Array {
     /// Create a new array of the given size
     pub fn new(n: Size) -> Array {
         unsafe {
-            let val = alloc::caml_alloc(n, Tag::Zero as u8);
+            let val = alloc::caml_alloc(n, Tag::Zero.into());
             Array(Value::new(val), n)
         }
     }

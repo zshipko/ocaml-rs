@@ -39,7 +39,7 @@ impl Value {
     /// Allocate a new value with the given size and tag
     pub fn alloc(n: usize, tag: Tag) -> Value {
         let x = unsafe  {
-            core::alloc::caml_alloc(n, tag as u8)
+            core::alloc::caml_alloc(n, tag.into())
         };
 
         Value::new(x)
@@ -48,7 +48,7 @@ impl Value {
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
         let x = unsafe  {
-            core::alloc::caml_alloc_small(n, tag as u8)
+            core::alloc::caml_alloc_small(n, tag.into())
         };
 
         Value::new(x)
