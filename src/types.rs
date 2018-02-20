@@ -107,9 +107,49 @@ impl Array {
         }
     }
 
+    /// Check if Array contains only doubles
+    pub fn is_double_array(&self) -> bool {
+        unsafe {
+            alloc::caml_is_double_array(self.0.value()) == 1
+        }
+    }
+
     /// Array length
     pub fn len(&self) -> Size {
         unsafe { mlvalues::caml_array_length(self.0.value()) }
+    }
+
+    /// Set value to double array
+    pub fn set_double(&mut self, i: Size, f: f64) -> Result<(), Error> {
+        if i < self.len() {
+            if !self.is_double_array() {
+                return Err(Error::NotDoubleArray)
+            }
+
+            unsafe {
+                let ptr = self.0.ptr_val::<f64>().offset(i as isize) as *mut f64;
+                *ptr = f;
+            };
+
+            Ok(())
+        } else {
+            Err(Error::OutOfBounds)
+        }
+    }
+
+    /// Get a value from a double array
+    pub fn get_double(&mut self, i: Size) -> Result<f64, Error> {
+        if i < self.len() {
+            if !self.is_double_array() {
+                return Err(Error::NotDoubleArray)
+            }
+
+            unsafe {
+                Ok(*self.0.ptr_val::<f64>().offset(i as isize))
+            }
+        } else {
+            Err(Error::OutOfBounds)
+        }
     }
 
     /// Set array index

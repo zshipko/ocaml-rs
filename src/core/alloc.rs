@@ -9,6 +9,7 @@ extern "C" {
     pub fn caml_alloc_string(size: Size) -> Value; // size in bytes
     pub fn caml_copy_string(string: *const u8) -> Value;
     pub fn caml_copy_string_array(arr: *const *const u8) -> Value;
+    pub fn caml_is_double_array(v: Value) -> i32;
 
     pub fn caml_copy_double(double: f64) -> Value;
     pub fn caml_copy_int32(int: i32) -> Value; // defined in [ints.c]

@@ -91,6 +91,15 @@ impl Value {
         }
     }
 
+    /// Convert a boolean to OCaml value
+    pub fn bool(b: bool) -> Value {
+        if b {
+            TRUE
+        } else {
+            FALSE
+        }
+    }
+
     /// OCaml Some value
     pub fn some<V: ToValue>(v: V) -> Value {
         let mut x = Self::alloc(1, Tag::Zero);
@@ -128,6 +137,27 @@ impl Value {
     /// Create an integer Value from `i64`
     pub fn i64(i: i64) -> Value {
         Value(val_int!(i))
+    }
+
+    /// Create an OCaml int64 from `i64`
+    pub fn int64(i: i64) -> Value {
+        unsafe {
+            Value::new(core::alloc::caml_copy_int64(i))
+        }
+    }
+
+    /// Create an OCaml int32 from `i32`
+    pub fn int32(i: i32) -> Value {
+        unsafe {
+            Value::new(core::alloc::caml_copy_int32(i))
+        }
+    }
+
+    /// Create an OCaml native int from `isize`
+    pub fn nativeint(i: isize) -> Value {
+        unsafe {
+            Value::new(core::alloc::caml_copy_nativeint(i))
+        }
     }
 
     /// Create a long Value from `isize`
@@ -197,6 +227,27 @@ impl Value {
     pub fn f64_val(&self) -> f64 {
         unsafe {
             *self.ptr_val::<f64>()
+        }
+    }
+
+    /// Convert an OCaml int32 to `i32`
+    pub fn int32_val(&self) -> i32 {
+        unsafe {
+            *self.ptr_val::<i32>()
+        }
+    }
+
+    /// Convert an OCaml int64 to `i64`
+    pub fn int64_val(&self) -> i64 {
+        unsafe {
+            *self.ptr_val::<i64>()
+        }
+    }
+
+    /// Convert an OCaml integer to `isize`
+    pub fn nativeint_val(&self) -> isize {
+        unsafe {
+            *self.ptr_val::<isize>()
         }
     }
 

@@ -10,5 +10,8 @@ pub enum Error {
     NotCallable,
 
     /// An OCaml exception
-    Exception(Value)
+    Exception(Value),
+
+    /// Array is not a double array
+    NotDoubleArray
 }
