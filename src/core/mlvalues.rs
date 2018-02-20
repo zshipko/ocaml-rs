@@ -137,4 +137,6 @@ extern "C" {
     /// Returns size of the string in `value` in bytes
     pub fn caml_string_length(value: Value) -> Size;
     pub fn caml_array_length(value: Value) -> Size;
+    pub fn caml_hash_variant(tag: *const u8) -> Value;
+    pub fn caml_get_public_method(obj: Value, tag: Value) -> Value;
 }

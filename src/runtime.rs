@@ -3,6 +3,13 @@ use value::Value;
 
 use std::ffi::CString;
 
+/// Hash variant name
+pub fn hash_variant<S: AsRef<str>>(name: S) -> Value {
+    unsafe {
+        Value::new(core::mlvalues::caml_hash_variant(name.as_ref().as_ptr()))
+    }
+}
+
 /// Release global lock
 pub fn release_runtime_system() {
     unsafe {

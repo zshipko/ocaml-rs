@@ -1,6 +1,7 @@
 use core;
 use tag::Tag;
 use error::Error;
+use runtime::hash_variant;
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = core::mlvalues::Size;
@@ -35,6 +36,11 @@ impl FromValue for Value {
     }
 }
 
+pub const TRUE: Value = Value(val_int!(1));
+pub const FALSE: Value = Value(val_int!(0));
+pub const NONE: Value = Value(val_int!(0));
+pub const UNIT: Value = Value(core::mlvalues::UNIT);
+
 impl Value {
     /// Allocate a new value with the given size and tag
     pub fn alloc(n: usize, tag: Tag) -> Value {
@@ -68,6 +74,30 @@ impl Value {
     pub fn tag(&self) -> Tag {
         unsafe {
             Tag::new(tag_val!(self.0))
+        }
+    }
+
+    /// OCaml Some value
+    pub fn some<V: ToValue>(v: V) -> Value {
+        let mut x = Self::alloc(1, Tag::Zero);
+        x.store_field(0, v.to_value());
+        x
+    }
+
+    /// OCaml None value
+    pub fn none() -> Value {
+        NONE
+    }
+
+    /// Create a variant value
+    pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
+        match value {
+            Some(v) => {
+                let mut x = Self::alloc(1, Tag::Tag(tag));
+                x.store_field(0, v.to_value());
+                x
+            },
+            None => Self::alloc(0, Tag::Tag(tag))
         }
     }
 
@@ -287,6 +317,23 @@ impl Value {
     /// Determines if the current value is an exception
     pub fn is_exception_result(&self) -> bool {
         is_exception_result!(self.value())
+    }
+
+    /// Get object method
+    pub fn method<S: AsRef<str>>(&self, name: S) -> Option<Value> {
+        if self.tag() != Tag::Object {
+            return None
+        }
+
+        let v = unsafe {
+            core::mlvalues::caml_get_public_method(self.value(), hash_variant(name).value())
+        };
+
+        if v == 0 {
+            return None
+        }
+
+        Some(Value::new(v))
     }
 }
 
