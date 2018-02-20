@@ -66,7 +66,7 @@ impl Tuple {
 
 
 /// OCaml Array type
-pub struct Array(Value, Size);
+pub struct Array(Value);
 
 impl From<Array> for Value {
     fn from(t: Array) -> Value {
@@ -93,8 +93,7 @@ impl From<Value> for Array {
             let _ = arr.set(0, v);
             arr
         } else {
-            let length = unsafe { mlvalues::caml_array_length(v.0) };
-            Array(v, length)
+            Array(v)
         }
     }
 }
@@ -104,18 +103,18 @@ impl Array {
     pub fn new(n: Size) -> Array {
         unsafe {
             let val = alloc::caml_alloc(n, Tag::Zero.into());
-            Array(Value::new(val), n)
+            Array(Value::new(val))
         }
     }
 
     /// Array length
     pub fn len(&self) -> Size {
-        self.1
+        unsafe { mlvalues::caml_array_length(self.0.value()) }
     }
 
     /// Set array index
     pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
-        if i < self.1 {
+        if i < self.len() {
             self.0.store_field(i, v);
             Ok(())
         } else {
@@ -125,7 +124,7 @@ impl Array {
 
     /// Get array index
     pub fn get(&self, i: Size) -> Result<Value, Error> {
-        if i < self.1 {
+        if i < self.len() {
             Ok(self.0.field(i))
         } else {
             Err(Error::OutOfBounds)
@@ -134,11 +133,23 @@ impl Array {
 }
 
 /// OCaml list type
-pub struct List(Value, Size);
+pub struct List(Value);
 
 impl From<List> for Value {
     fn from(t: List) -> Value {
         t.0
+    }
+}
+
+impl From<Value> for List {
+    fn from(v: Value) -> List {
+        if !v.is_block() {
+            let mut l = List::new();
+            let _ = l.push_hd(v);
+            l
+        } else {
+            List(v)
+        }
     }
 }
 
@@ -157,12 +168,20 @@ impl <R: AsRef<[Value]>> From<R> for List {
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
-        List(Value::new(empty_list()), 0)
+        List(Value::new(empty_list()))
     }
 
     /// List length
     pub fn len(&self) -> Size {
-        self.1
+        let mut length = 0;
+        let mut tmp = self.0.clone();
+
+        while tmp.value() != empty_list() {
+            tmp = tmp.field(1);
+            length += 1;
+        }
+
+        length
     }
 
     /// Add an element to the front of the list
@@ -172,13 +191,12 @@ impl List {
             memory::store_field(tmp, 0, v.0);
             memory::store_field(tmp, 1, (self.0).0);
             self.0 = Value::new(tmp);
-            self.1 += 1;
         }
     }
 
     /// List head
     pub fn hd(&self) -> Option<Value> {
-        if self.1 == 0 {
+        if self.len() == 0 {
             return None
         }
 
@@ -187,16 +205,12 @@ impl List {
 
     /// List tail
     pub fn tl(&self) -> Value {
-        if self.1 == 0 {
-            Value::new(empty_list())
-        } else {
-            self.0.field(1)
-        }
+        self.0.field(1)
     }
 }
 
 /// OCaml String type
-pub struct Str(Value, Size);
+pub struct Str(Value);
 
 impl From<Str> for Value {
     fn from(t: Str) -> Value {
@@ -211,16 +225,17 @@ impl <'a> From<&'a str> for Str {
             let x = alloc::caml_alloc_string(len);
             let ptr = string_val!(x) as *mut u8;
             ptr::copy(s.as_ptr(), ptr, len);
-            Str(Value::new(x), len)
+            Str(Value::new(x))
         }
     }
 }
 
 impl From<Value> for Str {
     fn from(v: Value) -> Str {
-        unsafe {
-            let len = mlvalues::caml_string_length(v.0);
-            Str(v, len)
+        if v.tag() != Tag::String {
+            Str::new(0)
+        } else {
+            Str(v)
         }
     }
 }
@@ -230,20 +245,22 @@ impl Str {
     pub fn new(n: Size) -> Str {
         unsafe {
             let s = alloc::caml_alloc_string(n);
-            Str(Value::new(s), n)
+            Str(Value::new(s))
         }
     }
 
     /// String length
     pub fn len(&self) -> Size {
-        self.1
+        unsafe {
+            mlvalues::caml_string_length(self.0.value())
+        }
     }
 
     /// Access OCaml string as `&str`
     pub fn as_str(&self) -> &str {
         let ptr = string_val!((self.0).0);
         unsafe {
-            let slice = ::std::slice::from_raw_parts(ptr, self.1);
+            let slice = ::std::slice::from_raw_parts(ptr, self.len());
             ::std::str::from_utf8_unchecked(slice)
         }
     }
@@ -252,7 +269,7 @@ impl Str {
     pub fn as_str_mut(&mut self) -> &mut str {
         let ptr = string_val!((self.0).0) as *mut u8;
         unsafe {
-            let slice = ::std::slice::from_raw_parts_mut(ptr, self.1);
+            let slice = ::std::slice::from_raw_parts_mut(ptr, self.len());
             ::std::str::from_utf8_unchecked_mut(slice)
         }
     }

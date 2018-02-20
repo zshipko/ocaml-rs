@@ -65,6 +65,20 @@ impl Value {
         Value(v)
     }
 
+    /// See caml_register_global_root
+    pub fn register_global_root(&self) {
+        unsafe {
+            core::memory::caml_register_global_root(&self.value())
+        }
+    }
+
+    /// Set caml_remove_global_root
+    pub fn remove_global_root(&self) {
+        unsafe {
+            core::memory::caml_remove_global_root(&self.value())
+        }
+    }
+
     /// Get the underlying OCaml `value`
     pub fn value(&self) -> core::mlvalues::Value {
         self.0
