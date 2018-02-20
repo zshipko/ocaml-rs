@@ -1,3 +1,7 @@
+type testing =
+    | First of float
+    | Second of int
+
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
@@ -7,6 +11,7 @@ external new_list : unit -> int list = "ml_new_list"
 external testing_callback : int -> int -> unit = "ml_testing_callback"
 external raise_not_found : unit -> unit = "ml_raise_not_found"
 external send_float : float -> float = "ml_send_float"
+external send_first_variant : unit -> testing = "ml_send_first_variant"
 
 let f x = x land 0x0000ffff
 
@@ -60,4 +65,7 @@ let _ =
     (* send float *)
     let f = send_float 2.5 in
     Printf.printf "send_float: %f\n" f;
-    assert (f = 5.0)
+    assert (f = 5.0);
+
+    (* send first variant *)
+    assert (send_first_variant () = First (2.0))

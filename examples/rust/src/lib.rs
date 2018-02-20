@@ -52,3 +52,7 @@ caml!(ml_raise_not_found, |_unit|, {
 caml!(ml_send_float, |f|, <dest>, {
     dest = (f.f64_val() * 2.0).to_value()
 } -> dest);
+
+caml!(ml_send_first_variant, |_unit|, <dest>, {
+    dest = Value::variant(0, Some(2.0))
+} -> dest);
