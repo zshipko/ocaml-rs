@@ -6,6 +6,7 @@ external new_array : unit -> int array = "ml_new_array"
 external new_list : unit -> int list = "ml_new_list"
 external testing_callback : int -> int -> unit = "ml_testing_callback"
 external raise_not_found : unit -> unit = "ml_raise_not_found"
+external send_float : float -> float = "ml_send_float"
 
 let f x = x land 0x0000ffff
 
@@ -54,4 +55,9 @@ let _ =
 
     (* raise Not_found *)
     try raise_not_found ()
-    with Not_found -> print_endline "Got Not_found"
+    with Not_found -> print_endline "Got Not_found";
+
+    (* send float *)
+    let f = send_float 2.5 in
+    Printf.printf "send_float: %f\n" f;
+    assert (f = 5.0)

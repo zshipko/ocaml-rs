@@ -48,3 +48,7 @@ caml!(ml_testing_callback, |a, b|, {
 caml!(ml_raise_not_found, |_unit|, {
     ocaml::raise_not_found()
 });
+
+caml!(ml_send_float, |f|, <dest>, {
+    dest = (f.f64_val() * 2.0).to_value()
+} -> dest);
