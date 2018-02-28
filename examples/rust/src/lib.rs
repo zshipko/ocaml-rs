@@ -25,6 +25,12 @@ caml!(ml_send_tuple, |t|, <dest>, {
     dest = (x + y).to_value()
 } -> dest);
 
+caml!(ml_send_int64, |x|, <dest>, {
+    let _x = x.int64_val();
+
+    dest = Value::int64(_x + 10i64)
+} -> dest);
+
 caml!(ml_new_tuple, |_unit|, <dest>, {
     dest = tuple!(0i32, 1i32, 2i32);
 } -> dest);

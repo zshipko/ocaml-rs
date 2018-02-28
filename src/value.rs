@@ -233,27 +233,33 @@ impl Value {
     /// Convert an OCaml int32 to `i32`
     pub fn int32_val(&self) -> i32 {
         unsafe {
-            *self.ptr_val::<i32>()
+            *self.custom_ptr_val::<i32>()
         }
     }
 
     /// Convert an OCaml int64 to `i64`
     pub fn int64_val(&self) -> i64 {
         unsafe {
-            *self.ptr_val::<i64>()
+            *self.custom_ptr_val::<i64>()
         }
     }
 
     /// Convert an OCaml integer to `isize`
     pub fn nativeint_val(&self) -> isize {
         unsafe {
-            *self.ptr_val::<isize>()
+            *self.custom_ptr_val::<isize>()
+        }
+    }
+
+    pub fn custom_ptr_val<T>(&self) -> *const T {
+        unsafe {
+            core::mlvalues::field(self.0, 1) as *const T
         }
     }
 
     /// Get a pointer stored in an opaque value
     pub fn ptr_val<T>(&self) -> *const T {
-        self.0 as *mut T
+        self.0 as *const T
     }
 
     /// Call a closure with a single argument

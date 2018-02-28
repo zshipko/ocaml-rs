@@ -35,7 +35,6 @@ pub mod value;
 mod error;
 pub mod conv;
 pub mod runtime;
-pub mod custom;
 
 #[macro_use]
 mod macros;
@@ -46,4 +45,3 @@ pub use types::{Array, Tuple, List, Str};
 pub use named::named_value;
 pub use value::{ToValue, FromValue, Value};
 pub use runtime::*;
-pub use custom::custom;

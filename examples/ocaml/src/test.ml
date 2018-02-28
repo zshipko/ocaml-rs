@@ -5,6 +5,7 @@ type testing =
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
+external send_int64 : int64 -> int64 = "ml_send_int64"
 external new_tuple : unit -> (int * int * int) = "ml_new_tuple"
 external new_array : unit -> int array = "ml_new_array"
 external new_list : unit -> int list = "ml_new_list"
@@ -40,6 +41,11 @@ let _ =
     Printf.printf "%d\n" res;
     assert (res = 3);
 
+    (* send_int64 *)
+    let res = send_int64 15L in
+    Printf.printf "%Ld\n" res;
+    assert (res = 25L);
+
     (* new_tuple *)
     let (a, b, c) = new_tuple () in
     Printf.printf "%d %d %d\n" a b c;
@@ -65,7 +71,11 @@ let _ =
     (* send float *)
     let f = send_float 2.5 in
     Printf.printf "send_float: %f\n" f;
+    flush stdout;
     assert (f = 5.0);
 
     (* send first variant *)
-    assert (send_first_variant () = First (2.0))
+    assert (send_first_variant () = First (2.0));
+
+    Gc.full_major ();
+    Gc.minor()
