@@ -1,9 +1,17 @@
+use std::ffi::CString;
+
 use core::mlvalues::Value;
 use core::custom;
+use error::Error;
 
-pub fn custom<S: AsRef<str>>(name: S, finalize: ::std::option::Option<unsafe extern "C" fn(v: Value)>) {
+pub fn custom<S: AsRef<str>>(name: S, finalize: ::std::option::Option<unsafe extern "C" fn(v: Value)>) -> Result<(), Error> {
+    let c = match CString::new(name.as_ref()) {
+        Ok(c) => c,
+        Err(_) => return Err(Error::InvalidCString)
+    };
+
     let mut ops = custom::CustomOperations {
-        identifier: name.as_ref().as_ptr() as *mut i8,
+        identifier: c.as_ptr() as *mut i8,
         finalize: finalize,
         compare: None,
         hash: None,
@@ -13,6 +21,8 @@ pub fn custom<S: AsRef<str>>(name: S, finalize: ::std::option::Option<unsafe ext
     };
 
     unsafe {
-        custom::caml_register_custom_operations(&mut ops)
+        custom::caml_register_custom_operations(&mut ops);
     }
+
+    Ok(())
 }

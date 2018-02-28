@@ -13,5 +13,8 @@ pub enum Error {
     Exception(Value),
 
     /// Array is not a double array
-    NotDoubleArray
+    NotDoubleArray,
+
+    /// C String is invalid
+    InvalidCString
 }
