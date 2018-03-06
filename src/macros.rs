@@ -61,7 +61,7 @@ macro_rules! caml_body {
         let caml_frame = $crate::core::memory::caml_local_roots;
         caml_local!($($local),*);
         {
-            $(let mut $param = Value::new($param);
+            $(let mut $param = $crate::value::Value::new($param);
             {
                 let _ = $param;
             })*
@@ -74,7 +74,7 @@ macro_rules! caml_body {
         let caml_frame = $crate::core::memory::caml_local_roots;
         caml_param!($($param),*);
         {
-            $(let mut $param = Value::new($param);
+            $(let mut $param = $crate::value::Value::new($param);
             {
                 let _ = $param;
             })*
@@ -88,7 +88,7 @@ macro_rules! caml_body {
         caml_param!($($param),*);
         caml_local!($($local),*);
         {
-            $(let mut $param = Value::new($param);
+            $(let mut $param = $crate::value::Value::new($param);
             {
                 let _ = $param;
             })*
