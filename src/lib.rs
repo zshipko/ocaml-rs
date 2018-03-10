@@ -1,6 +1,6 @@
 //! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
-//! **This is currently just an experiment and not suggested for production use**
+//! **Note:** `ocaml-rs` is still experimental, please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 //!
 //! This crate will allow you to write OCaml C stubs directly in Rust. It is suggested to build
 //! a static library to link to when compiling your OCaml code.
@@ -27,6 +27,9 @@
 //! ```
 //!
 //! using the traditional C bindings.
+//!
+//! For a more complete example see:
+//! [https://github.com/zshipko/ocaml-vec](https://github.com/zshipko/ocaml-vec)
 
 #[macro_use]
 pub mod core;
