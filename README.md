@@ -23,7 +23,7 @@ caml!(ml_beef, |parameter|, <local>, {
 
 This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn)
 
-For a working example see `./examples/rust` and `./examples/ocaml`
+For a working example see `./examples/rust` and `./examples/ocaml` or [ocaml-vec](https://github.com/zshipko/ocaml-vec)
 
 ### Documentation
 
