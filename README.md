@@ -4,6 +4,8 @@
     <img src="https://img.shields.io/crates/v/ocaml.svg">
 </a>
 
+**This is currently just an experiment and not suggested for production use**
+
 `ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was forked from [raml](https://crates.io/crates/raml) with the goal of creating a safer, high-level interface.
 
 ```rust

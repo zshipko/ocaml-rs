@@ -262,6 +262,11 @@ impl Value {
         self.0 as *const T
     }
 
+    /// Get a pointer stored in an opaque value
+    pub fn mut_ptr_val<T>(&self) -> *mut T {
+        self.0 as *mut T
+    }
+
     /// Call a closure with a single argument
     pub fn call<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
         if self.tag() != Tag::Closure  {
