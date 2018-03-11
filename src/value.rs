@@ -60,6 +60,15 @@ impl Value {
         Value::new(x)
     }
 
+    /// Allocate a new value with a custom finalizer
+    pub fn alloc_final(n: usize, finalizer: extern "C" fn(core::Value)) -> Value {
+        let x = unsafe {
+            core::alloc::caml_alloc_final(n, finalizer, 0, 1)
+        };
+
+        Value::new(x)
+    }
+
     /// Create a new Value from an existing OCaml `value`
     pub fn new(v: core::mlvalues::Value) -> Value {
         Value(v)

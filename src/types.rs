@@ -39,6 +39,12 @@ impl Tuple {
         }
     }
 
+    /// Create a new tuple with a custom finalizer function
+    pub fn new_final(n: Size, finalizer: extern "C" fn(mlvalues::Value)) -> Tuple {
+        let val = Value::alloc_final(n, finalizer);
+        Tuple(val, n)
+    }
+
     /// Tuple length
     pub fn len(&self) -> Size {
         self.1

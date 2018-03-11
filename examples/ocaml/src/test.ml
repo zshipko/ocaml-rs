@@ -2,6 +2,8 @@ type testing =
     | First of float
     | Second of int
 
+type something
+
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
@@ -13,6 +15,7 @@ external testing_callback : int -> int -> unit = "ml_testing_callback"
 external raise_not_found : unit -> unit = "ml_raise_not_found"
 external send_float : float -> float = "ml_send_float"
 external send_first_variant : unit -> testing = "ml_send_first_variant"
+external custom_value : unit -> something = "ml_custom_value"
 
 let f x = x land 0x0000ffff
 
@@ -76,6 +79,9 @@ let _ =
 
     (* send first variant *)
     assert (send_first_variant () = First (2.0));
+
+    (* custom_value *)
+    let _ = custom_value () in
 
     Gc.full_major ();
     Gc.minor()

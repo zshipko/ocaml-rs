@@ -62,3 +62,11 @@ caml!(ml_send_float, |f|, <dest>, {
 caml!(ml_send_first_variant, |_unit|, <dest>, {
     dest = Value::variant(0, Some(2.0))
 } -> dest);
+
+extern "C" fn finalizer(_value: ocaml::core::Value) {
+    println!("Finalizer");
+}
+
+caml!(ml_custom_value, |_unit|, <dest>, {
+    dest = tuple!(0; finalizer).into()
+} -> dest);
