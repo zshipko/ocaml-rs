@@ -144,7 +144,7 @@ macro_rules! tuple {
             for (n, item) in t.as_ref().iter().enumerate() {
                 let _ = dst.set(n, item.clone());
             }
-            dst
+            dst.into()
         }
     }
 }
