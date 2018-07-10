@@ -1,3 +1,5 @@
+open Bigarray
+
 type testing =
     | First of float
     | Second of int
@@ -16,6 +18,7 @@ external raise_not_found : unit -> unit = "ml_raise_not_found"
 external send_float : float -> float = "ml_send_float"
 external send_first_variant : unit -> testing = "ml_send_first_variant"
 external custom_value : unit -> something = "ml_custom_value"
+external array1 : unit -> (int, int8_unsigned_elt, c_layout) Array1.t = "ml_array1"
 
 let f x = x land 0x0000ffff
 
@@ -78,10 +81,23 @@ let _ =
     assert (f = 5.0);
 
     (* send first variant *)
+    print_endline "send_first_variant";
     assert (send_first_variant () = First (2.0));
 
     (* custom_value *)
+    print_endline "custom_value";
     let _ = custom_value () in
 
+    (* bigarray *)
+    print_endline "bigarray create";
+    let ba = array1 () in
+
+    print_endline "bigarray iter";
+    for i = 0 to 99 do
+      Printf.printf "Bigarray: %d %d\n" i ba.{i};
+      assert (ba.{i} = i)
+    done;
+
+    print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()

@@ -2,6 +2,7 @@
 
 #[allow(non_camel_case_types)]
 pub type Value = usize;
+pub type Intnat = isize;
 pub type Uintnat = usize;
 #[allow(non_camel_case_types)]
 pub type Size = Uintnat;

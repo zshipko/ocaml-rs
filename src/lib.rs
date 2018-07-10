@@ -46,7 +46,7 @@ mod macros;
 
 pub use error::Error;
 pub use tag::Tag;
-pub use types::{Array, Tuple, List, Str};
+pub use types::{Array, Tuple, List, Str, Array1};
 pub use named::named_value;
 pub use value::{ToValue, FromValue, Value};
 pub use runtime::*;

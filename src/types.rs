@@ -1,11 +1,15 @@
 use core::mlvalues;
 use core::mlvalues::empty_list;
+use core::bigarray;
 use core::memory;
 use core::alloc;
 use tag::Tag;
 use error::Error;
 
 use std::ptr;
+use std::slice;
+use std::mem;
+use std::marker::PhantomData;
 
 use value::{Size, Value};
 
@@ -37,12 +41,6 @@ impl Tuple {
             let val = Value::new(alloc::caml_alloc_tuple(n));
             Tuple(val, n)
         }
-    }
-
-    /// Create a new tuple with a custom finalizer function
-    pub fn new_final(n: Size, finalizer: extern "C" fn(mlvalues::Value)) -> Tuple {
-        let val = Value::alloc_final(n, finalizer);
-        Tuple(val, n)
     }
 
     /// Tuple length
@@ -320,3 +318,85 @@ impl Str {
         }
     }
 }
+
+pub trait BigarrayKind {
+    type T;
+    fn kind() -> i32;
+}
+
+macro_rules! make_kind {
+    ($t:ty, $k:ident) => {
+        impl BigarrayKind for $t {
+            type T = $t;
+
+            fn kind() -> i32 {
+                bigarray::Kind::$k as i32
+            }
+        }
+    }
+}
+
+make_kind!(u8, UINT8);
+make_kind!(i8, SINT8);
+make_kind!(u16, UINT16);
+make_kind!(i16, SINT16);
+make_kind!(f32, FLOAT32);
+make_kind!(f64, FLOAT64);
+make_kind!(i64, INT64);
+make_kind!(i32, INT32);
+make_kind!(char, CHAR);
+
+/// OCaml Bigarray.Array1 type
+pub struct Array1<T>(Value, PhantomData<T>);
+
+impl<T: BigarrayKind> From<Array1<T>> for Value {
+    fn from(t: Array1<T>) -> Value {
+        t.0
+    }
+}
+
+impl<T: BigarrayKind> From<Value> for Array1<T> {
+    fn from(v: Value) -> Array1<T> {
+        Array1(v, PhantomData)
+    }
+}
+
+impl<T: BigarrayKind> Array1<T> {
+    pub fn of_slice(data: &mut [T]) -> Array1<T> {
+        unsafe {
+            let s = bigarray::caml_ba_alloc_dims(T::kind() | bigarray::Managed::EXTERNAL as i32, 1, data.as_mut_ptr() as bigarray::Data, data.len() as i32);
+            Array1(Value::new(s), PhantomData)
+        }
+    }
+
+    pub fn create(n: Size) -> Array1<T> {
+        unsafe {
+            let data = bigarray::malloc(n * mem::size_of::<T>());
+            let s = bigarray::caml_ba_alloc_dims(T::kind() | bigarray::Managed::MANAGED as i32, 1, data, n as mlvalues::Intnat);
+            Array1(Value::new(s), PhantomData)
+        }
+    }
+
+    pub fn len(&self) -> Size {
+        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+        unsafe {
+            let x = (*ba).dim as usize;
+            x
+        }
+    }
+
+    pub fn data(&self) -> &[T] {
+        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+        unsafe {
+            slice::from_raw_parts((*ba).data as *const T, self.len())
+        }
+    }
+
+    pub fn data_mut(&mut self) -> &mut [T] {
+        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+        unsafe {
+            slice::from_raw_parts_mut((*ba).data as *mut T, self.len())
+        }
+    }
+}
+

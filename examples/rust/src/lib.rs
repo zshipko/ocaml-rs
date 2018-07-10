@@ -68,5 +68,14 @@ extern "C" fn finalizer(_value: ocaml::core::Value) {
 }
 
 caml!(ml_custom_value, |_unit|, <dest>, {
-    dest = tuple!(0; finalizer).into()
+    let t = Value::alloc_custom(&mut 1, finalizer);
+    dest = t.into()
+} -> dest);
+
+caml!(ml_array1, |_unit|, <dest>, {
+    let mut ba = ocaml::Array1::<u8>::create(100);
+    for i in 0..ba.len() {
+        ba.data_mut()[i] = i as u8;
+    }
+    dest = ba.into();
 } -> dest);

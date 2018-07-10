@@ -3,6 +3,8 @@ use tag::Tag;
 use error::Error;
 use runtime::hash_variant;
 
+use std::{ptr, mem};
+
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = core::mlvalues::Size;
 
@@ -61,12 +63,22 @@ impl Value {
     }
 
     /// Allocate a new value with a custom finalizer
-    pub fn alloc_final(n: usize, finalizer: extern "C" fn(core::Value)) -> Value {
+    pub fn alloc_custom<T>(value: *mut T, finalizer: extern "C" fn(core::Value)) -> Value {
         let x = unsafe {
-            core::alloc::caml_alloc_final(n, finalizer, 0, 1)
+            let v = core::alloc::caml_alloc_final(mem::size_of::<*mut T>(), finalizer, 0, 1);
+            let ptr = Value::new(v).custom_ptr_val_mut();
+            ptr::replace(ptr, value);
+            v
         };
 
         Value::new(x)
+    }
+
+    pub fn set_custom<T>(&mut self, value: *mut T) {
+        let ptr = self.custom_ptr_val_mut();
+        unsafe {
+            ptr::replace(ptr, value);
+        }
     }
 
     /// Create a new Value from an existing OCaml `value`
@@ -260,18 +272,26 @@ impl Value {
         }
     }
 
+    /// Get pointer to data stored in an OCaml custom value
     pub fn custom_ptr_val<T>(&self) -> *const T {
         unsafe {
             core::mlvalues::field(self.0, 1) as *const T
         }
     }
 
-    /// Get a pointer stored in an opaque value
+    /// Get mutable pointer to data stored in an OCaml custom value
+    pub fn custom_ptr_val_mut<T>(&self) -> *mut T {
+        unsafe {
+            core::mlvalues::field(self.0, 1) as *mut T
+        }
+    }
+
+    /// Get pointer to data stored in an opaque value
     pub fn ptr_val<T>(&self) -> *const T {
         self.0 as *const T
     }
 
-    /// Get a pointer stored in an opaque value
+    /// Get mutable pointer to data stored in an opaque value
     pub fn mut_ptr_val<T>(&self) -> *mut T {
         self.0 as *mut T
     }

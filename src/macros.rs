@@ -136,16 +136,6 @@ macro_rules! caml {
 macro_rules! tuple {
     ($($x:expr),*) => {
         $crate::Tuple::from(&[$($x.to_value(),)*]).into()
-    };
-    ($($x:expr),*; $f: ident) => {
-        {
-            let t = &[$($x.to_value(),)*];
-            let mut dst = $crate::Tuple::new_final(t.len(), $f);
-            for (n, item) in t.as_ref().iter().enumerate() {
-                let _ = dst.set(n, item.clone());
-            }
-            dst.into()
-        }
     }
 }
 
