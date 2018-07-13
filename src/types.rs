@@ -317,6 +317,22 @@ impl Str {
             ::std::str::from_utf8_unchecked_mut(slice)
         }
     }
+
+    /// Access OCaml string as `&[u8]`
+    pub fn data(&self) -> &[u8] {
+        let ptr = string_val!((self.0).0);
+        unsafe {
+            ::std::slice::from_raw_parts(ptr, self.len())
+        }
+    }
+
+    /// Access OCaml string as `&mut [u8]`
+    pub fn data_mut(&mut self) -> &mut [u8] {
+        let ptr = string_val!((self.0).0) as *mut u8;
+        unsafe {
+            ::std::slice::from_raw_parts_mut(ptr, self.len())
+        }
+    }
 }
 
 pub trait BigarrayKind {
