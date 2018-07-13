@@ -67,7 +67,7 @@ impl Value {
         let x = unsafe {
             let v = core::alloc::caml_alloc_final(mem::size_of::<*mut T>(), finalizer, 0, 1);
             let ptr = Value::new(v).custom_ptr_val_mut();
-            ptr::replace(ptr, value);
+            ptr::swap(ptr, value);
             v
         };
 
@@ -77,7 +77,7 @@ impl Value {
     pub fn set_custom<T>(&mut self, value: *mut T) {
         let ptr = self.custom_ptr_val_mut();
         unsafe {
-            ptr::replace(ptr, value);
+            ptr::swap(ptr, value);
         }
     }
 

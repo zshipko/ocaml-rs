@@ -277,7 +277,7 @@ impl <'a> From<&'a str> for Str {
 impl From<Value> for Str {
     fn from(v: Value) -> Str {
         if v.tag() != Tag::String {
-            Str::new(0)
+            panic!("Invalid string value, got tag {:?}", v.tag());
         } else {
             Str(v)
         }
