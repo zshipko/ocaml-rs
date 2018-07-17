@@ -1,5 +1,5 @@
 use core;
-use tag::Tag;
+use tag::{self, Tag};
 use error::Error;
 use runtime::hash_variant;
 
@@ -10,6 +10,7 @@ pub type Size = core::mlvalues::Size;
 
 /// Value wraps the native OCaml `value` type
 #[derive(Debug, Clone)]
+#[repr(transparent)]
 pub struct Value(pub core::mlvalues::Value);
 
 impl From<Value> for core::mlvalues::Value {
@@ -439,6 +440,57 @@ impl Value {
         }
 
         Some(Value::new(v))
+    }
+
+    /// This will recursively clone any OCaml value
+    /// The new value is allocated inside the OCaml heap,
+    /// and may end up being moved or garbage collected.
+    pub fn deep_clone_to_ocaml(&self) -> Self {
+        if self.is_long() {
+            return self.clone();
+        }
+        unsafe {
+            let wosize = wosize_val!(self.0);
+            let val1 = Value::alloc(wosize, self.tag());
+            let ptr0 = self.ptr_val::<core::mlvalues::Value>();
+            let ptr1 = val1.mut_ptr_val::<core::mlvalues::Value>();
+            if tag_val!(self.0) >= tag::No_scan_tag as u8 {
+                ptr0.copy_to_nonoverlapping(ptr1, wosize);
+                return val1;
+            }
+            for i in 0..(wosize as isize) {
+                ptr1.offset(i).write(
+                    Value(ptr0.offset(i).read()).deep_clone_to_ocaml().0);
+            }
+            return val1;
+        }
+    }
+
+    /// This will recursively clone any OCaml value
+    /// The new value is allocated outside of the OCaml heap, and should
+    /// only be used for storage inside Rust structures.
+    pub fn deep_clone_to_rust(&self) -> Self {
+        if self.is_long() {
+            return self.clone();
+        }
+        unsafe {
+            if tag_val!(self.0) >= tag::No_scan_tag as u8 {
+                let slice0 = core::mlvalues::as_slice(self.0);
+                let vec1 = slice0.to_vec();
+                let ptr1 = vec1.as_ptr();
+                mem::forget(vec1);
+                return Value::ptr(ptr1.offset(1));
+            }
+            let slice0 = core::mlvalues::as_slice(self.0);
+            let vec1 : Vec<core::mlvalues::Value> =
+                slice0.iter().enumerate().map(
+                    |(i, v)|
+                        if i == 0 { *v } else { Value(*v).deep_clone_to_rust().0 })
+                .collect();
+            let ptr1 = vec1.as_ptr();
+            mem::forget(vec1);
+            return Value::ptr(ptr1.offset(1));
+        }
     }
 }
 

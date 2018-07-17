@@ -6,6 +6,7 @@ pub const Object_tag: ::std::os::raw::c_uint = 248;
 pub const Closure_tag: ::std::os::raw::c_uint = 247;
 pub const Lazy_tag: ::std::os::raw::c_uint = 246;
 pub const Abstract_tag: ::std::os::raw::c_uint = 251;
+pub const No_scan_tag: ::std::os::raw::c_uint = 251;
 pub const String_tag: ::std::os::raw::c_uint = 252;
 pub const Double_tag: ::std::os::raw::c_uint = 253;
 pub const Double_array_tag: ::std::os::raw::c_uint = 254;
