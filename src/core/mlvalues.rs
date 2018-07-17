@@ -113,10 +113,10 @@ pub unsafe fn field(value: Value, i: usize) -> *mut Value {
 pub const UNIT: Value = val_int!(0);
 
 /// The OCaml `true` value
-pub const TRUE: Value = val_int!(0);
+pub const TRUE: Value = val_int!(1);
 
 /// OCaml `false` value
-pub const FALSE: Value = val_int!(1);
+pub const FALSE: Value = val_int!(0);
 
 // Strings
 
