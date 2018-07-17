@@ -274,6 +274,19 @@ impl <'a> From<&'a str> for Str {
     }
 }
 
+
+impl <'a> From<&'a [u8]> for Str {
+    fn from(s: &'a [u8]) -> Str {
+        unsafe {
+            let len = s.len();
+            let x = alloc::caml_alloc_string(len);
+            let ptr = string_val!(x) as *mut u8;
+            ptr::copy(s.as_ptr(), ptr, len);
+            Str(Value::new(x))
+        }
+    }
+}
+
 impl From<Value> for Str {
     fn from(v: Value) -> Str {
         if v.tag() != Tag::String {
