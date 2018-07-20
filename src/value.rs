@@ -459,7 +459,8 @@ impl Value {
                 return val1;
             }
             for i in 0..(wosize as isize) {
-                ptr1.offset(i).write(
+                core::memory::caml_initialize(
+                    ptr1.offset(i),
                     Value(ptr0.offset(i).read()).deep_clone_to_ocaml().0);
             }
             return val1;
