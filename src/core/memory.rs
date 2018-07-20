@@ -65,6 +65,7 @@ impl Default for CamlRootsBlock {
 extern "C" {
     pub static mut caml_local_roots: *mut CamlRootsBlock;
     pub fn caml_modify(addr: *mut Value, value: Value);
+    pub fn caml_initialize(addr: *mut Value, value: Value);
 }
 
 /// Stores the `$val` at `$offset` in the `$block`.

@@ -54,6 +54,16 @@ macro_rules! tag_val {
 ($x:ident) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
 }
 
+macro_rules! hd_val {
+($x:expr) => (*(($x as *const usize).offset(-1)));
+($x:ident) => (*(($x as *const usize).offset(-1)));
+}
+
+macro_rules! wosize_val {
+($x:expr) => (hd_val!($x) >> 10);
+($x:ident) => (hd_val!($x) >> 10);
+}
+
 /// `(((intnat)(x) << 1) + 1)`
 macro_rules! val_long {
 ($x:expr) => ((($x as usize) << 1) + 1);
@@ -107,6 +117,12 @@ macro_rules! field {
 
 pub unsafe fn field(value: Value, i: usize) -> *mut Value {
     field!(value, i as isize)
+}
+
+pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
+    ::std::slice::from_raw_parts(
+        (value as *const Value).offset(-1),
+        wosize_val!(value) + 1)
 }
 
 /// The OCaml `()` (`unit`) value - rien.
