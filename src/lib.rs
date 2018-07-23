@@ -32,6 +32,9 @@
 //! [https://github.com/zshipko/ocaml-vec](https://github.com/zshipko/ocaml-vec)
 
 #[macro_use]
+mod macros;
+
+#[macro_use]
 pub mod core;
 mod tag;
 mod types;
@@ -41,8 +44,7 @@ mod error;
 pub mod conv;
 pub mod runtime;
 
-#[macro_use]
-mod macros;
+
 
 pub use error::Error;
 pub use tag::Tag;
