@@ -1,4 +1,4 @@
 - `in_channel`/`out_channel` (io.h)
 - Timing hooks (misc.h)
 - `caml_format_exception` (printexc.h)
-- bigarrays
+- bigarrays (only Bigarray.Array1 has been implemented)

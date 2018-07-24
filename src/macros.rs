@@ -101,13 +101,21 @@ macro_rules! caml_body {
 #[macro_export]
 /// Defines an external Rust function for FFI use by an OCaml program, with automatic `CAMLparam`, `CAMLlocal`, and `CAMLreturn` inserted for you.
 macro_rules! caml {
-
     ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block -> $retval:ident) => {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
             caml_body!(|$($param),*|, <$($local),*>, $code);
             return $crate::core::mlvalues::Value::from($retval)
+        }
+    };
+
+    ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block) => {
+        #[allow(unused_mut)]
+        #[no_mangle]
+        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
+            caml_body!(|$($param),*|, <$($local),*>, $code);
+            return;
         }
     };
 
