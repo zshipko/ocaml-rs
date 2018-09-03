@@ -14,7 +14,7 @@ use ocaml;
 use ocaml::ToValue;
 
 caml!(ml_beef, |parameter|, <local>, {
-    let i = parameter.val_int();
+    let i = parameter.i32_val();
     let res = 0xbeef * i;
     println!("about to return  0x{:x} to OCaml runtime", res);
     local = res.to_value();
