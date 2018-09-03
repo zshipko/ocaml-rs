@@ -64,21 +64,21 @@ impl Value {
     }
 
     /// Allocate a new value with a custom finalizer
-    pub fn alloc_custom<T>(value: *mut T, finalizer: extern "C" fn(core::Value)) -> Value {
+    pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
         let x = unsafe {
-            let v = core::alloc::caml_alloc_final(mem::size_of::<*mut T>(), finalizer, 0, 1);
-            let ptr = Value::new(v).custom_ptr_val_mut();
-            ptr::swap(ptr, value);
+            let v = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
+            let ptr = Value::new(v).custom_ptr_val_mut::<T>();
+            ptr::write(ptr, value);
             v
         };
 
         Value::new(x)
     }
 
-    pub fn set_custom<T>(&mut self, value: *mut T) {
-        let ptr = self.custom_ptr_val_mut();
+    pub fn set_custom<T>(&mut self, value: T) -> T {
+        let ptr = self.custom_ptr_val_mut::<T>();
         unsafe {
-            ptr::swap(ptr, value);
+            ptr::replace(ptr, value)
         }
     }
 

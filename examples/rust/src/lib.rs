@@ -68,7 +68,7 @@ extern "C" fn finalizer(_value: ocaml::core::Value) {
 }
 
 caml!(ml_custom_value, |_unit|, <dest>, {
-    let t = Value::alloc_custom(&mut 1, finalizer);
+    let t = Value::alloc_custom(1, finalizer);
     dest = t.into()
 } -> dest);
 
