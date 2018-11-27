@@ -1,0 +1,9 @@
+[package]
+name = "example_stubs"
+version = "0.1.0"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies.ocaml]
+path = "../"

@@ -1,21 +1,9 @@
-SRC=$(wildcard src/*.rs)
-ARGS=-- -Z unstable-options --pretty=expanded
-
-pretty: $(SRC)
-	@cargo rustc $(ARGS)
-	@cd examples/rust && cargo rustc $(ARGS)
-	@cd examples/ocaml && make pretty
-	examples/ocaml/test
-
-test: $(SRC)
+test:
 	@cargo test
-	@cd examples/rust && cargo build
-	@cd examples/ocaml && make
-	examples/ocaml/test
+	@cd example && dune exec bin/main.exe
 
 clean:
 	cargo clean
-	cd examples/rust && cargo clean
-	cd examples/ocaml && make clean
+	cd example && dune clean
 
-.PHONE: test pretty clean
+.PHONY: test clean

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate ocaml;
-use ocaml::{ToValue, Value};
 use ocaml::core::memory;
+use ocaml::{ToValue, Value};
 
 caml!(ml_send_int, |v|, <l>, {
     let x = v.i32_val();
@@ -78,4 +78,11 @@ caml!(ml_array1, |_unit|, <dest>, {
         ba.data_mut()[i] = i as u8;
     }
     dest = ba.into();
+} -> dest);
+
+caml!(ml_string_test, |s|, <dest>, {
+    let st = ocaml::Str::from(s.clone());
+    println!("{:?}", s.tag());
+    println!("{} {}", st.len(), st.as_str());
+    dest = ocaml::Str::from("testing").into();
 } -> dest);

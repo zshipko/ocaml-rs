@@ -1,0 +1,19 @@
+(include_subdirs unqualified)
+
+(rule
+    (deps (source_tree .))
+    (targets libexample_stubs.a dllexample_stubs.so)
+    (action
+        (progn
+            (run cargo build -Z unstable-options --out-dir . --target-dir ../rust --release)
+            (run mv libexample_stubs.so ./dllexample_stubs.so)
+        )
+    )
+)
+
+(library
+   (name example)
+   (public_name example)
+   (self_build_stubs_archive (example))
+   (c_library_flags (-lpthread -lc -lm))
+)
