@@ -36,19 +36,17 @@ mod macros;
 
 #[macro_use]
 pub mod core;
+pub mod conv;
+mod error;
+mod named;
+pub mod runtime;
 mod tag;
 mod types;
-mod named;
 pub mod value;
-mod error;
-pub mod conv;
-pub mod runtime;
-
-
 
 pub use error::Error;
-pub use tag::Tag;
-pub use types::{Array, Tuple, List, Str, Array1};
 pub use named::named_value;
-pub use value::{ToValue, FromValue, Value};
 pub use runtime::*;
+pub use tag::Tag;
+pub use types::{Array, Array1, List, Str, Tuple};
+pub use value::{FromValue, ToValue, Value};

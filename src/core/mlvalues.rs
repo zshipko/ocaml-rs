@@ -44,52 +44,84 @@ pub struct Header {}
 /// #endif
 #[cfg(target_endian = "big")]
 macro_rules! tag_val {
-($x:expr) => (*(($x as *const u8).offset(-1)));
-($x:ident) => (*(($x as *const u8).offset(-1)));
+    ($x:expr) => {
+        *(($x as *const u8).offset(-1))
+    };
+    ($x:ident) => {
+        *(($x as *const u8).offset(-1))
+    };
 }
 
 #[cfg(target_endian = "little")]
 macro_rules! tag_val {
-($x:expr) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
-($x:ident) => (*(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize))));
+    ($x:expr) => {
+        *(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize)))
+    };
+    ($x:ident) => {
+        *(($x as *const u8).offset(-(::std::mem::size_of::<Value>() as isize)))
+    };
 }
 
 macro_rules! hd_val {
-($x:expr) => (*(($x as *const usize).offset(-1)));
-($x:ident) => (*(($x as *const usize).offset(-1)));
+    ($x:expr) => {
+        *(($x as *const usize).offset(-1))
+    };
+    ($x:ident) => {
+        *(($x as *const usize).offset(-1))
+    };
 }
 
 macro_rules! wosize_val {
-($x:expr) => (hd_val!($x) >> 10);
-($x:ident) => (hd_val!($x) >> 10);
+    ($x:expr) => {
+        hd_val!($x) >> 10
+    };
+    ($x:ident) => {
+        hd_val!($x) >> 10
+    };
 }
 
 /// `(((intnat)(x) << 1) + 1)`
 macro_rules! val_long {
-($x:expr) => ((($x as usize) << 1) + 1);
-($x:ident) => ((($x as usize) << 1) + 1);
+    ($x:expr) => {
+        (($x as usize) << 1) + 1
+    };
+    ($x:ident) => {
+        (($x as usize) << 1) + 1
+    };
 }
 
 /// `Long_val(x)     ((x) >> 1)`
 macro_rules! long_val {
-($x:ident) => ($x as usize >> 1);
-($x:expr) => ($x as usize >> 1);
+    ($x:ident) => {
+        $x as usize >> 1
+    };
+    ($x:expr) => {
+        $x as usize >> 1
+    };
 }
 
 /// Converts a machine `usize` into an OCaml `int`
 ///
 /// `Val_int(x) Val_long(x)`
 macro_rules! val_int {
-($x:expr) => ( val_long!($x) );
-($x:ident) => ( val_long!($x) );
+    ($x:expr) => {
+        val_long!($x)
+    };
+    ($x:ident) => {
+        val_long!($x)
+    };
 }
 
 /// Converts an OCaml `int` into a `usize`
 ///
 /// `Int_val(x) ((int) Long_val(x))`
 macro_rules! int_val {
-($x:ident) => (long_val!($x));
-($x:expr) => (long_val!($x));
+    ($x:ident) => {
+        long_val!($x)
+    };
+    ($x:expr) => {
+        long_val!($x)
+    };
 }
 
 /// Creates an empty list
@@ -110,9 +142,9 @@ pub fn is_long(v: Value) -> bool {
 
 /// Extracts from the `$block` an OCaml value at the `$ith`-field
 macro_rules! field {
-    ($block:expr, $i:expr) => (
+    ($block:expr, $i:expr) => {
         ($block as *mut $crate::core::mlvalues::Value).offset($i)
-    );
+    };
 }
 
 pub unsafe fn field(value: Value, i: usize) -> *mut Value {
@@ -120,9 +152,7 @@ pub unsafe fn field(value: Value, i: usize) -> *mut Value {
 }
 
 pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
-    ::std::slice::from_raw_parts(
-        (value as *const Value).offset(-1),
-        wosize_val!(value) + 1)
+    ::std::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val!(value) + 1)
 }
 
 /// The OCaml `()` (`unit`) value - rien.
@@ -138,16 +168,16 @@ pub const FALSE: Value = val_int!(0);
 
 /// Pointer to the first byte
 macro_rules! bp_val {
-  ($v: expr) => {
-      $v as *const u8
-  }
+    ($v: expr) => {
+        $v as *const u8
+    };
 }
 
 /// Extracts a machine `ptr` to the bytes making up an OCaml `string`
 macro_rules! string_val {
-  ($v:expr) => {
-      bp_val!($v)
-  }
+    ($v:expr) => {
+        bp_val!($v)
+    };
 }
 
 extern "C" {

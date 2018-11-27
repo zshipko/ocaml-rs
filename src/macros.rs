@@ -3,14 +3,14 @@ macro_rules! caml_ffi {
     ($code:tt) => {
         let mut caml_frame = $crate::core::memory::caml_local_roots.clone();
         $code;
-        return
+        return;
     };
 
     ($code:tt => $result:expr) => {
         let mut caml_frame = $crate::core::memory::caml_local_roots;
         $code;
         return $crate::core::mlvalues::Value::from($result);
-    }
+    };
 }
 
 #[macro_export]

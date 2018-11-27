@@ -1,15 +1,15 @@
-use core::mlvalues;
-use core::mlvalues::empty_list;
+use core::alloc;
 use core::bigarray;
 use core::memory;
-use core::alloc;
-use tag::Tag;
+use core::mlvalues;
+use core::mlvalues::empty_list;
 use error::Error;
+use tag::Tag;
 
+use std::marker::PhantomData;
+use std::mem;
 use std::ptr;
 use std::slice;
-use std::mem;
-use std::marker::PhantomData;
 
 use value::{Size, Value};
 
@@ -22,7 +22,7 @@ impl From<Tuple> for Value {
     }
 }
 
-impl <R: AsRef<[Value]>> From<R> for Tuple {
+impl<R: AsRef<[Value]>> From<R> for Tuple {
     fn from(t: R) -> Tuple {
         let mut dst = Tuple::new(t.as_ref().len());
 
@@ -68,7 +68,6 @@ impl Tuple {
     }
 }
 
-
 /// OCaml Array type
 pub struct Array(Value);
 
@@ -78,7 +77,7 @@ impl From<Array> for Value {
     }
 }
 
-impl <R: AsRef<[Value]>> From<R> for Array {
+impl<R: AsRef<[Value]>> From<R> for Array {
     fn from(t: R) -> Array {
         let mut dst = Array::new(t.as_ref().len());
 
@@ -113,9 +112,7 @@ impl Array {
 
     /// Check if Array contains only doubles
     pub fn is_double_array(&self) -> bool {
-        unsafe {
-            alloc::caml_is_double_array(self.0.value()) == 1
-        }
+        unsafe { alloc::caml_is_double_array(self.0.value()) == 1 }
     }
 
     /// Array length
@@ -127,7 +124,7 @@ impl Array {
     pub fn set_double(&mut self, i: Size, f: f64) -> Result<(), Error> {
         if i < self.len() {
             if !self.is_double_array() {
-                return Err(Error::NotDoubleArray)
+                return Err(Error::NotDoubleArray);
             }
 
             unsafe {
@@ -145,12 +142,10 @@ impl Array {
     pub fn get_double(&mut self, i: Size) -> Result<f64, Error> {
         if i < self.len() {
             if !self.is_double_array() {
-                return Err(Error::NotDoubleArray)
+                return Err(Error::NotDoubleArray);
             }
 
-            unsafe {
-                Ok(*self.0.ptr_val::<f64>().offset(i as isize))
-            }
+            unsafe { Ok(*self.0.ptr_val::<f64>().offset(i as isize)) }
         } else {
             Err(Error::OutOfBounds)
         }
@@ -197,7 +192,7 @@ impl From<Value> for List {
     }
 }
 
-impl <R: AsRef<[Value]>> From<R> for List {
+impl<R: AsRef<[Value]>> From<R> for List {
     fn from(t: R) -> List {
         let mut dst = List::new();
 
@@ -241,7 +236,7 @@ impl List {
     /// List head
     pub fn hd(&self) -> Option<Value> {
         if self.len() == 0 {
-            return None
+            return None;
         }
 
         Some(self.0.field(0))
@@ -262,7 +257,7 @@ impl From<Str> for Value {
     }
 }
 
-impl <'a> From<&'a str> for Str {
+impl<'a> From<&'a str> for Str {
     fn from(s: &'a str) -> Str {
         unsafe {
             let len = s.len();
@@ -274,8 +269,7 @@ impl <'a> From<&'a str> for Str {
     }
 }
 
-
-impl <'a> From<&'a [u8]> for Str {
+impl<'a> From<&'a [u8]> for Str {
     fn from(s: &'a [u8]) -> Str {
         unsafe {
             let len = s.len();
@@ -308,9 +302,12 @@ impl Str {
 
     /// String length
     pub fn len(&self) -> Size {
-        unsafe {
-            mlvalues::caml_string_length(self.0.value())
-        }
+        unsafe { mlvalues::caml_string_length(self.0.value()) }
+    }
+
+    /// Check if a string is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Access OCaml string as `&str`
@@ -334,17 +331,13 @@ impl Str {
     /// Access OCaml string as `&[u8]`
     pub fn data(&self) -> &[u8] {
         let ptr = string_val!((self.0).0);
-        unsafe {
-            ::std::slice::from_raw_parts(ptr, self.len())
-        }
+        unsafe { ::std::slice::from_raw_parts(ptr, self.len()) }
     }
 
     /// Access OCaml string as `&mut [u8]`
     pub fn data_mut(&mut self) -> &mut [u8] {
         let ptr = string_val!((self.0).0) as *mut u8;
-        unsafe {
-            ::std::slice::from_raw_parts_mut(ptr, self.len())
-        }
+        unsafe { ::std::slice::from_raw_parts_mut(ptr, self.len()) }
     }
 }
 
@@ -362,7 +355,7 @@ macro_rules! make_kind {
                 bigarray::Kind::$k as i32
             }
         }
-    }
+    };
 }
 
 make_kind!(u8, UINT8);
@@ -393,7 +386,12 @@ impl<T: BigarrayKind> From<Value> for Array1<T> {
 impl<T: BigarrayKind> Array1<T> {
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
         unsafe {
-            let s = bigarray::caml_ba_alloc_dims(T::kind() | bigarray::Managed::EXTERNAL as i32, 1, data.as_mut_ptr() as bigarray::Data, data.len() as i32);
+            let s = bigarray::caml_ba_alloc_dims(
+                T::kind() | bigarray::Managed::EXTERNAL as i32,
+                1,
+                data.as_mut_ptr() as bigarray::Data,
+                data.len() as i32,
+            );
             Array1(Value::new(s), PhantomData)
         }
     }
@@ -401,31 +399,32 @@ impl<T: BigarrayKind> Array1<T> {
     pub fn create(n: Size) -> Array1<T> {
         unsafe {
             let data = bigarray::malloc(n * mem::size_of::<T>());
-            let s = bigarray::caml_ba_alloc_dims(T::kind() | bigarray::Managed::MANAGED as i32, 1, data, n as mlvalues::Intnat);
+            let s = bigarray::caml_ba_alloc_dims(
+                T::kind() | bigarray::Managed::MANAGED as i32,
+                1,
+                data,
+                n as mlvalues::Intnat,
+            );
             Array1(Value::new(s), PhantomData)
         }
     }
 
     pub fn len(&self) -> Size {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe {
-            let x = (*ba).dim as usize;
-            x
-        }
+        unsafe { (*ba).dim as usize }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn data(&self) -> &[T] {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe {
-            slice::from_raw_parts((*ba).data as *const T, self.len())
-        }
+        unsafe { slice::from_raw_parts((*ba).data as *const T, self.len()) }
     }
 
     pub fn data_mut(&mut self) -> &mut [T] {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe {
-            slice::from_raw_parts_mut((*ba).data as *mut T, self.len())
-        }
+        unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
     }
 }
-

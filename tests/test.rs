@@ -6,4 +6,3 @@ fn test_memory() {
     let x = ocaml::Value::new(caml_int).isize_val();
     assert_eq!(x, 0xdeadbeef);
 }
-

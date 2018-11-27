@@ -23,14 +23,13 @@ extern "C" {
 }
 
 macro_rules! is_exception_result {
-  ($v:expr) => {
-    ($v as usize) & 3 == 2
-  }
+    ($v:expr) => {
+        ($v as usize) & 3 == 2
+    };
 }
 
 macro_rules! extract_exception {
-  ($v:expr) => {
-    ($v as usize) & !3
-  }
+    ($v:expr) => {
+        ($v as usize) & !3
+    };
 }
-

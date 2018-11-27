@@ -1,5 +1,5 @@
-use value::{Value, ToValue, FromValue};
 use types::{Array, Str};
+use value::{FromValue, ToValue, Value};
 
 macro_rules! value_i {
     ($t:ty) => {
@@ -56,14 +56,14 @@ impl FromValue for String {
     }
 }
 
-impl <V: ToValue> ToValue for Vec<V> {
+impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(&self) -> Value {
         let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
         Array::from(tmp).into()
     }
 }
 
-impl <V: FromValue> FromValue for Vec<V> {
+impl<V: FromValue> FromValue for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
         let arr = Array::from(v);
         let mut dst = Vec::with_capacity(arr.len());

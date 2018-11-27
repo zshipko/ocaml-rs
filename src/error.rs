@@ -16,5 +16,5 @@ pub enum Error {
     NotDoubleArray,
 
     /// C String is invalid
-    InvalidCString
+    InvalidCString,
 }

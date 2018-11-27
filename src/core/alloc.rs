@@ -1,6 +1,6 @@
 //! External definitions for allocating values in the OCaml runtime
 
-use core::mlvalues::{Size, Value, Tag};
+use core::mlvalues::{Size, Tag, Value};
 
 extern "C" {
     pub fn caml_alloc(size: Size, tag: Tag) -> Value;
@@ -15,7 +15,15 @@ extern "C" {
     pub fn caml_copy_int32(int: i32) -> Value; // defined in [ints.c]
     pub fn caml_copy_int64(int: i64) -> Value; // defined in [ints.c]
     pub fn caml_copy_nativeint(int: isize) -> Value; // defined in [ints.c]
-    pub fn caml_alloc_array(value: (unsafe extern "C" fn(*const u8) -> Value), array: *mut *mut u8) -> Value;
+    pub fn caml_alloc_array(
+        value: (unsafe extern "C" fn(*const u8) -> Value),
+        array: *mut *mut u8,
+    ) -> Value;
 
-    pub fn caml_alloc_final(size: Size, final_fn: extern "C" fn(Value), consumed: Size, max: Size) -> Value;
+    pub fn caml_alloc_final(
+        size: Size,
+        final_fn: extern "C" fn(Value),
+        consumed: Size,
+        max: Size,
+    ) -> Value;
 }

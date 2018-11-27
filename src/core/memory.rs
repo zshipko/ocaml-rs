@@ -76,9 +76,9 @@ extern "C" {
 /// store_field!(some_block, 1, some_value)
 /// ```
 macro_rules! store_field {
-    ($block:expr, $offset:expr, $val:expr) => (
-      $crate::core::memory::caml_modify (field!($block, $offset), $val);
-    );
+    ($block:expr, $offset:expr, $val:expr) => {
+        $crate::core::memory::caml_modify(field!($block, $offset), $val);
+    };
 }
 
 /// Stores the `value` in the `block` at `offset`.
@@ -103,5 +103,3 @@ extern "C" {
     pub fn caml_register_global_root(value: *const Value);
     pub fn caml_remove_global_root(value: *const Value);
 }
-
-

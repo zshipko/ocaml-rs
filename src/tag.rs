@@ -27,12 +27,12 @@ pub enum Tag {
     String,
     Double,
     DoubleArray,
-    Custom
+    Custom,
 }
 
 impl Tag {
     /// Create a `Tag` from the given `u8`
-   pub fn new(i: u8) -> Tag {
+    pub fn new(i: u8) -> Tag {
         match i as u32 {
             0 => Tag::Zero,
             Forward_tag => Tag::Forward,
@@ -45,7 +45,7 @@ impl Tag {
             Double_tag => Tag::Double,
             Double_array_tag => Tag::DoubleArray,
             Custom_tag => Tag::Custom,
-            n => Tag::Tag(n as u8)
+            n => Tag::Tag(n as u8),
         }
     }
 }
@@ -64,9 +64,7 @@ impl From<Tag> for u8 {
             Tag::String => String_tag as u8,
             Tag::Double => Double_tag as u8,
             Tag::DoubleArray => Double_array_tag as u8,
-            Tag::Custom => Custom_tag as u8
-
+            Tag::Custom => Custom_tag as u8,
         }
     }
 }
-
