@@ -1,6 +1,6 @@
 //! Bigarray bindings
 
-use core::mlvalues::{Intnat, Uintnat, Value};
+use crate::core::mlvalues::{Intnat, Uintnat, Value};
 use std::os::raw::c_void;
 
 pub type Data = *mut c_void;

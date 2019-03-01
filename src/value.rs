@@ -1,7 +1,8 @@
-use core;
-use error::Error;
-use runtime::hash_variant;
-use tag::{self, Tag};
+use crate::core;
+use crate::error::Error;
+use crate::runtime::hash_variant;
+use crate::tag;
+use crate::Tag;
 
 use std::{mem, ptr};
 
@@ -483,7 +484,8 @@ impl Value {
                     } else {
                         Value(*v).deep_clone_to_rust().0
                     }
-                }).collect();
+                })
+                .collect();
             let ptr1 = vec1.as_ptr();
             mem::forget(vec1);
             return Value::ptr(ptr1.offset(1));

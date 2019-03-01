@@ -1,5 +1,5 @@
-use types::{Array, Str};
-use value::{FromValue, ToValue, Value};
+use crate::types::{Array, Str};
+use crate::value::{FromValue, ToValue, Value};
 
 macro_rules! value_i {
     ($t:ty) => {

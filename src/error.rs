@@ -1,4 +1,4 @@
-use value::Value;
+use crate::value::Value;
 
 /// Error returned by `ocaml-rs` functions
 #[derive(Debug)]

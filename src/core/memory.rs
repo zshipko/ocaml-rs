@@ -36,7 +36,7 @@
 use std::default::Default;
 use std::ptr;
 
-use core::mlvalues::{Size, Value};
+use crate::core::mlvalues::{Size, Value};
 
 #[repr(C)]
 #[derive(Debug, Clone)]

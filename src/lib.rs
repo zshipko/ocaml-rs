@@ -20,8 +20,8 @@
 //! value ml_add_10(value arg) {
 //!     CAMLparam1(arg);
 //!     CAMLlocal(result);
-//!     int n = int_val(arg);
-//!     result = val_int(arg + 10)
+//!     int n = Int_val(arg);
+//!     result = Val_int(arg + 10)
 //!     CAMLreturn(result);
 //! }
 //! ```
@@ -44,9 +44,9 @@ mod tag;
 mod types;
 pub mod value;
 
-pub use error::Error;
-pub use named::named_value;
-pub use runtime::*;
-pub use tag::Tag;
-pub use types::{Array, Array1, List, Str, Tuple};
-pub use value::{FromValue, ToValue, Value};
+pub use crate::error::Error;
+pub use crate::named::named_value;
+pub use crate::runtime::*;
+pub use crate::tag::Tag;
+pub use crate::types::{Array, Array1, List, Str, Tuple};
+pub use crate::value::{FromValue, ToValue, Value};

@@ -1,5 +1,5 @@
-use core;
-use value::Value;
+use crate::core;
+use crate::value::Value;
 
 use std::ffi::CString;
 

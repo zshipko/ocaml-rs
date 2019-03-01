@@ -1,5 +1,5 @@
-use core;
-use value::Value;
+use crate::core;
+use crate::value::Value;
 
 /// Returns a named value registered by OCaml
 pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {

@@ -1,17 +1,17 @@
-use core::alloc;
-use core::bigarray;
-use core::memory;
-use core::mlvalues;
-use core::mlvalues::empty_list;
-use error::Error;
-use tag::Tag;
+use crate::core::alloc;
+use crate::core::bigarray;
+use crate::core::memory;
+use crate::core::mlvalues;
+use crate::core::mlvalues::empty_list;
+use crate::error::Error;
+use crate::tag::Tag;
 
 use std::marker::PhantomData;
 use std::mem;
 use std::ptr;
 use std::slice;
 
-use value::{Size, Value};
+use crate::value::{Size, Value};
 
 /// OCaml Tuple type
 pub struct Tuple(Value, Size);
