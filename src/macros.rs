@@ -23,7 +23,7 @@ macro_rules! caml_param {
 
     (@step $idx:expr, $caml_roots:ident, $param:expr, $($tail:expr,)*) => {
         $caml_roots.tables[$idx] = &mut $param;
-        caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
+        $crate::caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
     };
 
     ($($n:expr),*) => {
@@ -31,7 +31,7 @@ macro_rules! caml_param {
         caml_roots.next = $crate::core::memory::caml_local_roots;
         $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
-        caml_param!(@step 0usize, caml_roots, $($n,)*);
+        $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
     }
 }
 
@@ -49,7 +49,7 @@ macro_rules! caml_param {
 macro_rules! caml_local {
     ($($local:ident),*) => {
         $(let mut $local = $crate::value::Value::new($crate::core::mlvalues::UNIT);)*
-        caml_param!($($local.0),*);
+        $crate::caml_param!($($local.0),*);
     }
 }
 
@@ -59,7 +59,7 @@ macro_rules! caml_body {
 
     (||, <$($local:ident),*>, $code:block) => {
         let caml_frame = $crate::core::memory::caml_local_roots;
-        caml_local!($($local),*);
+        crate::caml_local!($($local),*);
         {
             $(let mut $param = $crate::value::Value::new($param);
             {
@@ -72,7 +72,7 @@ macro_rules! caml_body {
 
     (|$($param:ident),*|, @code $code:block) => {
         let caml_frame = $crate::core::memory::caml_local_roots;
-        caml_param!($($param),*);
+        $crate::caml_param!($($param),*);
         {
             $(let mut $param = $crate::value::Value::new($param);
             {
@@ -85,8 +85,8 @@ macro_rules! caml_body {
 
     (|$($param:ident),*|, <$($local:ident),*>, $code:block) => {
         let caml_frame = $crate::core::memory::caml_local_roots;
-        caml_param!($($param),*);
-        caml_local!($($local),*);
+        $crate::caml_param!($($param),*);
+        $crate::caml_local!($($local),*);
         {
             $(let mut $param = $crate::value::Value::new($param);
             {
@@ -105,7 +105,7 @@ macro_rules! caml {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            caml_body!(|$($param),*|, <$($local),*>, $code);
+            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
             return $crate::core::mlvalues::Value::from($retval)
         }
     };
@@ -114,7 +114,7 @@ macro_rules! caml {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            caml_body!(|$($param),*|, <$($local),*>, $code);
+            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
             return;
         }
     };
@@ -123,7 +123,7 @@ macro_rules! caml {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) {
-            caml_body!(|$($param),*|, @code $code);
+            $crate::caml_body!(|$($param),*|, @code $code);
             return;
         }
     };
@@ -132,7 +132,7 @@ macro_rules! caml {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            caml_body!(|$($param),*|, @code $code);
+            $crate::caml_body!(|$($param),*|, @code $code);
             return $crate::core::mlvalues::Value::from($retval);
         }
     };
