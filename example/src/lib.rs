@@ -60,7 +60,7 @@ caml!(ml_send_float, |f|, <dest>, {
 } -> dest);
 
 caml!(ml_send_first_variant, |_unit|, <dest>, {
-    dest = Value::variant(0, Some(2.0))
+    dest = Value::variant(&mut dest, 0, Some(2.0))
 } -> dest);
 
 extern "C" fn finalizer(_value: ocaml::core::Value) {
