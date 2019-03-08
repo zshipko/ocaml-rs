@@ -53,6 +53,12 @@ impl Value {
         Value::new(x)
     }
 
+    /// Allocate a new tuple value
+    pub fn alloc_tuple(n: usize) -> Value {
+        let x = unsafe { core::alloc::caml_alloc_tuple(n) };
+        Value::new(x)
+    }
+
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
         let x = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
@@ -121,6 +127,11 @@ impl Value {
     /// OCaml None value
     pub fn none() -> Value {
         NONE
+    }
+
+    /// OCaml Unit value
+    pub fn unit() -> Value {
+        UNIT
     }
 
     /// Create a variant value

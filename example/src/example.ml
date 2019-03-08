@@ -20,5 +20,4 @@ external send_first_variant : unit -> testing = "ml_send_first_variant"
 external custom_value : unit -> something = "ml_custom_value"
 external array1 : unit -> (int, int8_unsigned_elt, c_layout) Array1.t = "ml_array1"
 external string_test : string -> string = "ml_string_test"
-
-
+external make_list: int -> int list = "ml_make_list"

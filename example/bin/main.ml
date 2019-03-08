@@ -81,6 +81,13 @@ let _ =
     print_endline "string test";
     assert (string_test "wow" = "testing");
 
+    Printf.printf "Calling \"make_list\"...\n";
+    flush(stdout);
+    let l = make_list 100000 in
+    Printf.printf "make_list: %d\n" (List.length l);
+    flush(stdout);
+    (*assert (List.length l = 100000);*)
+
     print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()

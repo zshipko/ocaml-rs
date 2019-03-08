@@ -86,3 +86,11 @@ caml!(ml_string_test, |s|, <dest>, {
     println!("{} {}", st.len(), st.as_str());
     dest = ocaml::Str::from("testing").into();
 } -> dest);
+
+caml!(ml_make_list, |length|, <tmp, dest>, {
+    let length = length.i32_val();
+    let mut list = ocaml::List::new(&mut dest);
+    for v in 0..length {
+        list.push_hd(&mut tmp, Value::i32(v));
+    }
+} -> dest);

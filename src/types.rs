@@ -1,6 +1,6 @@
 use crate::core::alloc;
 use crate::core::bigarray;
-use crate::core::memory;
+//use crate::core::memory;
 use crate::core::mlvalues;
 use crate::core::mlvalues::empty_list;
 use crate::error::Error;
@@ -14,33 +14,19 @@ use std::slice;
 use crate::value::{Size, Value};
 
 /// OCaml Tuple type
-pub struct Tuple(Value, Size);
+pub struct Tuple<'a>(&'a mut Value, Size);
 
-impl From<Tuple> for Value {
-    fn from(t: Tuple) -> Value {
-        t.0
+impl<'a> From<Tuple<'a>> for Value {
+    fn from(t: Tuple<'a>) -> Value {
+        t.0.clone()
     }
 }
 
-impl<R: AsRef<[Value]>> From<R> for Tuple {
-    fn from(t: R) -> Tuple {
-        let mut dst = Tuple::new(t.as_ref().len());
-
-        for (n, item) in t.as_ref().iter().enumerate() {
-            let _ = dst.set(n, item.clone());
-        }
-
-        dst
-    }
-}
-
-impl Tuple {
+impl<'a> Tuple<'a> {
     /// Create a new tuple
-    pub fn new(n: Size) -> Tuple {
-        unsafe {
-            let val = Value::new(alloc::caml_alloc_tuple(n));
-            Tuple(val, n)
-        }
+    pub fn new(local: &'a mut Value, n: Size) -> Tuple<'a> {
+        local.0 = unsafe { alloc::caml_alloc_tuple(n) };
+        Tuple(local, n)
     }
 
     /// Tuple length
@@ -69,44 +55,26 @@ impl Tuple {
 }
 
 /// OCaml Array type
-pub struct Array(Value);
+pub struct Array<'a>(&'a mut Value);
 
-impl From<Array> for Value {
-    fn from(t: Array) -> Value {
-        t.0
+impl<'a> From<Array<'a>> for Value {
+    fn from(t: Array<'a>) -> Value {
+        t.0.clone()
     }
 }
 
-impl<R: AsRef<[Value]>> From<R> for Array {
-    fn from(t: R) -> Array {
-        let mut dst = Array::new(t.as_ref().len());
-
-        for (n, item) in t.as_ref().iter().enumerate() {
-            let _ = dst.set(n, item.clone());
-        }
-
-        dst
+impl<'a> From<&'a mut Value> for Array<'a> {
+    fn from(v: &'a mut Value) -> Array<'a> {
+        Array(v)
     }
 }
 
-impl From<Value> for Array {
-    fn from(v: Value) -> Array {
-        if !v.is_block() {
-            let mut arr = Array::new(1);
-            let _ = arr.set(0, v);
-            arr
-        } else {
-            Array(v)
-        }
-    }
-}
-
-impl Array {
+impl<'a> Array<'a> {
     /// Create a new array of the given size
-    pub fn new(n: Size) -> Array {
+    pub fn new(value: &'a mut Value, n: Size) -> Array<'a> {
         unsafe {
-            let val = alloc::caml_alloc(n, Tag::Zero.into());
-            Array(Value::new(val))
+            value.0 = alloc::caml_alloc(n, Tag::Zero.into());
+            Array(value)
         }
     }
 
@@ -172,42 +140,24 @@ impl Array {
 }
 
 /// OCaml list type
-pub struct List(Value);
+pub struct List<'a>(&'a mut Value);
 
-impl From<List> for Value {
-    fn from(t: List) -> Value {
-        t.0
+impl<'a> From<List<'a>> for Value {
+    fn from(t: List<'a>) -> Value {
+        t.0.clone()
     }
 }
 
-impl From<Value> for List {
-    fn from(v: Value) -> List {
-        if !v.is_block() {
-            let mut l = List::new();
-            let _ = l.push_hd(v);
-            l
-        } else {
-            List(v)
-        }
+impl<'a> From<&'a mut Value> for List<'a> {
+    fn from(v: &'a mut Value) -> List {
+        List(v)
     }
 }
 
-impl<R: AsRef<[Value]>> From<R> for List {
-    fn from(t: R) -> List {
-        let mut dst = List::new();
-
-        for item in t.as_ref().iter().rev() {
-            let _ = dst.push_hd(item.clone());
-        }
-
-        dst
-    }
-}
-
-impl List {
+impl<'a> List<'a> {
     /// Create a new OCaml list
-    pub fn new() -> List {
-        List(Value::new(empty_list()))
+    pub fn new(local: &mut Value) -> List {
+        List(local)
     }
 
     /// List length
@@ -215,7 +165,7 @@ impl List {
         let mut length = 0;
         let mut tmp = self.0.clone();
 
-        while tmp.value() != empty_list() {
+        while tmp.0 != empty_list() {
             tmp = tmp.field(1);
             length += 1;
         }
@@ -224,13 +174,11 @@ impl List {
     }
 
     /// Add an element to the front of the list
-    pub fn push_hd(&mut self, v: Value) {
-        unsafe {
-            let tmp = alloc::caml_alloc(2, 0);
-            memory::store_field(tmp, 0, v.0);
-            memory::store_field(tmp, 1, (self.0).0);
-            self.0 = Value::new(tmp);
-        }
+    pub fn push_hd(&mut self, local: &mut Value, v: Value) {
+        local.0 = Value::alloc(2, Tag::Zero).0;
+        local.store_field(0, v);
+        local.store_field(1, self.0.clone());
+        (self.0).0 = local.0
     }
 
     /// List head

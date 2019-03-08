@@ -28,8 +28,10 @@ macro_rules! caml_param {
 
     ($($n:expr),*) => {
         let mut caml_roots: $crate::core::memory::CamlRootsBlock = ::std::default::Default::default();
-        caml_roots.next = $crate::core::memory::caml_local_roots;
-        $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
+        caml_roots.next = unsafe { $crate::core::memory::caml_local_roots };
+        unsafe {
+            $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
+        }
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
         $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
     }
@@ -142,23 +144,68 @@ macro_rules! caml {
 #[macro_export]
 /// Create an OCaml tuple
 macro_rules! tuple {
+    (_ $x:expr) => {
+        {
+            $crate::caml_local!(t);
+            let x =  $x;
+            t = $crate::Value::alloc_tuple(x.len());
+            for (n, i) in x.into_iter().enumerate() {
+                t.store_field(n, i.clone());
+            }
+            t.clone()
+        }
+    };
     ($($x:expr),*) => {
-        $crate::Tuple::from(&[$($x.to_value(),)*]).into()
+        {
+            let x =  &[$($x.to_value(),)*];
+            tuple!(_ x)
+        }
     }
 }
 
 #[macro_export]
 /// Create an OCaml array
 macro_rules! array {
+    (_ $x:expr) => {
+        {
+            $crate::caml_local!(t);
+            let x = $x;
+            t = $crate::Value::alloc(x.len(), $crate::Tag::Zero);
+            for (n, i) in x.into_iter().enumerate() {
+                t.store_field(n, i.clone());
+            }
+            t.clone()
+        }
+    };
     ($($x:expr),*) => {
-        $crate::Array::from(&[$($x.to_value(),)*]).into()
+        {
+            let x =  &[$($x.to_value(),)*];
+            array!(_ x)
+        }
     }
 }
 
 #[macro_export]
 /// Create an OCaml list
 macro_rules! list {
+    (_ $x:expr) => {
+        {
+            $crate::caml_local!(tmp, dest);
+            let x =  $x;
+            dest = $crate::Value::unit();
+            for i in x.into_iter().rev() {
+                tmp = $crate::Value::alloc(2, $crate::Tag::Zero);
+                tmp.store_field(0, i.clone());
+                tmp.store_field(1, dest);
+                dest = tmp;
+            }
+            dest.clone()
+        }
+    };
     ($($x:expr),*) => {
-        $crate::List::from(&[$($x.to_value(),)*]).into()
+        {
+            let x =  &[$($x.to_value(),)*];
+            list!(_ x)
+        }
     }
 }

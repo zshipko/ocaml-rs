@@ -59,13 +59,13 @@ impl FromValue for String {
 impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(&self) -> Value {
         let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
-        Array::from(tmp).into()
+        crate::array!(_ tmp).into()
     }
 }
 
 impl<V: FromValue> FromValue for Vec<V> {
-    fn from_value(v: Value) -> Vec<V> {
-        let arr = Array::from(v);
+    fn from_value(mut v: Value) -> Vec<V> {
+        let arr = Array::from(&mut v);
         let mut dst = Vec::with_capacity(arr.len());
         for i in 0..arr.len() {
             dst.push(V::from_value(arr.get(i).unwrap()))
