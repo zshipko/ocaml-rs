@@ -118,10 +118,10 @@ impl Value {
     }
 
     /// OCaml Some value
-    pub fn some<V: ToValue>(v: V) -> Value {
-        let mut x = Self::alloc(1, Tag::Zero);
-        x.store_field(0, v.to_value());
-        x
+    pub fn some<V: ToValue>(local: &mut Value, v: V) -> Value {
+        local.0 = Self::alloc(1, Tag::Zero).0;
+        local.store_field(0, v.to_value());
+        local.clone()
     }
 
     /// OCaml None value
@@ -135,15 +135,16 @@ impl Value {
     }
 
     /// Create a variant value
-    pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
+    pub fn variant<V: ToValue>(local: &mut Value, tag: u8, value: Option<V>) -> Value {
         match value {
             Some(v) => {
-                let mut x = Self::alloc(1, Tag::Tag(tag));
-                x.store_field(0, v.to_value());
-                x
+                local.0 = Self::alloc(1, Tag::Tag(tag)).0;
+                local.store_field(0, v.to_value());
             }
-            None => Self::alloc(0, Tag::Tag(tag)),
+            None => local.0 = Self::alloc(0, Tag::Tag(tag)).0,
         }
+
+        local.clone()
     }
 
     /// Create a new opaque pointer Value
