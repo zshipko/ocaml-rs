@@ -70,23 +70,23 @@ let _ =
 
     (* bigarray *)
     print_endline "bigarray create";
-    let ba = array1 () in
+    let ba = array1 100000 in
 
     print_endline "bigarray iter";
-    for i = 0 to 99 do
-      Printf.printf "Bigarray: %d %d\n" i ba.{i};
-      assert (ba.{i} = i)
+    for i = 0 to Bigarray.Array1.dim ba - 1 do
+      assert (ba.{i} = i mod 256)
     done;
 
     print_endline "string test";
     assert (string_test "wow" = "testing");
 
-    Printf.printf "Calling \"make_list\"...\n";
-    flush(stdout);
     let l = make_list 100000 in
     Printf.printf "make_list: %d\n" (List.length l);
-    flush(stdout);
-    (*assert (List.length l = 100000);*)
+    assert (List.length l = 100000);
+
+    let l = make_array 100000 in
+    Printf.printf "make_array: %d\n" (Array.length l);
+    assert (Array.length l = 100000);
 
     print_endline "cleanup";
     Gc.full_major ();

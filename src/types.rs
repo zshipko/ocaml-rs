@@ -1,6 +1,5 @@
 use crate::core::alloc;
 use crate::core::bigarray;
-//use crate::core::memory;
 use crate::core::mlvalues;
 use crate::core::mlvalues::empty_list;
 use crate::error::Error;
@@ -14,19 +13,39 @@ use std::slice;
 use crate::value::{Size, Value};
 
 /// OCaml Tuple type
-pub struct Tuple<'a>(&'a mut Value, Size);
+pub struct Tuple(Value, Size);
 
-impl<'a> From<Tuple<'a>> for Value {
-    fn from(t: Tuple<'a>) -> Value {
-        t.0.clone()
+impl From<Tuple> for Value {
+    fn from(t: Tuple) -> Value {
+        t.0
     }
 }
 
-impl<'a> Tuple<'a> {
+impl From<Value> for Tuple {
+    fn from(v: Value) -> Tuple {
+        let len = v.array_length();
+        Tuple(v, len)
+    }
+}
+
+impl<'a, V: crate::ToValue> From<&'a [V]> for Tuple {
+    fn from(a: &'a [V]) -> Tuple {
+        let mut t = Tuple::new(a.len());
+        for (n, i) in a.iter().enumerate() {
+            let _ = t.set(n, i.to_value());
+        }
+        t
+    }
+}
+
+impl Tuple {
     /// Create a new tuple
-    pub fn new(local: &'a mut Value, n: Size) -> Tuple<'a> {
-        local.0 = unsafe { alloc::caml_alloc_tuple(n) };
-        Tuple(local, n)
+    pub fn new(n: Size) -> Tuple {
+        let x = caml_body!(|x| {
+            x.0 = unsafe { alloc::caml_alloc_tuple(n) };
+            x
+        });
+        Tuple(x, n)
     }
 
     /// Tuple length
@@ -55,27 +74,38 @@ impl<'a> Tuple<'a> {
 }
 
 /// OCaml Array type
-pub struct Array<'a>(&'a mut Value);
+pub struct Array(Value);
 
-impl<'a> From<Array<'a>> for Value {
-    fn from(t: Array<'a>) -> Value {
+impl From<Array> for Value {
+    fn from(t: Array) -> Value {
         t.0.clone()
     }
 }
 
-impl<'a> From<&'a mut Value> for Array<'a> {
-    fn from(v: &'a mut Value) -> Array<'a> {
+impl From<Value> for Array {
+    fn from(v: Value) -> Array {
         Array(v)
     }
 }
 
-impl<'a> Array<'a> {
-    /// Create a new array of the given size
-    pub fn new(value: &'a mut Value, n: Size) -> Array<'a> {
-        unsafe {
-            value.0 = alloc::caml_alloc(n, Tag::Zero.into());
-            Array(value)
+impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
+    fn from(a: &'a [V]) -> Array {
+        let mut t = Array::new(a.len());
+        for (n, i) in a.iter().enumerate() {
+            let _ = t.set(n, i.to_value());
         }
+        t
+    }
+}
+
+impl Array {
+    /// Create a new array of the given size
+    pub fn new(n: Size) -> Array {
+        let x = caml_body!(|x| {
+            x.0 = unsafe { alloc::caml_alloc(n, Tag::Zero.into()) };
+            x
+        });
+        Array(x)
     }
 
     /// Check if Array contains only doubles
@@ -113,10 +143,14 @@ impl<'a> Array<'a> {
                 return Err(Error::NotDoubleArray);
             }
 
-            unsafe { Ok(*self.0.ptr_val::<f64>().offset(i as isize)) }
+            Ok(self.get_double_unchecked(i))
         } else {
             Err(Error::OutOfBounds)
         }
+    }
+
+    pub fn get_double_unchecked(&mut self, i: Size) -> f64 {
+        unsafe { *self.0.ptr_val::<f64>().offset(i as isize) }
     }
 
     /// Set array index
@@ -132,32 +166,43 @@ impl<'a> Array<'a> {
     /// Get array index
     pub fn get(&self, i: Size) -> Result<Value, Error> {
         if i < self.len() {
-            Ok(self.0.field(i))
+            self.get_unchecked(i)
         } else {
             Err(Error::OutOfBounds)
         }
     }
-}
 
-/// OCaml list type
-pub struct List<'a>(&'a mut Value);
-
-impl<'a> From<List<'a>> for Value {
-    fn from(t: List<'a>) -> Value {
-        t.0.clone()
+    pub fn get_unchecked(&self, i: Size) -> Result<Value, Error> {
+        Ok(self.0.field(i))
     }
 }
 
-impl<'a> From<&'a mut Value> for List<'a> {
-    fn from(v: &'a mut Value) -> List {
+/// OCaml list type
+pub struct List(Value);
+
+impl From<List> for Value {
+    fn from(t: List) -> Value {
+        t.0
+    }
+}
+
+impl From<Value> for List {
+    fn from(v: Value) -> List {
         List(v)
     }
 }
 
-impl<'a> List<'a> {
+impl<'a, V: crate::ToValue> From<&'a [V]> for List {
+    fn from(a: &'a [V]) -> List {
+        crate::list!(_ a.iter().map(|x| x.to_value()))
+    }
+}
+
+impl List {
     /// Create a new OCaml list
-    pub fn new(local: &mut Value) -> List {
-        List(local)
+    pub fn new() -> List {
+        let x = caml_body!(|x| { x });
+        return List(x);
     }
 
     /// List length
@@ -174,11 +219,13 @@ impl<'a> List<'a> {
     }
 
     /// Add an element to the front of the list
-    pub fn push_hd(&mut self, local: &mut Value, v: Value) {
-        local.0 = Value::alloc(2, Tag::Zero).0;
-        local.store_field(0, v);
-        local.store_field(1, self.0.clone());
-        (self.0).0 = local.0
+    pub fn push_hd(&mut self, v: Value) {
+        self.0 = caml_body!(|x| {
+            x = Value::alloc(1, Tag::Zero);
+            x.store_field(0, v);
+            x.store_field(1, self.0.clone());
+            x
+        })
     }
 
     /// List head
@@ -209,10 +256,13 @@ impl<'a> From<&'a str> for Str {
     fn from(s: &'a str) -> Str {
         unsafe {
             let len = s.len();
-            let x = alloc::caml_alloc_string(len);
-            let ptr = string_val!(x) as *mut u8;
+            let x = caml_body!(|x| {
+                x.0 = alloc::caml_alloc_string(len);
+                x
+            });
+            let ptr = string_val!(x.0) as *mut u8;
             ptr::copy(s.as_ptr(), ptr, len);
-            Str(Value::new(x))
+            Str(x)
         }
     }
 }
@@ -333,28 +383,34 @@ impl<T: BigarrayKind> From<Value> for Array1<T> {
 
 impl<T: BigarrayKind> Array1<T> {
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
-        unsafe {
-            let s = bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::EXTERNAL as i32,
-                1,
-                data.as_mut_ptr() as bigarray::Data,
-                data.len() as i32,
-            );
-            Array1(Value::new(s), PhantomData)
-        }
+        let x = caml_body!(|x| {
+            unsafe {
+                x.0 = bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    1,
+                    data.as_mut_ptr() as bigarray::Data,
+                    data.len() as i32,
+                );
+                x
+            }
+        });
+        Array1(x, PhantomData)
     }
 
     pub fn create(n: Size) -> Array1<T> {
-        unsafe {
-            let data = bigarray::malloc(n * mem::size_of::<T>());
-            let s = bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::MANAGED as i32,
-                1,
-                data,
-                n as mlvalues::Intnat,
-            );
-            Array1(Value::new(s), PhantomData)
-        }
+        let x = caml_body!(|x| {
+            unsafe {
+                let data = bigarray::malloc(n * mem::size_of::<T>());
+                x.0 = bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::MANAGED as i32,
+                    1,
+                    data,
+                    n as mlvalues::Intnat,
+                );
+                x
+            }
+        });
+        Array1(x, PhantomData)
     }
 
     pub fn len(&self) -> Size {

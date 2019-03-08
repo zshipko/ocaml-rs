@@ -8,10 +8,12 @@
 //! The following in Rust:
 //!
 //! ```norun
-//! caml!(ml_add_10, |arg|, <result>, {
+//! caml!(ml_add_10(arg) {
+//!     caml_local!(x);
 //!     let n = arg.i32_val();
-//!     result = Value::i32(n + 10)
-//! } -> result);
+//!     x = Value::i32(n + 10);
+//!     return x;
+//! });
 //! ```
 //!
 //! is equivalent to:
@@ -28,8 +30,36 @@
 //!
 //! using the traditional C bindings.
 //!
-//! For a more complete example see:
-//! [https://github.com/zshipko/ocaml-vec](https://github.com/zshipko/ocaml-vec)
+//! Here are a few more examples...
+//!
+//! ```norun
+//! caml!(build_tuple(i) {
+//!     let i = i.val_i32();
+//!     Tuple::from(&[i + 1, i + 2, i + 3])
+//! });
+//! ```
+//! ```norun
+//! caml!(average(arr) {
+//!     let arr = Array::new(arr);
+//!     let len = arr.len();
+//!     let sum = 0f64;
+//!
+//!     for i in 0..len {
+//!         sum += arr.get_double_unchecked(i);
+//!     }
+//!
+//!      return Value::f64(sum / len as f64);
+//! })
+//! ```
+//!
+//! In OCaml the stubs for these functions looks like this:
+//!
+//! ```ocaml
+//! external build_tuple: int -> int * int * int = "build_tuple"
+//! external average: float array -> float = "average"
+//! ```
+//!
+//! For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 #[macro_use]
 mod macros;

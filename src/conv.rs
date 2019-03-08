@@ -64,8 +64,8 @@ impl<V: ToValue> ToValue for Vec<V> {
 }
 
 impl<V: FromValue> FromValue for Vec<V> {
-    fn from_value(mut v: Value) -> Vec<V> {
-        let arr = Array::from(&mut v);
+    fn from_value(v: Value) -> Vec<V> {
+        let arr = Array::from(v);
         let mut dst = Vec::with_capacity(arr.len());
         for i in 0..arr.len() {
             dst.push(V::from_value(arr.get(i).unwrap()))

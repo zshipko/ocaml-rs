@@ -1,6 +1,6 @@
 test:
 	@cargo test
-	@cd example && dune exec bin/main.exe
+	@cd example && dune clean && dune exec bin/main.exe
 
 clean:
 	cargo clean

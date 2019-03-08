@@ -20,6 +20,12 @@ impl From<Value> for core::mlvalues::Value {
     }
 }
 
+impl From<core::mlvalues::Value> for Value {
+    fn from(v: core::mlvalues::Value) -> Value {
+        Value::new(v)
+    }
+}
+
 pub trait ToValue {
     fn to_value(&self) -> Value;
 }
@@ -48,34 +54,38 @@ pub const UNIT: Value = Value(core::mlvalues::UNIT);
 impl Value {
     /// Allocate a new value with the given size and tag
     pub fn alloc(n: usize, tag: Tag) -> Value {
-        let x = unsafe { core::alloc::caml_alloc(n, tag.into()) };
-
-        Value::new(x)
+        caml_body!(|x| {
+            x.0 = unsafe { core::alloc::caml_alloc(n, tag.into()) };
+            x
+        })
     }
 
     /// Allocate a new tuple value
     pub fn alloc_tuple(n: usize) -> Value {
-        let x = unsafe { core::alloc::caml_alloc_tuple(n) };
-        Value::new(x)
+        caml_body!(|x| {
+            x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
+            x
+        })
     }
 
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
-        let x = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
-
-        Value::new(x)
+        caml_body!(|x| {
+            x.0 = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
+            x
+        })
     }
 
     /// Allocate a new value with a custom finalizer
     pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-        let x = unsafe {
-            let v = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
-            let ptr = Value::new(v).custom_ptr_val_mut::<T>();
-            ptr::write(ptr, value);
-            v
-        };
-
-        Value::new(x)
+        caml_body!(|x| {
+            unsafe {
+                x.0 = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
+                let ptr = x.custom_ptr_val_mut::<T>();
+                ptr::write(ptr, value);
+                x
+            }
+        })
     }
 
     pub fn set_custom<T>(&mut self, value: T) -> T {
@@ -86,6 +96,10 @@ impl Value {
     /// Create a new Value from an existing OCaml `value`
     pub fn new(v: core::mlvalues::Value) -> Value {
         Value(v)
+    }
+
+    pub fn array_length(&self) -> usize {
+        unsafe { core::mlvalues::caml_array_length(self.0) }
     }
 
     /// See caml_register_global_root
@@ -118,10 +132,10 @@ impl Value {
     }
 
     /// OCaml Some value
-    pub fn some<V: ToValue>(local: &mut Value, v: V) -> Value {
-        local.0 = Self::alloc(1, Tag::Zero).0;
-        local.store_field(0, v.to_value());
-        local.clone()
+    pub fn some<V: ToValue>(v: V) -> Value {
+        let mut x = Self::alloc(1, Tag::Zero);
+        x.store_field(0, v.to_value());
+        x
     }
 
     /// OCaml None value
@@ -135,16 +149,17 @@ impl Value {
     }
 
     /// Create a variant value
-    pub fn variant<V: ToValue>(local: &mut Value, tag: u8, value: Option<V>) -> Value {
+    pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
+        let mut x: Value;
         match value {
             Some(v) => {
-                local.0 = Self::alloc(1, Tag::Tag(tag)).0;
-                local.store_field(0, v.to_value());
+                x = Self::alloc(1, Tag::Tag(tag));
+                x.store_field(0, v.to_value());
             }
-            None => local.0 = Self::alloc(0, Tag::Tag(tag)).0,
+            None => x = Self::alloc(0, Tag::Tag(tag)),
         }
 
-        local.clone()
+        x
     }
 
     /// Create a new opaque pointer Value
@@ -164,17 +179,26 @@ impl Value {
 
     /// Create an OCaml int64 from `i64`
     pub fn int64(i: i64) -> Value {
-        unsafe { Value::new(core::alloc::caml_copy_int64(i)) }
+        caml_body!(|x| {
+            unsafe { x.0 = core::alloc::caml_copy_int64(i) };
+            x
+        })
     }
 
     /// Create an OCaml int32 from `i32`
     pub fn int32(i: i32) -> Value {
-        unsafe { Value::new(core::alloc::caml_copy_int32(i)) }
+        caml_body!(|x| {
+            unsafe { x.0 = core::alloc::caml_copy_int32(i) };
+            x
+        })
     }
 
     /// Create an OCaml native int from `isize`
     pub fn nativeint(i: isize) -> Value {
-        unsafe { Value::new(core::alloc::caml_copy_nativeint(i)) }
+        caml_body!(|x| {
+            unsafe { x.0 = core::alloc::caml_copy_nativeint(i) };
+            x
+        })
     }
 
     /// Create a long Value from `isize`
@@ -189,7 +213,10 @@ impl Value {
 
     /// Create a value from `f64`
     pub fn f64(d: f64) -> Value {
-        unsafe { Value(core::alloc::caml_copy_double(d)) }
+        caml_body!(|x| {
+            unsafe { x.0 = core::alloc::caml_copy_double(d) }
+            x
+        }
     }
 
     /// Check if a Value is an integer or block, returning true if
@@ -454,7 +481,7 @@ impl Value {
         }
         unsafe {
             let wosize = wosize_val!(self.0);
-            let val1 = Value::alloc(wosize, self.tag());
+            let val1 = Self::alloc(wosize, self.tag());
             let ptr0 = self.ptr_val::<core::mlvalues::Value>();
             let ptr1 = val1.mut_ptr_val::<core::mlvalues::Value>();
             if tag_val!(self.0) >= tag::No_scan_tag as u8 {

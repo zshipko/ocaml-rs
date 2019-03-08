@@ -28,10 +28,13 @@ macro_rules! caml_param {
 
     ($($n:expr),*) => {
         let mut caml_roots: $crate::core::memory::CamlRootsBlock = ::std::default::Default::default();
-        caml_roots.next = unsafe { $crate::core::memory::caml_local_roots };
-        unsafe {
-            $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
-        }
+        #[allow(unused_unsafe)]
+        let () = {
+            caml_roots.next = unsafe { $crate::core::memory::caml_local_roots };
+            unsafe {
+                $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
+            }
+        };
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
         $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
     }
@@ -50,7 +53,8 @@ macro_rules! caml_param {
 #[macro_export]
 macro_rules! caml_local {
     ($($local:ident),*) => {
-        $(let mut $local = $crate::value::Value::new($crate::core::mlvalues::UNIT);)*
+        #[allow(unused_mut)]
+        $(let mut $local = $crate::value::Value::new($crate::core::mlvalues::UNIT););*
         $crate::caml_param!($($local.0),*);
     }
 }
@@ -58,57 +62,77 @@ macro_rules! caml_local {
 #[macro_export]
 /// Defines an OCaml FFI body, including any locals, as well as a return if provided; it is up to you to define the parameters.
 macro_rules! caml_body {
+    (|$($local:ident),*| $code:block) => {
+        {
+            #[allow(unused_unsafe)]
+            let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+            caml_local!($($local),*);
+            let res = $code;
+            #[allow(unused_unsafe)]
+            unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+            res
+        }
+    };
 
     (||, <$($local:ident),*>, $code:block) => {
-        let caml_frame = $crate::core::memory::caml_local_roots;
-        crate::caml_local!($($local),*);
-        {
-            $(let mut $param = $crate::value::Value::new($param);
-            {
-                let _ = $param;
-            })*
-            $code;
-        }
-        $crate::core::memory::caml_local_roots = caml_frame;
+        #[allow(unused_unsafe)]
+        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        $crate::caml_local!($($local),*);
+        $code;
+        #[allow(unused_unsafe)]
+        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
     };
 
     (|$($param:ident),*|, @code $code:block) => {
-        let caml_frame = $crate::core::memory::caml_local_roots;
-        $crate::caml_param!($($param),*);
-        {
-            $(let mut $param = $crate::value::Value::new($param);
-            {
-                let _ = $param;
-            })*
-            $code;
-        }
-        $crate::core::memory::caml_local_roots = caml_frame;
+        #[allow(unused_unsafe)]
+        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        $($crate::caml_param!($param); let $param = $crate::Value::new($param););*
+        $code;
+        #[allow(unused_unsafe)]
+        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
     };
 
     (|$($param:ident),*|, <$($local:ident),*>, $code:block) => {
-        let caml_frame = $crate::core::memory::caml_local_roots;
-        $crate::caml_param!($($param),*);
+        #[allow(unused_unsafe)]
+        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        $($crate::caml_param!($param); let $param = $crate::Value::new($param););*
         $crate::caml_local!($($local),*);
-        {
-            $(let mut $param = $crate::value::Value::new($param);
-            {
-                let _ = $param;
-            })*
-            $code;
-        }
-        $crate::core::memory::caml_local_roots = caml_frame;
+        $code
+        #[allow(unused_unsafe)]
+        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
     }
 }
 
 #[macro_export]
 /// Defines an external Rust function for FFI use by an OCaml program, with automatic `CAMLparam`, `CAMLlocal`, and `CAMLreturn` inserted for you.
 macro_rules! caml {
+    ($name:ident($($param:ident),*) $code:block) => {
+        #[allow(unused_mut)]
+        #[no_mangle]
+        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
+            let x: $crate::Value;
+            $crate::caml_body!(|$($param),*|, <>, { x = || -> $crate::Value { $code } () });
+            return $crate::core::mlvalues::Value::from(x);
+        }
+    };
+
+
+    ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block -> $retval:ident) => {
+
+        #[allow(unused_mut)]
+        #[no_mangle]
+        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
+            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
+            return $crate::core::mlvalues::Value::from($retval);
+        }
+    };
+
     ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block -> $retval:ident) => {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
             $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
-            return $crate::core::mlvalues::Value::from($retval)
+            return $crate::core::mlvalues::Value::from($retval);
         }
     };
 
@@ -117,16 +141,16 @@ macro_rules! caml {
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
             $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
-            return;
+            return $crate::core::mlvalues::UNIT;
         }
     };
 
     ($name:ident, |$($param:ident),*|, $code:block) => {
         #[allow(unused_mut)]
         #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) {
+        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
             $crate::caml_body!(|$($param),*|, @code $code);
-            return;
+            return $crate::core::mlvalues::UNIT;
         }
     };
 
@@ -152,13 +176,14 @@ macro_rules! tuple {
             for (n, i) in x.into_iter().enumerate() {
                 t.store_field(n, i.clone());
             }
-            t.clone()
+            $crate::Tuple::from(t)
         }
     };
     ($($x:expr),*) => {
         {
             let x =  &[$($x.to_value(),)*];
-            tuple!(_ x)
+            let x = tuple!(_ x);
+            x
         }
     }
 }
@@ -174,13 +199,14 @@ macro_rules! array {
             for (n, i) in x.into_iter().enumerate() {
                 t.store_field(n, i.clone());
             }
-            t.clone()
+            $crate::Array::from(t)
         }
     };
     ($($x:expr),*) => {
         {
             let x =  &[$($x.to_value(),)*];
-            array!(_ x)
+            let x = array!(_ x);
+            x
         }
     }
 }
@@ -190,22 +216,24 @@ macro_rules! array {
 macro_rules! list {
     (_ $x:expr) => {
         {
+            use $crate::ToValue;
             $crate::caml_local!(tmp, dest);
             let x =  $x;
             dest = $crate::Value::unit();
             for i in x.into_iter().rev() {
                 tmp = $crate::Value::alloc(2, $crate::Tag::Zero);
-                tmp.store_field(0, i.clone());
+                tmp.store_field(0, i.to_value());
                 tmp.store_field(1, dest);
                 dest = tmp;
             }
-            dest.clone()
+            $crate::List::from(dest)
         }
     };
     ($($x:expr),*) => {
         {
             let x =  &[$($x.to_value(),)*];
-            list!(_ x)
+            let x = list!(_ x);
+            x
         }
     }
 }
