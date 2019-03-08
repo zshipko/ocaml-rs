@@ -37,10 +37,9 @@
 //!     let i = i.val_i32();
 //!     Tuple::from(&[i + 1, i + 2, i + 3])
 //! });
-//! ```
-//! ```norun
+//!
 //! caml!(average(arr) {
-//!     let arr = Array::new(arr);
+//!     let arr = Array::from(arr);
 //!     let len = arr.len();
 //!     let sum = 0f64;
 //!
@@ -48,8 +47,8 @@
 //!         sum += arr.get_double_unchecked(i);
 //!     }
 //!
-//!      return Value::f64(sum / len as f64);
-//! })
+//!     Value::f64(sum / len as f64)
+//! });
 //! ```
 //!
 //! In OCaml the stubs for these functions looks like this:
@@ -59,7 +58,8 @@
 //! external average: float array -> float = "average"
 //! ```
 //!
-//! For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
+//! For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example)
+//! or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 #[macro_use]
 mod macros;

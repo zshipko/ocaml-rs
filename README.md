@@ -23,7 +23,7 @@ caml!(build_tuple(i) {
 });
 
 caml!(average(arr) {
-    let arr = Array::new(arr);
+    let arr = Array::from(arr);
     let len = arr.len();
     let sum = 0f64;
 
@@ -31,7 +31,7 @@ caml!(average(arr) {
         sum += arr.get_double_unchecked(i);
     }
 
-    return Value::f64(sum / len as f64);
+    Value::f64(sum / len as f64)
 })
 ```
 
@@ -54,7 +54,7 @@ Instead of:
 
 ```rust
 caml!(function_name, |a, b, c|, <local> {
-  ...
+    ...
 } -> local);
 ```
 
@@ -62,11 +62,16 @@ you can now write:
 
 ```rust
 caml!(function_name(a, b, c) {
-  caml_local!(local);
-  ...
-  return local;
-})
+    caml_local!(local);
+    ...
+    return local;
+});
 ```
 
-However, when using the type wrappers provided by `ocaml-rs` (`Array`, `List`, `Tuple`, `Str`, `Array1`, ...), `caml_local!` is already called internally.
+However, when using the type wrappers provided by `ocaml-rs` (`Array`, `List`, `Tuple`, `Str`, `Array1`, ...), `caml_local!` is already called internally. This means that the following is valid without having to declare a local value for the result:
+
+```rust
+caml!(example(a, b, c){
+    List::from(&[a, b, c])
+});
 ```
