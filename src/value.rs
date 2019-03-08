@@ -133,9 +133,11 @@ impl Value {
 
     /// OCaml Some value
     pub fn some<V: ToValue>(v: V) -> Value {
-        let mut x = Self::alloc(1, Tag::Zero);
-        x.store_field(0, v.to_value());
-        x
+        caml_body!(|x| {
+            x.0 = unsafe { core::alloc::caml_alloc(1, 0) };
+            x.store_field(0, v.to_value());
+            x
+        })
     }
 
     /// OCaml None value
@@ -150,16 +152,16 @@ impl Value {
 
     /// Create a variant value
     pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
-        let mut x: Value;
-        match value {
-            Some(v) => {
-                x = Self::alloc(1, Tag::Tag(tag));
-                x.store_field(0, v.to_value());
+        caml_body!(|x| {
+            match value {
+                Some(v) => {
+                    x.0 = unsafe { core::alloc::caml_alloc(1, tag) };
+                    x.store_field(0, v.to_value());
+                }
+                None => x.0 = unsafe { core::alloc::caml_alloc(0, tag) },
             }
-            None => x = Self::alloc(0, Tag::Tag(tag)),
-        }
-
-        x
+            x
+        })
     }
 
     /// Create a new opaque pointer Value
