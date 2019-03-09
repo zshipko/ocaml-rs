@@ -80,13 +80,13 @@ let _ =
     print_endline "string test";
     assert (string_test "wow" = "testing");
 
-    let l = make_list 150000 in
+    let l = make_list 350000 in
     Printf.printf "make_list: %d\n" (List.length l);
-    (*assert (List.length l = 150000);*)
+    assert (List.length l = 350000);
 
     let l = make_array 100000 in
     Printf.printf "make_array: %d\n" (Array.length l);
-    (*assert (Array.length l = 100000);*)
+    assert (Array.length l = 100000);
 
     print_endline "cleanup";
     Gc.full_major ();

@@ -65,11 +65,11 @@ macro_rules! caml_body {
     (|$($local:ident),*| $code:block) => {
         {
             #[allow(unused_unsafe)]
-            //let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+            let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
             caml_local!($($local),*);
             let res = $code;
             #[allow(unused_unsafe)]
-            //unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+            unsafe { $crate::core::memory::caml_local_roots = caml_frame };
             res
         }
     };

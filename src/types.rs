@@ -178,7 +178,7 @@ impl Array {
 }
 
 /// OCaml list type
-pub struct List(Value, Value);
+pub struct List(Value);
 
 impl From<List> for Value {
     fn from(t: List) -> Value {
@@ -188,8 +188,7 @@ impl From<List> for Value {
 
 impl From<Value> for List {
     fn from(v: Value) -> List {
-        let tmp = caml_body!(|tmp| { tmp });
-        List(v, tmp)
+        List(v)
     }
 }
 
@@ -202,30 +201,32 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for List {
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
-        let (res, tmp) = caml_body!(|res, tmp| { (res, tmp) });
-        return List(res, tmp);
+        List(Value::unit())
     }
 
     /// List length
     pub fn len(&self) -> Size {
         let mut length = 0;
         let mut tmp = self.0.clone();
-
         while tmp.0 != empty_list() {
             tmp = tmp.field(1);
             length += 1;
         }
-
         length
     }
 
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: Value) {
-        self.1 = Value::alloc_small(2, Tag::Zero);
-        self.1.store_field(0, v);
-        self.1.store_field(1, Value::new((self.0).0));
+        let tmp = caml_body!(|x, tmp| {
+            x.0 = (self.0).0;
 
-        std::mem::swap(&mut self.0, &mut self.1);
+            tmp = Value::alloc_small(2, Tag::Zero);
+            tmp.store_field(0, v);
+            tmp.store_field(1, x);
+            tmp
+        });
+
+        self.0 = tmp;
     }
 
     /// List head
