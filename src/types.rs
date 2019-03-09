@@ -41,7 +41,7 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for Tuple {
 impl Tuple {
     /// Create a new tuple
     pub fn new(n: Size) -> Tuple {
-        let x = caml_body!(|x| {
+        let x = caml_frame!(|x| {
             x.0 = unsafe { alloc::caml_alloc_tuple(n) };
             x
         });
@@ -101,7 +101,7 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
 impl Array {
     /// Create a new array of the given size
     pub fn new(n: Size) -> Array {
-        let x = caml_body!(|x| {
+        let x = caml_frame!(|x| {
             x.0 = unsafe { alloc::caml_alloc(n, Tag::Zero.into()) };
             x
         });
@@ -217,7 +217,7 @@ impl List {
 
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: Value) {
-        let tmp = caml_body!(|x, tmp| {
+        let tmp = caml_frame!(|x, tmp| {
             x.0 = (self.0).0;
 
             tmp = Value::alloc_small(2, Tag::Zero);
@@ -257,7 +257,7 @@ impl<'a> From<&'a str> for Str {
     fn from(s: &'a str) -> Str {
         unsafe {
             let len = s.len();
-            let x = caml_body!(|x| {
+            let x = caml_frame!(|x| {
                 x.0 = alloc::caml_alloc_string(len);
                 let ptr = string_val!(x.0) as *mut u8;
                 ptr::copy(s.as_ptr(), ptr, len);
@@ -273,7 +273,7 @@ impl<'a> From<&'a [u8]> for Str {
     fn from(s: &'a [u8]) -> Str {
         unsafe {
             let len = s.len();
-            let x = caml_body!(|x| {
+            let x = caml_frame!(|x| {
                 x.0 = alloc::caml_alloc_string(len);
                 let ptr = string_val!(x.0) as *mut u8;
                 ptr::copy(s.as_ptr(), ptr, len);
@@ -388,7 +388,7 @@ impl<T: BigarrayKind> From<Value> for Array1<T> {
 
 impl<T: BigarrayKind> Array1<T> {
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
-        let x = caml_body!(|x| {
+        let x = caml_frame!(|x| {
             unsafe {
                 x.0 = bigarray::caml_ba_alloc_dims(
                     T::kind() | bigarray::Managed::EXTERNAL as i32,
@@ -403,7 +403,7 @@ impl<T: BigarrayKind> Array1<T> {
     }
 
     pub fn create(n: Size) -> Array1<T> {
-        let x = caml_body!(|x| {
+        let x = caml_frame!(|x| {
             unsafe {
                 let data = bigarray::malloc(n * mem::size_of::<T>());
                 x.0 = bigarray::caml_ba_alloc_dims(

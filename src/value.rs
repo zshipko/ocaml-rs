@@ -75,7 +75,7 @@ impl Value {
 
     /// Allocate a new value with a custom finalizer
     pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             unsafe {
                 x.0 = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
                 let ptr = x.custom_ptr_val_mut::<T>();
@@ -130,7 +130,7 @@ impl Value {
 
     /// OCaml Some value
     pub fn some<V: ToValue>(v: V) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             x.0 = unsafe { core::alloc::caml_alloc(1, 0) };
             x.store_field(0, v.to_value());
             x
@@ -149,7 +149,7 @@ impl Value {
 
     /// Create a variant value
     pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             match value {
                 Some(v) => {
                     x.0 = unsafe { core::alloc::caml_alloc(1, tag) };
@@ -178,7 +178,7 @@ impl Value {
 
     /// Create an OCaml int64 from `i64`
     pub fn int64(i: i64) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_int64(i) };
             x
         })
@@ -186,7 +186,7 @@ impl Value {
 
     /// Create an OCaml int32 from `i32`
     pub fn int32(i: i32) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_int32(i) };
             x
         })
@@ -194,7 +194,7 @@ impl Value {
 
     /// Create an OCaml native int from `isize`
     pub fn nativeint(i: isize) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_nativeint(i) };
             x
         })
@@ -212,7 +212,7 @@ impl Value {
 
     /// Create a value from `f64`
     pub fn f64(d: f64) -> Value {
-        caml_body!(|x| {
+        caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_double(d) }
             x
         }

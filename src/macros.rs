@@ -60,6 +60,22 @@ macro_rules! caml_local {
 }
 
 #[macro_export]
+/// Defines an OCaml frame
+macro_rules! caml_frame {
+    (|$($local:ident),*| $code:block) => {
+        {
+            #[allow(unused_unsafe)]
+            let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+            caml_local!($($local),*);
+            let res = $code;
+            #[allow(unused_unsafe)]
+            unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+            res
+        }
+    };
+}
+
+#[macro_export]
 /// Defines an OCaml FFI body, including any locals, as well as a return if provided; it is up to you to define the parameters.
 macro_rules! caml_body {
     (|$($local:ident),*| $code:block) => {
