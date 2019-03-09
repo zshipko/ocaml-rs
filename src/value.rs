@@ -42,7 +42,13 @@ pub trait FromValue {
 
 impl ToValue for Value {
     fn to_value(&self) -> Value {
-        self.clone()
+        Value::new(self.0)
+    }
+}
+
+impl<'a> ToValue for &'a Value {
+    fn to_value(&self) -> Value {
+        Value::new(self.0)
     }
 }
 
@@ -58,31 +64,36 @@ pub const NONE: Value = Value(val_int!(0));
 pub const UNIT: Value = Value(core::mlvalues::UNIT);
 
 impl Value {
-    /// Allocate a new value with the given size and tag
+    /// Allocate a new value with the given size and tag.
     pub fn alloc(n: usize, tag: Tag) -> Value {
-        Value::new(unsafe { core::alloc::caml_alloc(n, tag.into()) })
+        caml_local!(x);
+        x.0 = unsafe { core::alloc::caml_alloc(n, tag.into()) };
+        return x;
     }
 
     /// Allocate a new tuple value
     pub fn alloc_tuple(n: usize) -> Value {
-        Value::new(unsafe { core::alloc::caml_alloc_tuple(n) })
+        caml_local!(x);
+        x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
+        return x;
     }
 
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
-        Value::new(unsafe { core::alloc::caml_alloc_small(n, tag.into()) })
+        caml_local!(x);
+        x.0 = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
+        return x;
     }
 
     /// Allocate a new value with a custom finalizer
     pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-        caml_frame!(|x| {
-            unsafe {
-                x.0 = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
-                let ptr = x.custom_ptr_val_mut::<T>();
-                ptr::write(ptr, value);
-                x
-            }
-        })
+        caml_local!(x);
+        unsafe {
+            x.0 = core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1);
+            let ptr = x.custom_ptr_val_mut::<T>();
+            ptr::write(ptr, value);
+        }
+        x
     }
 
     pub fn set_custom<T>(&mut self, value: T) -> T {

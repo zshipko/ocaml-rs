@@ -98,6 +98,12 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
     }
 }
 
+impl crate::ToValue for Array {
+    fn to_value(&self) -> Value {
+        self.0.to_value()
+    }
+}
+
 impl Array {
     /// Create a new array of the given size
     pub fn new(n: Size) -> Array {
@@ -198,6 +204,12 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for List {
     }
 }
 
+impl crate::ToValue for List {
+    fn to_value(&self) -> Value {
+        self.0.to_value()
+    }
+}
+
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
@@ -294,6 +306,12 @@ impl From<Value> for Str {
     }
 }
 
+impl crate::ToValue for Str {
+    fn to_value(&self) -> Value {
+        self.0.to_value()
+    }
+}
+
 impl Str {
     /// Create a new string of a given length
     pub fn new(n: Size) -> Str {
@@ -383,6 +401,12 @@ impl<T: BigarrayKind> From<Array1<T>> for Value {
 impl<T: BigarrayKind> From<Value> for Array1<T> {
     fn from(v: Value) -> Array1<T> {
         Array1(v, PhantomData)
+    }
+}
+
+impl<T: BigarrayKind> crate::ToValue for Array1<T> {
+    fn to_value(&self) -> Value {
+        self.0.to_value()
     }
 }
 

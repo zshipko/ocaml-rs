@@ -78,18 +78,6 @@ macro_rules! caml_frame {
 #[macro_export]
 /// Defines an OCaml FFI body, including any locals, as well as a return if provided; it is up to you to define the parameters.
 macro_rules! caml_body {
-    (|$($local:ident),*| $code:block) => {
-        {
-            #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
-            caml_local!($($local),*);
-            let res = $code;
-            #[allow(unused_unsafe)]
-            unsafe { $crate::core::memory::caml_local_roots = caml_frame };
-            res
-        }
-    };
-
     (||, <$($local:ident),*>, $code:block) => {
         #[allow(unused_unsafe)]
         let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
@@ -127,8 +115,10 @@ macro_rules! caml {
         #[no_mangle]
         pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
             let x: $crate::Value;
-            $crate::caml_body!(|$($param),*|, <>, { x = || -> $crate::Value { $code } () });
-            return $crate::core::mlvalues::Value::from(x);
+            $crate::caml_body!(|$($param),*|, <>, {
+                x = (|| -> $crate::Value { $code })();
+            });
+            return x.0;
         }
     };
 
@@ -184,13 +174,11 @@ macro_rules! caml {
 macro_rules! tuple {
     (_ $x:expr) => {
         {
-            $crate::caml_local!(t);
-            let x =  $x;
-            t = $crate::Value::alloc_tuple(x.len());
-            for (n, i) in x.into_iter().enumerate() {
-                t.store_field(n, i.clone());
+            let mut t = $crate::Tuple::new($x.len());
+            for (n, i) in $x.into_iter().enumerate() {
+                let _ = t.set(n, $crate::ToValue::to_value(&i));
             }
-            $crate::Tuple::from(t)
+            t
         }
     };
     ($($x:expr),*) => {
@@ -207,13 +195,11 @@ macro_rules! tuple {
 macro_rules! array {
     (_ $x:expr) => {
         {
-            $crate::caml_local!(t);
-            let x = $x;
-            t = $crate::Value::alloc(x.len(), $crate::Tag::Zero);
-            for (n, i) in x.into_iter().enumerate() {
-                t.store_field(n, i.clone());
+            let mut a = $crate::Array::new($x.len());
+            for (n, i) in $x.into_iter().enumerate() {
+                let _ = a.set(n, $crate::ToValue::to_value(&i));
             }
-            $crate::Array::from(t)
+            a
         }
     };
     ($($x:expr),*) => {
@@ -230,17 +216,11 @@ macro_rules! array {
 macro_rules! list {
     (_ $x:expr) => {
         {
-            use $crate::ToValue;
-            $crate::caml_local!(tmp, dest);
-            let x =  $x;
-            dest = $crate::Value::unit();
-            for i in x.into_iter().rev() {
-                tmp = $crate::Value::alloc(2, $crate::Tag::Zero);
-                tmp.store_field(0, i.to_value());
-                tmp.store_field(1, dest);
-                dest = tmp;
+            let mut l = $crate::List::new();
+            for i in $x.into_iter().rev() {
+                l.push_hd($crate::ToValue::to_value(&i));
             }
-            $crate::List::from(dest)
+            l
         }
     };
     ($($x:expr),*) => {

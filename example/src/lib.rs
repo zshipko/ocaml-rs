@@ -30,30 +30,24 @@ caml!(ml_send_tuple(t) {
 });
 
 caml!(ml_send_int64(x) {
-    caml_local!(dest);
     let _x = x.int64_val();
-
-    dest = Value::int64(_x + 10i64);
-    return dest;
+    return Value::int64(_x + 10i64);
 });
 
-caml!(ml_new_tuple(_unit) {
-    caml_local!(dest);
-    dest = tuple!(0i32, 1i32, 2i32).into();
-    return dest;
+caml!(ml_new_tuple(i) {
+    let i = i.i32_val();
+    return tuple!(i, i * 2, i * 3).into();
 });
 
-caml!(ml_new_array(_unit) {
-    caml_local!(dest);
-    let x: Vec<i32> = (0..5).collect();
-    dest = x.to_value();
-    return dest;
+caml!(ml_new_array(i) {
+    let i = i.i32_val();
+    let x: Vec<i32> = (0..5).map(|x| x * i).collect();
+    return x.to_value();
 });
 
-caml!(ml_new_list(_unit){
-    caml_local!(dest);
-    dest = list!(0i32, 1i32, 2i32, 3i32, 4i32).into();
-    return dest;
+caml!(ml_new_list(i){
+    let i = i.i32_val();
+    return list!(0i32 * i, 1i32 * i, 2i32 * i, 3i32 * i, 4i32 * i).into();
 });
 
 caml!(ml_testing_callback(a, b) {
@@ -70,9 +64,7 @@ caml!(ml_raise_not_found(_unit){
 });
 
 caml!(ml_send_float(f){
-    caml_local!(dest);
-    dest = (f.f64_val() * 2.0).to_value();
-    return dest;
+    return (f.f64_val() * 2.0).to_value();
 });
 
 caml!(ml_send_first_variant(_unit) {

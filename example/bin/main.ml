@@ -32,20 +32,26 @@ let _ =
     Printf.printf "%Ld\n" res;
     assert (res = 25L);
 
-    (* new_tuple *)
-    let (a, b, c) = new_tuple () in
-    Printf.printf "%d %d %d\n" a b c;
-    assert (a = 0 && b = 1 && c = 2);
+    for i = 1 to 10 do
+      (* new_tuple *)
+      let (a, b, c) = new_tuple i in
+      Printf.printf "%d %d %d\n" a b c;
+      assert (a = i && b = 2 * i && c = 3 * i);
+    done;
 
-    (* new_array *)
-    let arr = new_array () in
-    Array.iter (Printf.printf "%d\n") arr;
-    assert (arr = [| 0; 1; 2; 3; 4 |]);
+    for i = 1 to 10 do
+      (* new_array *)
+      let arr = new_array i in
+      Array.iter (Printf.printf "%d\n") arr;
+      assert (arr = [| 0; i; 2 * i; 3 * i; 4 * i |]);
+    done;
 
-    (* new list *)
-    let lst = new_list () in
-    List.iter (Printf.printf "%d\n") lst;
-    assert (lst = [0; 1; 2; 3; 4]);
+    for i = 1 to 10 do
+      (* new list *)
+      let lst = new_list i in
+      List.iter (Printf.printf "%d\n") lst;
+      assert (lst = [0; i; 2 * i; 3 * i; 4 * i]);
+    done;
 
     (* testing_callback *)
     testing_callback 5 10;
@@ -80,13 +86,17 @@ let _ =
     print_endline "string test";
     assert (string_test "wow" = "testing");
 
-    let l = make_list 350000 in
+    let l = make_list 250000 in
     Printf.printf "make_list: %d\n" (List.length l);
-    assert (List.length l = 350000);
+    assert (List.length l = 250000);
 
-    let l = make_array 100000 in
-    Printf.printf "make_array: %d\n" (Array.length l);
-    assert (Array.length l = 100000);
+    for _ = 1 to 3 do
+      let l = make_array 100000 in
+      Printf.printf "make_array: %d\n" (Array.length l);
+      assert (Array.length l = 100000);
+      Gc.full_major ();
+      Gc.minor()
+    done;
 
     print_endline "cleanup";
     Gc.full_major ();
