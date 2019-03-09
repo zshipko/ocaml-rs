@@ -178,7 +178,7 @@ impl Array {
 }
 
 /// OCaml list type
-pub struct List(Value);
+pub struct List(Value, Value);
 
 impl From<List> for Value {
     fn from(t: List) -> Value {
@@ -188,7 +188,8 @@ impl From<List> for Value {
 
 impl From<Value> for List {
     fn from(v: Value) -> List {
-        List(v)
+        let tmp = caml_body!(|tmp| { tmp });
+        List(v, tmp)
     }
 }
 
@@ -201,8 +202,8 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for List {
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
-        let x = caml_body!(|x| { x });
-        return List(x);
+        let (res, tmp) = caml_body!(|res, tmp| { (res, tmp) });
+        return List(res, tmp);
     }
 
     /// List length
@@ -220,12 +221,11 @@ impl List {
 
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: Value) {
-        self.0 = caml_body!(|x| {
-            x = Value::alloc(1, Tag::Zero);
-            x.store_field(0, v);
-            x.store_field(1, self.0.clone());
-            x
-        })
+        self.1 = Value::alloc_small(2, Tag::Zero);
+        self.1.store_field(0, v);
+        self.1.store_field(1, Value::new((self.0).0));
+
+        std::mem::swap(&mut self.0, &mut self.1);
     }
 
     /// List head
@@ -258,10 +258,11 @@ impl<'a> From<&'a str> for Str {
             let len = s.len();
             let x = caml_body!(|x| {
                 x.0 = alloc::caml_alloc_string(len);
+                let ptr = string_val!(x.0) as *mut u8;
+                ptr::copy(s.as_ptr(), ptr, len);
                 x
             });
-            let ptr = string_val!(x.0) as *mut u8;
-            ptr::copy(s.as_ptr(), ptr, len);
+
             Str(x)
         }
     }
@@ -271,10 +272,13 @@ impl<'a> From<&'a [u8]> for Str {
     fn from(s: &'a [u8]) -> Str {
         unsafe {
             let len = s.len();
-            let x = alloc::caml_alloc_string(len);
-            let ptr = string_val!(x) as *mut u8;
-            ptr::copy(s.as_ptr(), ptr, len);
-            Str(Value::new(x))
+            let x = caml_body!(|x| {
+                x.0 = alloc::caml_alloc_string(len);
+                let ptr = string_val!(x.0) as *mut u8;
+                ptr::copy(s.as_ptr(), ptr, len);
+                x
+            });
+            Str(x)
         }
     }
 }

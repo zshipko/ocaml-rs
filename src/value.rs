@@ -10,9 +10,15 @@ use std::{mem, ptr};
 pub type Size = core::mlvalues::Size;
 
 /// Value wraps the native OCaml `value` type
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[repr(transparent)]
 pub struct Value(pub core::mlvalues::Value);
+
+impl Clone for Value {
+    fn clone(&self) -> Value {
+        Value::new(self.0)
+    }
+}
 
 impl From<Value> for core::mlvalues::Value {
     fn from(v: Value) -> core::mlvalues::Value {
@@ -54,26 +60,17 @@ pub const UNIT: Value = Value(core::mlvalues::UNIT);
 impl Value {
     /// Allocate a new value with the given size and tag
     pub fn alloc(n: usize, tag: Tag) -> Value {
-        caml_body!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc(n, tag.into()) };
-            x
-        })
+        Value::new(unsafe { core::alloc::caml_alloc(n, tag.into()) })
     }
 
     /// Allocate a new tuple value
     pub fn alloc_tuple(n: usize) -> Value {
-        caml_body!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
-            x
-        })
+        Value::new(unsafe { core::alloc::caml_alloc_tuple(n) })
     }
 
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
-        caml_body!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
-            x
-        })
+        Value::new(unsafe { core::alloc::caml_alloc_small(n, tag.into()) })
     }
 
     /// Allocate a new value with a custom finalizer
