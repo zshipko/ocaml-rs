@@ -30,11 +30,16 @@ impl From<Value> for Tuple {
 
 impl<'a, V: crate::ToValue> From<&'a [V]> for Tuple {
     fn from(a: &'a [V]) -> Tuple {
-        let mut t = Tuple::new(a.len());
-        for (n, i) in a.iter().enumerate() {
-            let _ = t.set(n, i.to_value());
-        }
-        t
+        Tuple(
+            caml_frame!(|t| {
+                t.0 = unsafe { alloc::caml_alloc_tuple(a.len()) };
+                for (n, i) in a.iter().enumerate() {
+                    let _ = t.store_field(n, i.to_value());
+                }
+                t
+            }),
+            a.len(),
+        )
     }
 }
 
@@ -45,6 +50,7 @@ impl Tuple {
             x.0 = unsafe { alloc::caml_alloc_tuple(n) };
             x
         });
+
         Tuple(x, n)
     }
 
@@ -90,11 +96,13 @@ impl From<Value> for Array {
 
 impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
     fn from(a: &'a [V]) -> Array {
-        let mut t = Array::new(a.len());
-        for (n, i) in a.iter().enumerate() {
-            let _ = t.set(n, i.to_value());
-        }
-        t
+        Array(caml_frame!(|x| {
+            x.0 = unsafe { alloc::caml_alloc(a.len(), Tag::Zero.into()) };
+            for (n, i) in a.iter().enumerate() {
+                let _ = x.store_field(n, i.to_value());
+            }
+            x
+        }))
     }
 }
 
