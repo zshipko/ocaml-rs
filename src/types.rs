@@ -323,10 +323,12 @@ impl crate::ToValue for Str {
 impl Str {
     /// Create a new string of a given length
     pub fn new(n: Size) -> Str {
-        unsafe {
-            let s = alloc::caml_alloc_string(n);
-            Str(Value::new(s))
-        }
+        Str(caml_frame!(|s| {
+            unsafe {
+                s.0 = alloc::caml_alloc_string(n);
+                s
+            }
+        }))
     }
 
     /// String length
