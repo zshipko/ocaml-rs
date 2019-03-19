@@ -112,12 +112,12 @@ impl Value {
 
     /// See caml_register_global_root
     pub fn register_global_root(&self) {
-        unsafe { core::memory::caml_register_global_root(&self.value()) }
+        unsafe { core::memory::caml_register_global_root(&self.0) }
     }
 
     /// Set caml_remove_global_root
     pub fn remove_global_root(&self) {
-        unsafe { core::memory::caml_remove_global_root(&self.value()) }
+        unsafe { core::memory::caml_remove_global_root(&self.0) }
     }
 
     /// Get the underlying OCaml `value`
@@ -226,7 +226,7 @@ impl Value {
         caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_double(d) }
             x
-        }
+        })
     }
 
     /// Check if a Value is an integer or block, returning true if
