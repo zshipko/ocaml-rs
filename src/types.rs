@@ -221,7 +221,7 @@ impl crate::ToValue for List {
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
-        List(Value::unit())
+        List(caml_frame!(|x| x));
     }
 
     /// List length
@@ -323,11 +323,9 @@ impl crate::ToValue for Str {
 impl Str {
     /// Create a new string of a given length
     pub fn new(n: Size) -> Str {
-        Str(caml_frame!(|s| {
-            unsafe {
-                s.0 = alloc::caml_alloc_string(n);
-                s
-            }
+        Str(caml_frame!(|s| unsafe {
+            s.0 = alloc::caml_alloc_string(n);
+            s
         }))
     }
 
@@ -422,32 +420,28 @@ impl<T: BigarrayKind> crate::ToValue for Array1<T> {
 
 impl<T: BigarrayKind> Array1<T> {
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
-        let x = caml_frame!(|x| {
-            unsafe {
-                x.0 = bigarray::caml_ba_alloc_dims(
-                    T::kind() | bigarray::Managed::EXTERNAL as i32,
-                    1,
-                    data.as_mut_ptr() as bigarray::Data,
-                    data.len() as i32,
-                );
-                x
-            }
+        let x = caml_frame!(|x| unsafe {
+            x.0 = bigarray::caml_ba_alloc_dims(
+                T::kind() | bigarray::Managed::EXTERNAL as i32,
+                1,
+                data.as_mut_ptr() as bigarray::Data,
+                data.len() as i32,
+            );
+            x
         });
         Array1(x, PhantomData)
     }
 
     pub fn create(n: Size) -> Array1<T> {
-        let x = caml_frame!(|x| {
-            unsafe {
-                let data = bigarray::malloc(n * mem::size_of::<T>());
-                x.0 = bigarray::caml_ba_alloc_dims(
-                    T::kind() | bigarray::Managed::MANAGED as i32,
-                    1,
-                    data,
-                    n as mlvalues::Intnat,
-                );
-                x
-            }
+        let x = caml_frame!(|x| unsafe {
+            let data = bigarray::malloc(n * mem::size_of::<T>());
+            x.0 = bigarray::caml_ba_alloc_dims(
+                T::kind() | bigarray::Managed::MANAGED as i32,
+                1,
+                data,
+                n as mlvalues::Intnat,
+            );
+            x
         });
         Array1(x, PhantomData)
     }
