@@ -111,3 +111,7 @@ caml!(ml_make_array(length) {
     }
     arr.into()
 });
+
+caml!(ml_call(f, a) {
+    f.call(a).unwrap()
+});

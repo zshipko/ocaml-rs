@@ -22,3 +22,4 @@ external array1 : int -> (int, int8_unsigned_elt, c_layout) Array1.t = "ml_array
 external string_test : string -> string = "ml_string_test"
 external make_list: int -> int list = "ml_make_list"
 external make_array: int -> int array = "ml_make_array"
+external call: ('a -> 'b) -> 'a -> 'b = "ml_call"

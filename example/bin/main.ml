@@ -98,6 +98,8 @@ let _ =
       Gc.minor()
     done;
 
+    assert (call int_of_string "123" = 123);
+
     print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()
