@@ -386,10 +386,14 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = self.call(arg)?;
+        let mut v = caml_frame!(|res| {
+            res.0 = unsafe { core::callback::caml_callback_exn(self.0, arg.to_value().0) };
+            res
+        });
 
         if is_exception_result!(v.0) {
-            Err(Error::Exception(Value::new(extract_exception!(v.0))))
+            v.0 = extract_exception!(v.0);
+            Err(Error::Exception(v))
         } else {
             Ok(v)
         }
@@ -401,10 +405,16 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = self.call2(arg1, arg2)?;
+        let mut v = caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callback2_exn(self.0, arg1.to_value().0, arg2.to_value().0)
+            };
+            res
+        });
 
         if is_exception_result!(v.0) {
-            Err(Error::Exception(Value::new(extract_exception!(v.0))))
+            v.0 = extract_exception!(v.0);
+            Err(Error::Exception(v))
         } else {
             Ok(v)
         }
@@ -421,10 +431,21 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = self.call3(arg1, arg2, arg3)?;
+        let mut v = caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callback3_exn(
+                    self.0,
+                    arg1.to_value().0,
+                    arg2.to_value().0,
+                    arg3.to_value().0,
+                )
+            };
+            res
+        });
 
         if is_exception_result!(v.0) {
-            Err(Error::Exception(Value::new(extract_exception!(v.0))))
+            v.0 = extract_exception!(v.0);
+            Err(Error::Exception(v))
         } else {
             Ok(v)
         }
@@ -436,10 +457,23 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = self.call_n(args)?;
+        let n = args.as_ref().len();
+        let x: Vec<core::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
+
+        let mut v = caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callbackN_exn(
+                    self.0,
+                    n,
+                    x.as_ptr() as *mut core::mlvalues::Value,
+                )
+            };
+            res
+        });
 
         if is_exception_result!(v.0) {
-            Err(Error::Exception(Value::new(extract_exception!(v.0))))
+            v.0 = extract_exception!(v.0);
+            Err(Error::Exception(v))
         } else {
             Ok(v)
         }

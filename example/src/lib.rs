@@ -113,5 +113,5 @@ caml!(ml_make_array(length) {
 });
 
 caml!(ml_call(f, a) {
-    f.call(a).unwrap()
+    f.call_exn(a).unwrap()
 });
