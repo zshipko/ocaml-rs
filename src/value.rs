@@ -90,14 +90,12 @@ impl Value {
 
     /// Allocate a new value with a custom finalizer
     pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-        let x = caml_frame!(|x| {
+        caml_frame!(|x| {
             x.0 = unsafe { core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1) };
+            let ptr = x.custom_ptr_val_mut::<T>();
+            unsafe { ptr::write(ptr, value) };
             x
-        });
-
-        let ptr = x.custom_ptr_val_mut::<T>();
-        unsafe { ptr::write(ptr, value) };
-        x
+        })
     }
 
     pub fn set_custom<T>(&mut self, value: T) -> T {
