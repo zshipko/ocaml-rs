@@ -319,12 +319,10 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        unsafe {
-            Ok(Value::new(core::callback::caml_callback(
-                self.0,
-                arg.to_value().0,
-            )))
-        }
+        caml_frame!(|res| {
+            res.0 = unsafe { core::callback::caml_callback(self.0, arg.to_value().0) };
+            Ok(res)
+        })
     }
 
     /// Call a closure with two arguments
@@ -333,13 +331,12 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        unsafe {
-            Ok(Value::new(core::callback::caml_callback2(
-                self.0,
-                arg1.to_value().0,
-                arg2.to_value().0,
-            )))
-        }
+        caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callback2(self.0, arg1.to_value().0, arg2.to_value().0)
+            };
+            Ok(res)
+        })
     }
 
     /// Call a closure with three arguments
@@ -353,14 +350,17 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        unsafe {
-            Ok(Value::new(core::callback::caml_callback3(
-                self.0,
-                arg1.to_value().0,
-                arg2.to_value().0,
-                arg3.to_value().0,
-            )))
-        }
+        caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callback3(
+                    self.0,
+                    arg1.to_value().0,
+                    arg2.to_value().0,
+                    arg3.to_value().0,
+                )
+            };
+            Ok(res)
+        })
     }
 
     /// Call a closure with `n` arguments
@@ -371,13 +371,13 @@ impl Value {
 
         let n = args.as_ref().len();
         let x: Vec<core::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
-        unsafe {
-            Ok(Value::new(core::callback::caml_callbackN(
-                self.0,
-                n,
-                x.as_ptr() as *mut core::mlvalues::Value,
-            )))
-        }
+
+        caml_frame!(|res| {
+            res.0 = unsafe {
+                core::callback::caml_callbackN(self.0, n, x.as_ptr() as *mut core::mlvalues::Value)
+            };
+            Ok(res)
+        })
     }
 
     /// Call a closure with a single argument, returning an exception value
@@ -386,12 +386,12 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = unsafe { core::callback::caml_callback_exn(self.0, arg.to_value().0) };
+        let v = self.call(arg)?;
 
-        if is_exception_result!(v) {
-            Err(Error::Exception(Value::new(extract_exception!(v))))
+        if is_exception_result!(v.0) {
+            Err(Error::Exception(Value::new(extract_exception!(v.0))))
         } else {
-            Ok(Value::new(v))
+            Ok(v)
         }
     }
 
@@ -401,13 +401,12 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v =
-            unsafe { core::callback::caml_callback2(self.0, arg1.to_value().0, arg2.to_value().0) };
+        let v = self.call2(arg1, arg2)?;
 
-        if is_exception_result!(v) {
-            Err(Error::Exception(Value::new(extract_exception!(v))))
+        if is_exception_result!(v.0) {
+            Err(Error::Exception(Value::new(extract_exception!(v.0))))
         } else {
-            Ok(Value::new(v))
+            Ok(v)
         }
     }
 
@@ -422,19 +421,12 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let v = unsafe {
-            core::callback::caml_callback3(
-                self.0,
-                arg1.to_value().0,
-                arg2.to_value().0,
-                arg3.to_value().0,
-            )
-        };
+        let v = self.call3(arg1, arg2, arg3)?;
 
-        if is_exception_result!(v) {
-            Err(Error::Exception(Value::new(extract_exception!(v))))
+        if is_exception_result!(v.0) {
+            Err(Error::Exception(Value::new(extract_exception!(v.0))))
         } else {
-            Ok(Value::new(v))
+            Ok(v)
         }
     }
 
@@ -444,16 +436,12 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let n = args.as_ref().len();
-        let x: Vec<core::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
-        let v = unsafe {
-            core::callback::caml_callbackN(self.0, n, x.as_ptr() as *mut core::mlvalues::Value)
-        };
+        let v = self.call_n(args)?;
 
-        if is_exception_result!(v) {
-            Err(Error::Exception(Value::new(extract_exception!(v))))
+        if is_exception_result!(v.0) {
+            Err(Error::Exception(Value::new(extract_exception!(v.0))))
         } else {
-            Ok(Value::new(v))
+            Ok(v)
         }
     }
 
