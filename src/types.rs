@@ -260,6 +260,18 @@ impl List {
     pub fn tl(&self) -> Value {
         self.0.field(1)
     }
+
+    /// List as vector
+    pub fn to_vec(&self) -> Vec<Value> {
+        let mut vec: Vec<Value> = Vec::new();
+        let mut tmp = self.0.clone();
+        while tmp.0 != empty_list() {
+            let val = tmp.field(0);
+            vec.push(val);
+            tmp = tmp.field(1);
+        }
+        vec
+    }
 }
 
 /// OCaml String type
