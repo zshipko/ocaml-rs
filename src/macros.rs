@@ -90,7 +90,7 @@ macro_rules! caml_body {
     (|$($param:ident),*|, @code $code:block) => {
         #[allow(unused_unsafe)]
         let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
-        $($crate::caml_param!($param); let $param = $crate::Value::new($param););*
+        $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
         $code;
         #[allow(unused_unsafe)]
         unsafe { $crate::core::memory::caml_local_roots = caml_frame };
@@ -99,7 +99,7 @@ macro_rules! caml_body {
     (|$($param:ident),*|, <$($local:ident),*>, $code:block) => {
         #[allow(unused_unsafe)]
         let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
-        $($crate::caml_param!($param); let $param = $crate::Value::new($param););*
+        $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
         $crate::caml_local!($($local),*);
         $code
         #[allow(unused_unsafe)]
