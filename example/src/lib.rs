@@ -97,9 +97,34 @@ caml!(ml_string_test(s){
 caml!(ml_make_list(length) {
     let length = length.i32_val();
     let mut list = ocaml::List::new();
+    let mut sum_list = 0;
     for v in 0..length {
+        sum_list += v;
         list.push_hd(Value::i32(v));
     }
+
+    // list to vec
+    let vec: Vec<Value> = list.to_vec();
+    println!("vec.len: {:?}", vec.len());
+    assert_eq!(list.len(), vec.len());
+    let mut sum_vec = 0;
+    for i in 0..vec.len() {
+        let v = vec[i].i32_val();
+        sum_vec += v;
+    }
+
+    // check heads
+    let list_hd = list.hd().unwrap().i32_val();
+    let vec_hd = vec[0].i32_val();
+    println!("list_hd: {:?} vs. vec_hd: {:?}", list_hd, vec_hd);
+    assert_eq!(list_hd, vec_hd);
+
+    // check sums
+    println!("sum_list: {:?} vs. sum_vec: {:?}", sum_list, sum_vec);
+    assert_ne!(0, sum_list);
+    assert_ne!(0, sum_vec);
+    assert_eq!(sum_list, sum_vec);
+
     return list.into();
 });
 
