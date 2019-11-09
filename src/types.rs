@@ -428,6 +428,17 @@ impl<T: BigarrayKind> crate::ToValue for Array1<T> {
     }
 }
 
+impl<T: Copy + BigarrayKind> From<&[T]> for Array1<T> {
+    fn from(x: &[T]) -> Array1<T> {
+        let mut arr = Array1::<T>::create(x.len());
+        let data = arr.data_mut();
+        for (n, i) in x.iter().enumerate() {
+            data[n] = *i;
+        }
+        arr
+    }
+}
+
 impl<T: BigarrayKind> Array1<T> {
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
         let x = caml_frame!(|x| {
