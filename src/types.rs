@@ -428,7 +428,22 @@ impl<T: BigarrayKind> crate::ToValue for Array1<T> {
     }
 }
 
+impl<T: Copy + BigarrayKind> From<&[T]> for Array1<T> {
+    fn from(x: &[T]) -> Array1<T> {
+        let mut arr = Array1::<T>::create(x.len());
+        let data = arr.data_mut();
+        for (n, i) in x.iter().enumerate() {
+            data[n] = *i;
+        }
+        arr
+    }
+}
+
 impl<T: BigarrayKind> Array1<T> {
+    /// Array1::of_slice is used to convert from a slice to OCaml Bigarray,
+    /// the `data` parameter must outlive the resulting bigarray or there is
+    /// no guarantee the data will be valid. Use `Array1::from` to clone the
+    /// contents of a slice.
     pub fn of_slice(data: &mut [T]) -> Array1<T> {
         let x = caml_frame!(|x| {
             x.0 = unsafe {

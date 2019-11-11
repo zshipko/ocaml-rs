@@ -87,6 +87,13 @@ caml!(ml_array1(len) {
     return ba.into();
 });
 
+caml!(ml_array2(s) {
+    let mut a: ocaml::Str = s.into();
+    let b = a.data_mut();
+    let ba = ocaml::Array1::<u8>::of_slice(b); // Note: `b` is still owned by OCaml since it was passed as a parameter
+    return ba.into();
+});
+
 caml!(ml_string_test(s){
     let st = ocaml::Str::from(s.clone());
     println!("{:?}", s.tag());

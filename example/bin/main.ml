@@ -83,6 +83,13 @@ let _ =
       assert (ba.{i} = i mod 256)
     done;
 
+    print_endline "bigarray Array1::of_slice";
+    let s = "testing" in
+    let ba = array2 s in
+    for i = 0 to Bigarray.Array1.dim ba - 1 do
+      assert (ba.{i} = String.get s i)
+    done;
+
     print_endline "string test";
     assert (string_test "wow" = "testing");
 
