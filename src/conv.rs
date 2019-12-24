@@ -42,6 +42,18 @@ macro_rules! value_f {
 value_i!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize);
 value_f!(f32, f64);
 
+impl ToValue for bool {
+    fn to_value(&self) -> Value {
+        Value::i64(*self as i64)
+    }
+}
+
+impl FromValue for bool {
+    fn from_value(v: Value) -> bool {
+        v.i64_val() != 0
+    }
+}
+
 impl ToValue for String {
     fn to_value(&self) -> Value {
         let s = Str::from(self.as_str());
