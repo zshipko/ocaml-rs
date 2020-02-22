@@ -1,13 +1,13 @@
 #[macro_export]
 macro_rules! caml_ffi {
     ($code:tt) => {
-        let mut caml_frame = $crate::core::memory::caml_local_roots.clone();
+        let mut caml_frame = $crate::core::state::local_roots();
         $code;
         return;
     };
 
     ($code:tt => $result:expr) => {
-        let mut caml_frame = $crate::core::memory::caml_local_roots;
+        let mut caml_frame = $crate::core::state::local_roots();
         $code;
         return $crate::core::mlvalues::Value::from($result);
     };
@@ -29,10 +29,10 @@ macro_rules! caml_param {
     ($($n:expr),*) => {
         let mut caml_roots: $crate::core::memory::CamlRootsBlock = ::std::default::Default::default();
         #[allow(unused_unsafe)]
-        let () = {
-            caml_roots.next = unsafe { $crate::core::memory::caml_local_roots };
+        {
+            caml_roots.next = unsafe { $crate::core::state::local_roots() };
             unsafe {
-                $crate::core::memory::caml_local_roots = (&mut caml_roots) as *mut $crate::core::memory::CamlRootsBlock;
+                $crate::core::state::set_local_roots(&mut caml_roots);
             }
         };
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
@@ -65,11 +65,11 @@ macro_rules! caml_frame {
     (|$($local:ident),*| $code:block) => {
         {
             #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+            let caml_frame = unsafe { $crate::core::state::local_roots() };
             caml_local!($($local),*);
             let res = $code;
             #[allow(unused_unsafe)]
-            unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+            unsafe { $crate::core::state::set_local_roots(caml_frame) };
             res
         }
     };
@@ -80,30 +80,30 @@ macro_rules! caml_frame {
 macro_rules! caml_body {
     (||, <$($local:ident),*>, $code:block) => {
         #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        let caml_frame = unsafe { $crate::core::state::local_roots() };
         $crate::caml_local!($($local),*);
         $code;
         #[allow(unused_unsafe)]
-        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+        unsafe { $crate::core::state::set_local_roots(caml_frame) };
     };
 
     (|$($param:ident),*|, @code $code:block) => {
         #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        let caml_frame = unsafe { $crate::core::state::local_roots() };
         $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
         $code;
         #[allow(unused_unsafe)]
-        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+        unsafe { $crate::core::state::set_local_roots(caml_frame) };
     };
 
     (|$($param:ident),*|, <$($local:ident),*>, $code:block) => {
         #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::memory::caml_local_roots };
+        let caml_frame = unsafe { $crate::core::state::local_roots() };
         $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
         $crate::caml_local!($($local),*);
         $code
         #[allow(unused_unsafe)]
-        unsafe { $crate::core::memory::caml_local_roots = caml_frame };
+        unsafe { $crate::core::state::set_local_roots(caml_frame) };
     }
 }
 

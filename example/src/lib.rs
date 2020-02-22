@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate ocaml;
-use ocaml::core::memory;
+use ocaml::core::state;
 use ocaml::{ToValue, Value};
 
 caml!(ml_send_int(v){
@@ -12,7 +12,7 @@ caml!(ml_send_int(v){
 });
 
 caml!(ml_send_two, |v, v2|, <a>, {
-    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &memory::caml_local_roots, memory::caml_local_roots, v.value());
+    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &state::local_roots(), state::local_roots(), v.value());
     let tag: u8 = v2.tag().into();
     println!("string tag: {}", tag);
     let x = v.i32_val();

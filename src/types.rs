@@ -216,6 +216,12 @@ impl crate::ToValue for List {
     }
 }
 
+impl Default for List {
+    fn default() -> Self {
+        List::new()
+    }
+}
+
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
@@ -231,6 +237,11 @@ impl List {
             length += 1;
         }
         length
+    }
+
+    pub fn is_empty(&self) -> bool {
+        let item: usize = (self.0).0;
+        item == empty_list()
     }
 
     /// Add an element to the front of the list
