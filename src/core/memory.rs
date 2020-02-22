@@ -63,7 +63,6 @@ impl Default for CamlRootsBlock {
 
 /// These receive their implementations when you successfully link against an OCaml binary
 extern "C" {
-    pub static mut caml_local_roots: *mut CamlRootsBlock;
     pub fn caml_modify(addr: *mut Value, value: Value);
     pub fn caml_initialize(addr: *mut Value, value: Value);
 }

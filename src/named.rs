@@ -1,11 +1,16 @@
+use std::ffi::CString;
+
 use crate::core;
 use crate::value::Value;
 
 /// Returns a named value registered by OCaml
 pub fn named_value<S: AsRef<str>>(name: S) -> Option<Value> {
     unsafe {
-        let p = format!("{}\0", name.as_ref());
-        let named = core::callback::caml_named_value(p.as_str().as_ptr());
+        let s = match CString::new(name.as_ref()) {
+            Ok(s) => s,
+            Err(_) => return None,
+        };
+        let named = core::callback::caml_named_value(s.as_ptr() as *const u8);
         if named.is_null() {
             return None;
         }
