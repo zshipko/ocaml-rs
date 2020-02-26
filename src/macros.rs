@@ -54,7 +54,7 @@ macro_rules! caml_param {
 macro_rules! caml_local {
     ($($local:ident),*) => {
         #[allow(unused_mut)]
-        $(let mut $local = $crate::value::Value::new($crate::core::mlvalues::UNIT);)*
+        $(let mut $local = $crate::Value::new($crate::core::mlvalues::UNIT);)*
         $crate::caml_param!($($local.0),*);
     }
 }

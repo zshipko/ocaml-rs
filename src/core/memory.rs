@@ -82,7 +82,7 @@ macro_rules! store_field {
 
 /// Stores the `value` in the `block` at `offset`.
 ///
-/// ## Original C code
+/// # Original C code
 ///
 /// ```c
 /// Store_field(block, offset, val) do{ \
@@ -92,8 +92,12 @@ macro_rules! store_field {
 /// }while(0)
 /// ```
 ///
+/// # Safety
+///
+/// No bounds checking or validation of the OCaml values is done in this function
+///
 pub unsafe fn store_field(block: Value, offset: Size, value: Value) {
-    store_field!(block, offset as isize, value);
+    store_field!(block, offset, value);
 }
 
 extern "C" {

@@ -32,7 +32,7 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for Tuple {
             caml_frame!(|t| {
                 t.0 = unsafe { alloc::caml_alloc_tuple(a.len()) };
                 for (n, i) in a.iter().enumerate() {
-                    let _ = t.store_field(n, i.to_value());
+                    t.store_field(n, i.to_value());
                 }
                 t
             }),
@@ -55,6 +55,10 @@ impl Tuple {
     /// Tuple length
     pub fn len(&self) -> Size {
         self.1
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Set tuple index
@@ -82,7 +86,7 @@ pub struct Array(Value);
 
 impl From<Array> for Value {
     fn from(t: Array) -> Value {
-        t.0.clone()
+        t.0
     }
 }
 
@@ -97,7 +101,7 @@ impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
         Array(caml_frame!(|x| {
             x.0 = unsafe { alloc::caml_alloc(a.len(), Tag::Zero.into()) };
             for (n, i) in a.iter().enumerate() {
-                let _ = x.store_field(n, i.to_value());
+                x.store_field(n, i.to_value());
             }
             x
         }))
@@ -130,6 +134,10 @@ impl Array {
         unsafe { mlvalues::caml_array_length(self.0.value()) }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Set value to double array
     pub fn set_double(&mut self, i: Size, f: f64) -> Result<(), Error> {
         if i < self.len() {
@@ -138,7 +146,7 @@ impl Array {
             }
 
             unsafe {
-                let ptr = self.0.ptr_val::<f64>().offset(i as isize) as *mut f64;
+                let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
                 *ptr = f;
             };
 
@@ -155,14 +163,15 @@ impl Array {
                 return Err(Error::NotDoubleArray);
             }
 
-            Ok(self.get_double_unchecked(i))
+            Ok(unsafe { self.get_double_unchecked(i) })
         } else {
             Err(Error::OutOfBounds)
         }
     }
 
-    pub fn get_double_unchecked(&mut self, i: Size) -> f64 {
-        unsafe { *self.0.ptr_val::<f64>().offset(i as isize) }
+    /// Get a value from a double array without checking if the array is actually a double array
+    unsafe fn get_double_unchecked(&mut self, i: Size) -> f64 {
+        *self.0.ptr_val::<f64>().add(i)
     }
 
     /// Set array index
@@ -184,6 +193,7 @@ impl Array {
         }
     }
 
+    /// Get array index without bounds checking
     pub fn get_unchecked(&self, i: Size) -> Result<Value, Error> {
         Ok(self.0.field(i))
     }
@@ -228,7 +238,7 @@ impl List {
         List(caml_frame!(|x| { x }))
     }
 
-    /// List length
+    /// Returns the number of items in `self`
     pub fn len(&self) -> Size {
         let mut length = 0;
         let mut tmp = self.0.clone();
@@ -239,6 +249,7 @@ impl List {
         length
     }
 
+    /// Returns true when the list is empty
     pub fn is_empty(&self) -> bool {
         let item: usize = (self.0).0;
         item == empty_list()
@@ -260,7 +271,7 @@ impl List {
 
     /// List head
     pub fn hd(&self) -> Option<Value> {
-        if self.len() == 0 {
+        if self.is_empty() {
             return None;
         }
 
@@ -470,6 +481,7 @@ impl<T: BigarrayKind> Array1<T> {
         Array1(x, PhantomData)
     }
 
+    /// Create a new OCaml `Bigarray.Array1` with the given type and size
     pub fn create(n: Size) -> Array1<T> {
         let x = caml_frame!(|x| {
             let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
@@ -486,20 +498,24 @@ impl<T: BigarrayKind> Array1<T> {
         Array1(x, PhantomData)
     }
 
+    /// Returns the number of items in `self`
     pub fn len(&self) -> Size {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
         unsafe { (*ba).dim as usize }
     }
 
+    /// Returns true when `self.len() == 0`
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Get underlying data as Rust slice
     pub fn data(&self) -> &[T] {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
         unsafe { slice::from_raw_parts((*ba).data as *const T, self.len()) }
     }
 
+    /// Get underlying data as mutable Rust slice
     pub fn data_mut(&mut self) -> &mut [T] {
         let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
         unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
