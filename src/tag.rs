@@ -14,6 +14,7 @@ pub const Custom_tag: ::std::os::raw::c_uint = 255;
 
 /// Tags are used to determine the type of value that is stored
 /// in an OCaml value
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum Tag {
     Tag(u8),

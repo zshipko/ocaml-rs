@@ -65,6 +65,7 @@
 mod macros;
 
 #[macro_use]
+/// The `core` module contains the low-level implementation of the OCaml runtime
 pub mod core;
 pub mod conv;
 mod error;

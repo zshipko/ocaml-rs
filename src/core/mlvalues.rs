@@ -143,14 +143,20 @@ pub fn is_long(v: Value) -> bool {
 /// Extracts from the `$block` an OCaml value at the `$ith`-field
 macro_rules! field {
     ($block:expr, $i:expr) => {
-        ($block as *mut $crate::core::mlvalues::Value).offset($i)
+        ($block as *mut $crate::core::mlvalues::Value).add($i)
     };
 }
 
+/// Extract a field from an OCaml value
+///
+/// # Safety
+///
+/// This function does no bounds checking or validation of the OCaml values
 pub unsafe fn field(value: Value, i: usize) -> *mut Value {
-    field!(value, i as isize)
+    field!(value, i)
 }
 
+#[doc(hidden)]
 pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
     ::std::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val!(value) + 1)
 }

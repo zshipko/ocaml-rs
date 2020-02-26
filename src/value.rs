@@ -32,11 +32,15 @@ impl From<core::mlvalues::Value> for Value {
     }
 }
 
+/// `ToValue` is used to convert from Rust types to OCaml values
 pub trait ToValue {
+    /// Convert to OCaml value
     fn to_value(&self) -> Value;
 }
 
+/// `FromValue` is used to convert from OCaml values to Rust types
 pub trait FromValue {
+    /// Convert from OCaml value
     fn from_value(v: Value) -> Self;
 }
 
@@ -98,6 +102,7 @@ impl Value {
         })
     }
 
+    /// Set custom pointer value
     pub fn set_custom<T>(&mut self, value: T) -> T {
         let ptr = self.custom_ptr_val_mut::<T>();
         unsafe { ptr::replace(ptr, value) }
@@ -108,6 +113,7 @@ impl Value {
         Value(v)
     }
 
+    /// Get array length
     pub fn array_length(&self) -> usize {
         unsafe { core::mlvalues::caml_array_length(self.0) }
     }
@@ -179,17 +185,17 @@ impl Value {
         Value(p as core::mlvalues::Value)
     }
 
-    /// Create an integer Value from `i32`
+    /// Create an OCaml `int` from `i32`
     pub fn i32(i: i32) -> Value {
         Value(val_int!(i))
     }
 
-    /// Create an integer Value from `i64`
+    /// Create an OCaml `int` from `i64`
     pub fn i64(i: i64) -> Value {
         Value(val_int!(i))
     }
 
-    /// Create an OCaml int64 from `i64`
+    /// Create an OCaml `Int64` from `i64`
     pub fn int64(i: i64) -> Value {
         caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_int64(i) };
@@ -197,7 +203,7 @@ impl Value {
         })
     }
 
-    /// Create an OCaml int32 from `i32`
+    /// Create an OCaml `Int32` from `i32`
     pub fn int32(i: i32) -> Value {
         caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_int32(i) };
@@ -205,7 +211,7 @@ impl Value {
         })
     }
 
-    /// Create an OCaml native int from `isize`
+    /// Create an OCaml `Nativeint` from `isize`
     pub fn nativeint(i: isize) -> Value {
         caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_nativeint(i) };
@@ -213,17 +219,17 @@ impl Value {
         })
     }
 
-    /// Create a long Value from `isize`
+    /// Create an OCaml `int` from `isize`
     pub fn isize(i: isize) -> Value {
         Value(val_long!(i))
     }
 
-    /// Create a value from `usize`
+    /// Create an OCaml `int` from `usize`
     pub fn usize(u: usize) -> Value {
         Value(val_long!(u))
     }
 
-    /// Create a value from `f64`
+    /// Create an OCaml `Float` from `f64`
     pub fn f64(d: f64) -> Value {
         caml_frame!(|x| {
             unsafe { x.0 = core::alloc::caml_copy_double(d) }
@@ -253,42 +259,42 @@ impl Value {
         unsafe { core::memory::store_field(self.0, i, val.to_value().0) }
     }
 
-    /// Convert an OCaml integer to `i32`
+    /// Convert an OCaml `int` to `i32`
     pub fn i32_val(&self) -> i32 {
         int_val!(self.0) as i32
     }
 
-    /// Convert an OCaml integer to `i64`
+    /// Convert an OCaml `int` to `i64`
     pub fn i64_val(&self) -> i64 {
         int_val!(self.0) as i64
     }
 
-    /// Convert an OCaml integer to `isize`
+    /// Convert an OCaml `int` to `isize`
     pub fn isize_val(&self) -> isize {
         long_val!(self.0) as isize
     }
 
-    /// Convert an OCaml integer to `usize`
+    /// Convert an OCaml `int` to `usize`
     pub fn usize_val(&self) -> usize {
         long_val!(self.0) as usize
     }
 
-    /// Convert an OCaml float to `f64`
+    /// Convert an OCaml `Float` to `f64`
     pub fn f64_val(&self) -> f64 {
         unsafe { *self.ptr_val::<f64>() }
     }
 
-    /// Convert an OCaml int32 to `i32`
+    /// Convert an OCaml `Int32` to `i32`
     pub fn int32_val(&self) -> i32 {
         unsafe { *self.custom_ptr_val::<i32>() }
     }
 
-    /// Convert an OCaml int64 to `i64`
+    /// Convert an OCaml `Int64` to `i64`
     pub fn int64_val(&self) -> i64 {
         unsafe { *self.custom_ptr_val::<i64>() }
     }
 
-    /// Convert an OCaml integer to `isize`
+    /// Convert an OCaml `Nativeint` to `isize`
     pub fn nativeint_val(&self) -> isize {
         unsafe { *self.custom_ptr_val::<isize>() }
     }
@@ -528,7 +534,7 @@ impl Value {
                     Value(ptr0.offset(i).read()).deep_clone_to_ocaml().0,
                 );
             }
-            return val1;
+            val1
         }
     }
 
@@ -561,7 +567,7 @@ impl Value {
                 .collect();
             let ptr1 = vec1.as_ptr();
             mem::forget(vec1);
-            return Value::ptr(ptr1.offset(1));
+            Value::ptr(ptr1.offset(1))
         }
     }
 }

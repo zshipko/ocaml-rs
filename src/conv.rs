@@ -68,6 +68,30 @@ impl FromValue for String {
     }
 }
 
+impl ToValue for () {
+    fn to_value(&self) -> Value {
+        Value::unit()
+    }
+}
+
+impl FromValue for &str {
+    fn from_value(value: Value) -> Self {
+        let len = unsafe { crate::core::mlvalues::caml_string_length(value.0) };
+        let ptr = string_val!(value.0) as *mut u8;
+        unsafe {
+            let slice = ::std::slice::from_raw_parts_mut(ptr, len);
+            ::std::str::from_utf8_unchecked_mut(slice)
+        }
+    }
+}
+
+impl ToValue for &str {
+    fn to_value(&self) -> Value {
+        let s = Str::from(*self);
+        Value::from(s)
+    }
+}
+
 impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(&self) -> Value {
         let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
