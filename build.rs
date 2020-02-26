@@ -1,10 +1,9 @@
-fn main() {
+fn run() -> std::io::Result<()> {
     let cmd = std::env::var("OCAML").unwrap_or("ocaml".to_string());
     let output = std::process::Command::new(cmd)
         .arg("version.ml")
         .arg(std::env::var("OUT_DIR").unwrap())
-        .output()
-        .unwrap();
+        .output()?;
     let output = String::from_utf8(output.stdout).unwrap();
     let split: Vec<&str> = output.split('.').collect();
 
@@ -14,4 +13,10 @@ fn main() {
     if major >= 4 && minor >= 10 {
         println!("cargo:rustc-cfg=caml_state");
     }
+
+    Ok(())
+}
+
+fn main() {
+    let _ = run();
 }
