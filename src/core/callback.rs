@@ -17,6 +17,7 @@ extern "C" {
 
     pub fn caml_main(argv: *mut *mut u8);
     pub fn caml_startup(argv: *mut *mut u8);
+    pub fn caml_shutdown();
     pub fn caml_named_value(name: *const u8) -> *mut Value;
 
     pub static mut caml_callback_depth: usize;

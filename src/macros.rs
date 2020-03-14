@@ -131,15 +131,6 @@ macro_rules! caml {
         }
     };
 
-    ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block -> $retval:ident) => {
-        #[allow(unused_mut)]
-        #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
-            return $crate::core::mlvalues::Value::from($retval);
-        }
-    };
-
     ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block) => {
         #[allow(unused_mut)]
         #[no_mangle]
