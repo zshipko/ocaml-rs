@@ -5,13 +5,13 @@ macro_rules! value_i {
     ($t:ty) => {
         impl ToValue for $t {
             fn to_value(&self) -> $crate::Value {
-                $crate::Value::i64(self.clone() as i64)
+                $crate::Value::int(self.clone() as isize)
             }
         }
 
         impl FromValue for $t {
             fn from_value(v: $crate::Value) -> $t {
-                v.i64_val() as $t
+                v.int_val() as $t
             }
         }
     };
@@ -44,13 +44,13 @@ value_f!(f32, f64);
 
 impl ToValue for bool {
     fn to_value(&self) -> Value {
-        Value::i64(*self as i64)
+        Value::int(*self as isize)
     }
 }
 
 impl FromValue for bool {
     fn from_value(v: Value) -> bool {
-        v.i64_val() != 0
+        v.int_val() != 0
     }
 }
 

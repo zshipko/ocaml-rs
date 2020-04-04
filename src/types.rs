@@ -3,7 +3,7 @@ use crate::core::bigarray;
 use crate::core::mlvalues;
 use crate::core::mlvalues::empty_list;
 use crate::error::Error;
-use crate::tag::Tag;
+use crate::tag;
 
 use std::marker::PhantomData;
 use std::{mem, ptr, slice};
@@ -99,7 +99,7 @@ impl From<Value> for Array {
 impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
     fn from(a: &'a [V]) -> Array {
         Array(caml_frame!(|x| {
-            x.0 = unsafe { alloc::caml_alloc(a.len(), Tag::Zero.into()) };
+            x.0 = unsafe { alloc::caml_alloc(a.len(), 0) };
             for (n, i) in a.iter().enumerate() {
                 x.store_field(n, i.to_value());
             }
@@ -118,7 +118,7 @@ impl Array {
     /// Create a new array of the given size
     pub fn new(n: Size) -> Array {
         let x = caml_frame!(|x| {
-            x.0 = unsafe { alloc::caml_alloc(n, Tag::Zero.into()) };
+            x.0 = unsafe { alloc::caml_alloc(n, 0) };
             x
         });
         Array(x)
@@ -260,7 +260,7 @@ impl List {
         let tmp = caml_frame!(|x, tmp| {
             x.0 = (self.0).0;
 
-            tmp = Value::alloc_small(2, Tag::Zero);
+            tmp = Value::alloc_small(2, 0);
             tmp.store_field(0, v);
             tmp.store_field(1, x);
             tmp
@@ -338,7 +338,7 @@ impl<'a> From<&'a [u8]> for Str {
 
 impl From<Value> for Str {
     fn from(v: Value) -> Str {
-        if v.tag() != Tag::String {
+        if v.tag() != tag::STRING {
             panic!("Invalid string value, got tag {:?}", v.tag());
         } else {
             Str(v)

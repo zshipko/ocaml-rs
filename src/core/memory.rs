@@ -36,7 +36,7 @@
 use std::default::Default;
 use std::ptr;
 
-use crate::core::mlvalues::{Size, Value};
+use crate::core::mlvalues::{field, Size, Value};
 
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -76,7 +76,10 @@ extern "C" {
 /// ```
 macro_rules! store_field {
     ($block:expr, $offset:expr, $val:expr) => {
-        $crate::core::memory::caml_modify(field!($block, $offset), $val);
+        let offset = $offset;
+        let val = $val;
+        let block = $block;
+        $crate::core::memory::caml_modify(field(block, offset), val);
     };
 }
 

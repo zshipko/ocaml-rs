@@ -71,13 +71,12 @@ pub mod conv;
 mod error;
 mod named;
 pub mod runtime;
-mod tag;
 mod types;
 pub mod value;
 
+pub use crate::core::tag::{self, Tag};
 pub use crate::error::Error;
 pub use crate::named::named_value;
 pub use crate::runtime::*;
-pub use crate::tag::Tag;
 pub use crate::types::{Array, Array1, List, Str, Tuple};
 pub use crate::value::{FromValue, ToValue, Value};

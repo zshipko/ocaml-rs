@@ -1,8 +1,7 @@
 use crate::core;
 use crate::error::Error;
 use crate::runtime::hash_variant;
-use crate::tag;
-use crate::Tag;
+use crate::{tag, Tag};
 
 use std::{mem, ptr};
 
@@ -62,9 +61,9 @@ impl FromValue for Value {
     }
 }
 
-pub const TRUE: Value = Value(val_int!(1));
-pub const FALSE: Value = Value(val_int!(0));
-pub const NONE: Value = Value(val_int!(0));
+pub const TRUE: Value = Value(core::mlvalues::val_int(1));
+pub const FALSE: Value = Value(core::mlvalues::val_int(0));
+pub const NONE: Value = Value(core::mlvalues::val_int(0));
 pub const UNIT: Value = Value(core::mlvalues::UNIT);
 
 impl Value {
@@ -135,7 +134,7 @@ impl Value {
 
     /// Get the tag for the underlying OCaml `value`
     pub fn tag(&self) -> Tag {
-        unsafe { Tag::new(tag_val!(self.0)) }
+        unsafe { core::mlvalues::tag_val(self.0) }
     }
 
     /// Convert a boolean to OCaml value
@@ -185,14 +184,9 @@ impl Value {
         Value(p as core::mlvalues::Value)
     }
 
-    /// Create an OCaml `int` from `i32`
-    pub fn i32(i: i32) -> Value {
-        Value(val_int!(i))
-    }
-
-    /// Create an OCaml `int` from `i64`
-    pub fn i64(i: i64) -> Value {
-        Value(val_int!(i))
+    /// Create an OCaml `int`
+    pub fn int(i: isize) -> Value {
+        Value(core::mlvalues::val_int(i))
     }
 
     /// Create an OCaml `Int64` from `i64`
@@ -217,16 +211,6 @@ impl Value {
             unsafe { x.0 = core::alloc::caml_copy_nativeint(i) };
             x
         })
-    }
-
-    /// Create an OCaml `int` from `isize`
-    pub fn isize(i: isize) -> Value {
-        Value(val_long!(i))
-    }
-
-    /// Create an OCaml `int` from `usize`
-    pub fn usize(u: usize) -> Value {
-        Value(val_long!(u))
     }
 
     /// Create an OCaml `Float` from `f64`
@@ -259,24 +243,9 @@ impl Value {
         unsafe { core::memory::store_field(self.0, i, val.to_value().0) }
     }
 
-    /// Convert an OCaml `int` to `i32`
-    pub fn i32_val(&self) -> i32 {
-        int_val!(self.0) as i32
-    }
-
-    /// Convert an OCaml `int` to `i64`
-    pub fn i64_val(&self) -> i64 {
-        int_val!(self.0) as i64
-    }
-
     /// Convert an OCaml `int` to `isize`
-    pub fn isize_val(&self) -> isize {
-        long_val!(self.0) as isize
-    }
-
-    /// Convert an OCaml `int` to `usize`
-    pub fn usize_val(&self) -> usize {
-        long_val!(self.0) as usize
+    pub fn int_val(&self) -> isize {
+        core::mlvalues::int_val(self.0)
     }
 
     /// Convert an OCaml `Float` to `f64`
@@ -321,7 +290,7 @@ impl Value {
 
     /// Call a closure with a single argument
     pub fn call<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -333,7 +302,7 @@ impl Value {
 
     /// Call a closure with two arguments
     pub fn call2<A: ToValue, B: ToValue>(&self, arg1: A, arg2: B) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -352,7 +321,7 @@ impl Value {
         arg2: B,
         arg3: C,
     ) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -371,7 +340,7 @@ impl Value {
 
     /// Call a closure with `n` arguments
     pub fn call_n<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -388,7 +357,7 @@ impl Value {
 
     /// Call a closure with a single argument, returning an exception value
     pub fn call_exn<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -407,7 +376,7 @@ impl Value {
 
     /// Call a closure with two arguments, returning an exception value
     pub fn call2_exn<A: ToValue, B: ToValue>(&self, arg1: A, arg2: B) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -433,7 +402,7 @@ impl Value {
         arg2: B,
         arg3: C,
     ) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -459,7 +428,7 @@ impl Value {
 
     /// Call a closure with `n` arguments, returning an exception value
     pub fn call_n_exn<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
-        if self.tag() != Tag::Closure {
+        if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -497,7 +466,7 @@ impl Value {
 
     /// Get object method
     pub fn method<S: AsRef<str>>(&self, name: S) -> Option<Value> {
-        if self.tag() != Tag::Object {
+        if self.tag() != tag::OBJECT {
             return None;
         }
 
@@ -520,11 +489,11 @@ impl Value {
             return self.clone();
         }
         unsafe {
-            let wosize = wosize_val!(self.0);
+            let wosize = core::mlvalues::wosize_val(self.0);
             let val1 = Self::alloc(wosize, self.tag());
             let ptr0 = self.ptr_val::<core::mlvalues::Value>();
             let ptr1 = val1.mut_ptr_val::<core::mlvalues::Value>();
-            if tag_val!(self.0) >= tag::No_scan_tag as u8 {
+            if core::mlvalues::tag_val(self.0) >= tag::NO_SCAN {
                 ptr0.copy_to_nonoverlapping(ptr1, wosize);
                 return val1;
             }
@@ -546,7 +515,7 @@ impl Value {
             return self.clone();
         }
         unsafe {
-            if tag_val!(self.0) >= tag::No_scan_tag as u8 {
+            if core::mlvalues::tag_val(self.0) >= tag::NO_SCAN {
                 let slice0 = core::mlvalues::as_slice(self.0);
                 let vec1 = slice0.to_vec();
                 let ptr1 = vec1.as_ptr();
