@@ -1,7 +1,7 @@
 use crate::core::alloc;
 use crate::core::bigarray;
 use crate::core::mlvalues;
-use crate::core::mlvalues::empty_list;
+use crate::core::mlvalues::EMPTY_LIST;
 use crate::error::Error;
 use crate::tag;
 
@@ -242,7 +242,7 @@ impl List {
     pub fn len(&self) -> Size {
         let mut length = 0;
         let mut tmp = self.0.clone();
-        while tmp.0 != empty_list() {
+        while tmp.0 != EMPTY_LIST {
             tmp = tmp.field(1);
             length += 1;
         }
@@ -252,7 +252,7 @@ impl List {
     /// Returns true when the list is empty
     pub fn is_empty(&self) -> bool {
         let item: usize = (self.0).0;
-        item == empty_list()
+        item == EMPTY_LIST
     }
 
     /// Add an element to the front of the list
@@ -287,7 +287,7 @@ impl List {
     pub fn to_vec(&self) -> Vec<Value> {
         let mut vec: Vec<Value> = Vec::new();
         let mut tmp = self.0.clone();
-        while tmp.0 != empty_list() {
+        while tmp.0 != EMPTY_LIST {
             let val = tmp.field(0);
             vec.push(val);
             tmp = tmp.field(1);
@@ -311,7 +311,7 @@ impl<'a> From<&'a str> for Str {
             let len = s.len();
             let x = caml_frame!(|x| {
                 x.0 = alloc::caml_alloc_string(len);
-                let ptr = string_val!(x.0) as *mut u8;
+                let ptr = crate::core::mlvalues::string_val(x.0) as *mut u8;
                 ptr::copy(s.as_ptr(), ptr, len);
                 x
             });
@@ -327,7 +327,7 @@ impl<'a> From<&'a [u8]> for Str {
             let len = s.len();
             let x = caml_frame!(|x| {
                 x.0 = alloc::caml_alloc_string(len);
-                let ptr = string_val!(x.0) as *mut u8;
+                let ptr = crate::core::mlvalues::string_val(x.0) as *mut u8;
                 ptr::copy(s.as_ptr(), ptr, len);
                 x
             });
@@ -373,8 +373,8 @@ impl Str {
 
     /// Access OCaml string as `&str`
     pub fn as_str(&self) -> &str {
-        let ptr = string_val!((self.0).0);
         unsafe {
+            let ptr = crate::core::mlvalues::string_val((self.0).0);
             let slice = ::std::slice::from_raw_parts(ptr, self.len());
             ::std::str::from_utf8_unchecked(slice)
         }
@@ -382,8 +382,8 @@ impl Str {
 
     /// Access OCaml string as `&mut str`
     pub fn as_str_mut(&mut self) -> &mut str {
-        let ptr = string_val!((self.0).0) as *mut u8;
         unsafe {
+            let ptr = crate::core::mlvalues::string_val((self.0).0) as *mut u8;
             let slice = ::std::slice::from_raw_parts_mut(ptr, self.len());
             ::std::str::from_utf8_unchecked_mut(slice)
         }
@@ -391,13 +391,13 @@ impl Str {
 
     /// Access OCaml string as `&[u8]`
     pub fn data(&self) -> &[u8] {
-        let ptr = string_val!((self.0).0);
+        let ptr = unsafe { crate::core::mlvalues::string_val((self.0).0) };
         unsafe { ::std::slice::from_raw_parts(ptr, self.len()) }
     }
 
     /// Access OCaml string as `&mut [u8]`
     pub fn data_mut(&mut self) -> &mut [u8] {
-        let ptr = string_val!((self.0).0) as *mut u8;
+        let ptr = unsafe { crate::core::mlvalues::string_val((self.0).0) as *mut u8 };
         unsafe { ::std::slice::from_raw_parts_mut(ptr, self.len()) }
     }
 }

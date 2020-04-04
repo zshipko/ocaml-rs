@@ -1,4 +1,3 @@
-#[macro_use]
 pub mod mlvalues;
 #[macro_use]
 pub mod memory;

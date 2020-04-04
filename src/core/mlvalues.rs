@@ -68,11 +68,6 @@ pub const fn int_val(val: Value) -> isize {
     ((val as usize) >> 1) as isize
 }
 
-/// Creates an empty list
-pub fn empty_list() -> Value {
-    val_int(0)
-}
-
 pub fn is_block(v: Value) -> bool {
     (v & 1) == 0
 }
@@ -98,8 +93,11 @@ pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
     ::std::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val(value) + 1)
 }
 
-/// The OCaml `()` (`unit`) value - rien.
+/// The OCaml `()` (`unit`) value
 pub const UNIT: Value = val_int(0);
+
+/// Empty list value
+pub const EMPTY_LIST: Value = val_int(0);
 
 /// The OCaml `true` value
 pub const TRUE: Value = val_int(1);
@@ -107,20 +105,17 @@ pub const TRUE: Value = val_int(1);
 /// OCaml `false` value
 pub const FALSE: Value = val_int(0);
 
-// Strings
-
 /// Pointer to the first byte
-macro_rules! bp_val {
-    ($v: expr) => {
-        $v as *const u8
-    };
+#[inline]
+pub const unsafe fn bp_val(val: Value) -> *const u8 {
+    val as *const u8
 }
 
 /// Extracts a machine `ptr` to the bytes making up an OCaml `string`
-macro_rules! string_val {
-    ($v:expr) => {
-        bp_val!($v)
-    };
+////// Pointer to the first byte
+#[inline]
+pub const unsafe fn string_val(val: Value) -> *const u8 {
+    val as *const u8
 }
 
 extern "C" {

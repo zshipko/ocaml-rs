@@ -23,14 +23,10 @@ extern "C" {
     pub static mut caml_callback_depth: usize;
 }
 
-macro_rules! is_exception_result {
-    ($v:expr) => {
-        ($v as usize) & 3 == 2
-    };
+pub const fn is_exception_result(val: Value) -> bool {
+    (val as usize) & 3 == 2
 }
 
-macro_rules! extract_exception {
-    ($v:expr) => {
-        ($v as usize) & !3
-    };
+pub const fn extract_exception(val: Value) -> Value {
+    (val as usize) & !3
 }

@@ -77,10 +77,10 @@ impl ToValue for () {
 impl FromValue for &str {
     fn from_value(value: Value) -> Self {
         let len = unsafe { crate::core::mlvalues::caml_string_length(value.0) };
-        let ptr = string_val!(value.0) as *mut u8;
+        let ptr = unsafe { crate::core::mlvalues::string_val(value.0) };
         unsafe {
-            let slice = ::std::slice::from_raw_parts_mut(ptr, len);
-            ::std::str::from_utf8_unchecked_mut(slice)
+            let slice = ::std::slice::from_raw_parts(ptr, len);
+            ::std::str::from_utf8_unchecked(slice)
         }
     }
 }

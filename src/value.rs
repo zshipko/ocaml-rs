@@ -366,8 +366,8 @@ impl Value {
             res
         });
 
-        if is_exception_result!(v.0) {
-            v.0 = extract_exception!(v.0);
+        if crate::core::callback::is_exception_result(v.0) {
+            v.0 = crate::core::callback::extract_exception(v.0);
             Err(Error::Exception(v))
         } else {
             Ok(v)
@@ -387,8 +387,8 @@ impl Value {
             res
         });
 
-        if is_exception_result!(v.0) {
-            v.0 = extract_exception!(v.0);
+        if crate::core::callback::is_exception_result(v.0) {
+            v.0 = crate::core::callback::extract_exception(v.0);
             Err(Error::Exception(v))
         } else {
             Ok(v)
@@ -418,8 +418,8 @@ impl Value {
             res
         });
 
-        if is_exception_result!(v.0) {
-            v.0 = extract_exception!(v.0);
+        if crate::core::callback::is_exception_result(v.0) {
+            v.0 = crate::core::callback::extract_exception(v.0);
             Err(Error::Exception(v))
         } else {
             Ok(v)
@@ -446,8 +446,8 @@ impl Value {
             res
         });
 
-        if is_exception_result!(v.0) {
-            v.0 = extract_exception!(v.0);
+        if crate::core::callback::is_exception_result(v.0) {
+            v.0 = crate::core::callback::extract_exception(v.0);
             Err(Error::Exception(v))
         } else {
             Ok(v)
@@ -461,7 +461,7 @@ impl Value {
 
     /// Determines if the current value is an exception
     pub fn is_exception_result(&self) -> bool {
-        is_exception_result!(self.value())
+        crate::core::callback::is_exception_result(self.value())
     }
 
     /// Get object method
