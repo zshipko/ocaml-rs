@@ -62,7 +62,7 @@
 //! or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 #[macro_use]
-mod macros;
+pub mod macros;
 
 pub mod conv;
 /// The `core` module contains the low-level implementation of the OCaml runtime

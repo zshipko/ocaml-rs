@@ -108,6 +108,7 @@ impl Value {
     }
 
     /// Create a new Value from an existing OCaml `value`
+    #[inline]
     pub fn new(v: core::mlvalues::Value) -> Value {
         Value(v)
     }

@@ -11,7 +11,7 @@ caml!(ml_send_int(v){
     return l;
 });
 
-caml!(ml_send_two, |v, v2|, <a>, {
+caml!(ml_send_two(v, v2) {
     println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &state::local_roots(), state::local_roots(), v.value());
     let tag: u8 = v2.tag().into();
     println!("string tag: {}", tag);
@@ -36,7 +36,8 @@ caml!(ml_send_int64(x) {
 
 caml!(ml_new_tuple(i) {
     let i = i.int_val();
-    return tuple!(i, i * 2, i * 3).into();
+    let value: Value = tuple!(i, i * 2, i * 3).into();
+    value
 });
 
 caml!(ml_new_array(i) {
@@ -47,7 +48,7 @@ caml!(ml_new_array(i) {
 
 caml!(ml_new_list(i){
     let i = i.int_val();
-    return list!(0 * i, 1 * i, 2 * i, 3 * i, 4 * i).into();
+    return list!(0 * i, 1 * i, 2 * i, 3 * i, 4 * i);
 });
 
 caml!(ml_testing_callback(a, b) {
@@ -84,21 +85,21 @@ caml!(ml_array1(len) {
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
     }
-    return ba.into();
+    return ba;
 });
 
 caml!(ml_array2(s) {
     let mut a: ocaml::Str = s.into();
     let b = a.data_mut();
     let ba = ocaml::Array1::<u8>::of_slice(b); // Note: `b` is still owned by OCaml since it was passed as a parameter
-    return ba.into();
+    return ba;
 });
 
 caml!(ml_string_test(s){
     let st = ocaml::Str::from(s.clone());
     println!("{:?}", s.tag());
     println!("{} {}", st.len(), st.as_str());
-    return ocaml::Str::from("testing").into();
+    return ocaml::Str::from("testing");
 });
 
 caml!(ml_make_list(length) {
@@ -132,7 +133,7 @@ caml!(ml_make_list(length) {
     assert_ne!(0, sum_vec);
     assert_eq!(sum_list, sum_vec);
 
-    return list.into();
+    return list;
 });
 
 caml!(ml_make_array(length) {
@@ -141,7 +142,7 @@ caml!(ml_make_array(length) {
     for v in 0..length {
         arr.set(v, Value::int(v as isize)).unwrap();
     }
-    arr.into()
+    arr
 });
 
 caml!(ml_call(f, a) {

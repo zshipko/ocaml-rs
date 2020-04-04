@@ -27,13 +27,11 @@ macro_rules! caml_param {
     };
 
     ($($n:expr),*) => {
-        let mut caml_roots: $crate::core::memory::CamlRootsBlock = ::std::default::Default::default();
+        let mut caml_roots = $crate::core::memory::CamlRootsBlock::default();
         #[allow(unused_unsafe)]
-        {
-            caml_roots.next = unsafe { $crate::core::state::local_roots() };
-            unsafe {
-                $crate::core::state::set_local_roots(&mut caml_roots);
-            }
+        unsafe {
+            caml_roots.next = $crate::core::state::local_roots();
+            $crate::core::state::set_local_roots(&mut caml_roots);
         };
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
         $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
@@ -76,88 +74,32 @@ macro_rules! caml_frame {
 }
 
 #[macro_export]
-/// Defines an OCaml FFI body, including any locals, as well as a return if provided; it is up to you to define the parameters.
 macro_rules! caml_body {
-    (||, <$($local:ident),*>, $code:block) => {
-        #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::state::local_roots() };
-        $crate::caml_local!($($local),*);
-        $code;
-        #[allow(unused_unsafe)]
-        unsafe { $crate::core::state::set_local_roots(caml_frame) };
-    };
-
-    (|$($param:ident),*|, @code $code:block) => {
-        #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::state::local_roots() };
-        $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
-        $code;
-        #[allow(unused_unsafe)]
-        unsafe { $crate::core::state::set_local_roots(caml_frame) };
-    };
-
-    (|$($param:ident),*|, <$($local:ident),*>, $code:block) => {
-        #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::core::state::local_roots() };
-        $($crate::caml_param!($param); let $param = $crate::Value::new($param);)*
-        $crate::caml_local!($($local),*);
-        $code
-        #[allow(unused_unsafe)]
-        unsafe { $crate::core::state::set_local_roots(caml_frame) };
+    (($($param:expr),*) $code:block) => {
+        {
+            #[allow(unused_unsafe)]
+            let caml_frame = unsafe { $crate::core::state::local_roots() };
+            $crate::caml_param!($($param),*);
+            let res = || $code;
+            let res = res();
+            let res = ToValue::to_value(&res);
+            #[allow(unused_unsafe)]
+            unsafe { $crate::core::state::set_local_roots(caml_frame) };
+            res
+        }
     }
 }
 
 #[macro_export]
-/// Defines an external Rust function for FFI use by an OCaml program, with automatic `CAMLparam`, `CAMLlocal`, and `CAMLreturn` inserted for you.
+/// Defines an external Rust function for FFI use by an OCaml program
 macro_rules! caml {
     ($name:ident($($param:ident),*) $code:block) => {
         #[allow(unused_mut)]
         #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            let x: $crate::Value;
-            $crate::caml_body!(|$($param),*|, <>, {
-                x = (|| -> $crate::Value { $code })();
-            });
-            return x.0;
+        pub unsafe extern fn $name ($(mut $param: $crate::Value,)*) -> $crate::Value {
+            caml_body!(($($param.0),*) $code)
         }
     };
-
-    ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block -> $retval:ident) => {
-        #[allow(unused_mut)]
-        #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
-            return $crate::core::mlvalues::Value::from($retval);
-        }
-    };
-
-    ($name:ident, |$($param:ident),*|, <$($local:ident),*>, $code:block) => {
-        #[allow(unused_mut)]
-        #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            $crate::caml_body!(|$($param),*|, <$($local),*>, $code);
-            return $crate::core::mlvalues::UNIT;
-        }
-    };
-
-    ($name:ident, |$($param:ident),*|, $code:block) => {
-        #[allow(unused_mut)]
-        #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            $crate::caml_body!(|$($param),*|, @code $code);
-            return $crate::core::mlvalues::UNIT;
-        }
-    };
-
-    ($name:ident, |$($param:ident),*|, $code:block -> $retval:ident) => {
-        #[allow(unused_mut)]
-        #[no_mangle]
-        pub unsafe extern fn $name ($(mut $param: $crate::core::mlvalues::Value,)*) -> $crate::core::mlvalues::Value {
-            $crate::caml_body!(|$($param),*|, @code $code);
-            return $crate::core::mlvalues::Value::from($retval);
-        }
-    };
-
 }
 
 #[macro_export]
