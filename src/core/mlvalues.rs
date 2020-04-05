@@ -113,8 +113,8 @@ pub const unsafe fn bp_val(val: Value) -> *const u8 {
 
 /// Extracts a machine `ptr` to the bytes making up an OCaml `string`
 #[inline]
-pub const unsafe fn string_val(val: Value) -> *const u8 {
-    val as *const u8
+pub const unsafe fn string_val(val: Value) -> *mut u8 {
+    val as *mut u8
 }
 
 extern "C" {

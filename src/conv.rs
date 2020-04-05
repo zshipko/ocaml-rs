@@ -1,4 +1,3 @@
-use crate::types::{Array, Str};
 use crate::value::{FromValue, ToValue, Value};
 
 macro_rules! value_i {
@@ -39,7 +38,56 @@ macro_rules! value_f {
     }
 }
 
-value_i!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize);
+impl ToValue for i64 {
+    fn to_value(&self) -> crate::Value {
+        Value::int64(*self)
+    }
+}
+
+impl FromValue for i64 {
+    fn from_value(v: crate::Value) -> i64 {
+        v.int64_val()
+    }
+}
+
+impl ToValue for u64 {
+    fn to_value(&self) -> crate::Value {
+        Value::int64(*self as i64)
+    }
+}
+
+impl FromValue for u64 {
+    fn from_value(v: crate::Value) -> u64 {
+        v.int64_val() as u64
+    }
+}
+
+impl ToValue for i32 {
+    fn to_value(&self) -> crate::Value {
+        Value::int32(*self)
+    }
+}
+
+impl FromValue for i32 {
+    fn from_value(v: crate::Value) -> i32 {
+        v.int32_val()
+    }
+}
+
+impl ToValue for u32 {
+    fn to_value(&self) -> crate::Value {
+        Value::int64(*self as i64)
+    }
+}
+
+impl FromValue for u32 {
+    fn from_value(v: crate::Value) -> u32 {
+        v.int32_val() as u32
+    }
+}
+
+// i32, u32, i64, u64,
+value_i!(i8, u8, i16, u16, isize, usize);
 value_f!(f32, f64);
 
 impl ToValue for bool {
@@ -56,15 +104,23 @@ impl FromValue for bool {
 
 impl ToValue for String {
     fn to_value(&self) -> Value {
-        let s = Str::from(self.as_str());
-        Value::from(s)
+        unsafe {
+            let value = crate::core::alloc::caml_alloc_string(self.len());
+            let ptr = crate::core::mlvalues::string_val(value);
+            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+            Value(value)
+        }
     }
 }
 
 impl FromValue for String {
-    fn from_value(v: Value) -> String {
-        let s = Str::from(v);
-        String::from(s.as_str())
+    fn from_value(value: Value) -> String {
+        let len = unsafe { crate::core::mlvalues::caml_string_length(value.0) };
+        let ptr = unsafe { crate::core::mlvalues::string_val(value.0) };
+        unsafe {
+            let slice = ::std::slice::from_raw_parts(ptr, len);
+            ::std::str::from_utf8(slice).expect("Invalid UTF-8").into()
+        }
     }
 }
 
@@ -80,32 +136,45 @@ impl FromValue for &str {
         let ptr = unsafe { crate::core::mlvalues::string_val(value.0) };
         unsafe {
             let slice = ::std::slice::from_raw_parts(ptr, len);
-            ::std::str::from_utf8_unchecked(slice)
+            ::std::str::from_utf8(slice).expect("Invalid UTF-8")
         }
     }
 }
 
-impl ToValue for &str {
+impl ToValue for str {
     fn to_value(&self) -> Value {
-        let s = Str::from(*self);
-        Value::from(s)
+        unsafe {
+            let value = crate::core::alloc::caml_alloc_string(self.len());
+            let ptr = crate::core::mlvalues::string_val(value);
+            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+            Value(value)
+        }
     }
 }
 
 impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(&self) -> Value {
         let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
-        crate::array!(_ tmp).into()
+        let len = tmp.len();
+        let mut arr = crate::alloc(len, 0);
+
+        for (i, v) in tmp.into_iter().enumerate() {
+            arr.store_field(i, v);
+        }
+
+        arr
     }
 }
 
 impl<V: FromValue> FromValue for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
-        let arr = Array::from(v);
-        let mut dst = Vec::with_capacity(arr.len());
-        for i in 0..arr.len() {
-            dst.push(V::from_value(arr.get(i).unwrap()))
+        unsafe {
+            let len = crate::core::mlvalues::caml_array_length(v.0);
+            let mut dst = Vec::with_capacity(len);
+            for i in 0..len {
+                dst.push(V::from_value(Value(*crate::core::mlvalues::field(v.0, i))))
+            }
+            dst
         }
-        dst
     }
 }

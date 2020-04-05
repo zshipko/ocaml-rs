@@ -1,204 +1,12 @@
 use crate::caml_frame;
-use crate::core::alloc;
 use crate::core::bigarray;
 use crate::core::mlvalues;
 use crate::core::mlvalues::EMPTY_LIST;
-use crate::error::Error;
-use crate::tag;
 
 use std::marker::PhantomData;
-use std::{mem, ptr, slice};
+use std::{mem, slice};
 
 use crate::value::{Size, Value};
-
-/// OCaml Tuple type
-pub struct Tuple(Value, Size);
-
-impl From<Tuple> for Value {
-    fn from(t: Tuple) -> Value {
-        t.0
-    }
-}
-
-impl From<Value> for Tuple {
-    fn from(v: Value) -> Tuple {
-        let len = v.array_length();
-        Tuple(v, len)
-    }
-}
-
-impl<'a, V: crate::ToValue> From<&'a [V]> for Tuple {
-    fn from(a: &'a [V]) -> Tuple {
-        Tuple(
-            caml_frame!(|t| {
-                t.0 = unsafe { alloc::caml_alloc_tuple(a.len()) };
-                for (n, i) in a.iter().enumerate() {
-                    t.store_field(n, i.to_value());
-                }
-                t
-            }),
-            a.len(),
-        )
-    }
-}
-
-impl Tuple {
-    /// Create a new tuple
-    pub fn new(n: Size) -> Tuple {
-        let x = caml_frame!(|x| {
-            x.0 = unsafe { alloc::caml_alloc_tuple(n) };
-            x
-        });
-
-        Tuple(x, n)
-    }
-
-    /// Tuple length
-    pub fn len(&self) -> Size {
-        self.1
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Set tuple index
-    pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
-        if i < self.1 {
-            self.0.store_field(i, v);
-            Ok(())
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-
-    /// Get tuple index
-    pub fn get(&self, i: Size) -> Result<Value, Error> {
-        if i < self.1 {
-            Ok(self.0.field(i))
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-}
-
-/// OCaml Array type
-pub struct Array(Value);
-
-impl From<Array> for Value {
-    fn from(t: Array) -> Value {
-        t.0
-    }
-}
-
-impl From<Value> for Array {
-    fn from(v: Value) -> Array {
-        Array(v)
-    }
-}
-
-impl<'a, V: crate::ToValue> From<&'a [V]> for Array {
-    fn from(a: &'a [V]) -> Array {
-        Array(caml_frame!(|x| {
-            x.0 = unsafe { alloc::caml_alloc(a.len(), 0) };
-            for (n, i) in a.iter().enumerate() {
-                x.store_field(n, i.to_value());
-            }
-            x
-        }))
-    }
-}
-
-impl crate::ToValue for Array {
-    fn to_value(&self) -> Value {
-        self.0.to_value()
-    }
-}
-
-impl Array {
-    /// Create a new array of the given size
-    pub fn new(n: Size) -> Array {
-        let x = caml_frame!(|x| {
-            x.0 = unsafe { alloc::caml_alloc(n, 0) };
-            x
-        });
-        Array(x)
-    }
-
-    /// Check if Array contains only doubles
-    pub fn is_double_array(&self) -> bool {
-        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
-    }
-
-    /// Array length
-    pub fn len(&self) -> Size {
-        unsafe { mlvalues::caml_array_length((self.0).0) }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Set value to double array
-    pub fn set_double(&mut self, i: Size, f: f64) -> Result<(), Error> {
-        if i < self.len() {
-            if !self.is_double_array() {
-                return Err(Error::NotDoubleArray);
-            }
-
-            unsafe {
-                let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
-                *ptr = f;
-            };
-
-            Ok(())
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-
-    /// Get a value from a double array
-    pub fn get_double(&mut self, i: Size) -> Result<f64, Error> {
-        if i < self.len() {
-            if !self.is_double_array() {
-                return Err(Error::NotDoubleArray);
-            }
-
-            Ok(unsafe { self.get_double_unchecked(i) })
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-
-    /// Get a value from a double array without checking if the array is actually a double array
-    unsafe fn get_double_unchecked(&mut self, i: Size) -> f64 {
-        *self.0.ptr_val::<f64>().add(i)
-    }
-
-    /// Set array index
-    pub fn set(&mut self, i: Size, v: Value) -> Result<(), Error> {
-        if i < self.len() {
-            self.0.store_field(i, v);
-            Ok(())
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-
-    /// Get array index
-    pub fn get(&self, i: Size) -> Result<Value, Error> {
-        if i < self.len() {
-            self.get_unchecked(i)
-        } else {
-            Err(Error::OutOfBounds)
-        }
-    }
-
-    /// Get array index without bounds checking
-    pub fn get_unchecked(&self, i: Size) -> Result<Value, Error> {
-        Ok(self.0.field(i))
-    }
-}
 
 /// OCaml list type
 pub struct List(Value);
@@ -215,11 +23,11 @@ impl From<Value> for List {
     }
 }
 
-impl<'a, V: crate::ToValue> From<&'a [V]> for List {
+/*impl<'a, V: crate::ToValue> From<&'a [V]> for List {
     fn from(a: &'a [V]) -> List {
-        crate::list!(_ a.iter().map(|x| x.to_value()))
+        crate::ToValue::to_value(a)
     }
-}
+}*/
 
 impl crate::ToValue for List {
     fn to_value(&self) -> Value {
@@ -261,7 +69,7 @@ impl List {
         let tmp = caml_frame!(|x, tmp| {
             x.0 = (self.0).0;
 
-            let mut y = Value::alloc_small(2, 0);
+            let mut y = crate::alloc_small(2, 0);
             y.store_field(0, v);
             y.store_field(1, x);
             tmp.0 = y.0;
@@ -298,112 +106,6 @@ impl List {
     }
 }
 
-/// OCaml String type
-pub struct Str(Value);
-
-impl From<Str> for Value {
-    fn from(t: Str) -> Value {
-        t.0
-    }
-}
-
-impl<'a> From<&'a str> for Str {
-    fn from(s: &'a str) -> Str {
-        unsafe {
-            let len = s.len();
-            let x = caml_frame!(|x| {
-                x.0 = alloc::caml_alloc_string(len);
-                let ptr = crate::core::mlvalues::string_val(x.0) as *mut u8;
-                ptr::copy(s.as_ptr(), ptr, len);
-                x
-            });
-
-            Str(x)
-        }
-    }
-}
-
-impl<'a> From<&'a [u8]> for Str {
-    fn from(s: &'a [u8]) -> Str {
-        unsafe {
-            let len = s.len();
-            let x = caml_frame!(|x| {
-                x.0 = alloc::caml_alloc_string(len);
-                let ptr = crate::core::mlvalues::string_val(x.0) as *mut u8;
-                ptr::copy(s.as_ptr(), ptr, len);
-                x
-            });
-            Str(x)
-        }
-    }
-}
-
-impl From<Value> for Str {
-    fn from(v: Value) -> Str {
-        if v.tag() != tag::STRING {
-            panic!("Invalid string value, got tag {:?}", v.tag());
-        } else {
-            Str(v)
-        }
-    }
-}
-
-impl crate::ToValue for Str {
-    fn to_value(&self) -> Value {
-        self.0.to_value()
-    }
-}
-
-impl Str {
-    /// Create a new string of a given length
-    pub fn new(n: Size) -> Str {
-        Str(caml_frame!(|s| {
-            s.0 = unsafe { alloc::caml_alloc_string(n) };
-            s
-        }))
-    }
-
-    /// String length
-    pub fn len(&self) -> Size {
-        unsafe { mlvalues::caml_string_length((self.0).0) }
-    }
-
-    /// Check if a string is empty
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Access OCaml string as `&str`
-    pub fn as_str(&self) -> &str {
-        unsafe {
-            let ptr = crate::core::mlvalues::string_val((self.0).0);
-            let slice = ::std::slice::from_raw_parts(ptr, self.len());
-            ::std::str::from_utf8_unchecked(slice)
-        }
-    }
-
-    /// Access OCaml string as `&mut str`
-    pub fn as_str_mut(&mut self) -> &mut str {
-        unsafe {
-            let ptr = crate::core::mlvalues::string_val((self.0).0) as *mut u8;
-            let slice = ::std::slice::from_raw_parts_mut(ptr, self.len());
-            ::std::str::from_utf8_unchecked_mut(slice)
-        }
-    }
-
-    /// Access OCaml string as `&[u8]`
-    pub fn data(&self) -> &[u8] {
-        let ptr = unsafe { crate::core::mlvalues::string_val((self.0).0) };
-        unsafe { ::std::slice::from_raw_parts(ptr, self.len()) }
-    }
-
-    /// Access OCaml string as `&mut [u8]`
-    pub fn data_mut(&mut self) -> &mut [u8] {
-        let ptr = unsafe { crate::core::mlvalues::string_val((self.0).0) as *mut u8 };
-        unsafe { ::std::slice::from_raw_parts_mut(ptr, self.len()) }
-    }
-}
-
 pub trait BigarrayKind {
     type T;
     fn kind() -> i32;
@@ -432,28 +134,28 @@ make_kind!(i32, INT32);
 make_kind!(char, CHAR);
 
 /// OCaml Bigarray.Array1 type
-pub struct Array1<T>(Value, PhantomData<T>);
+pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
 
-impl<T: BigarrayKind> From<Array1<T>> for Value {
+impl<'a, T: BigarrayKind> From<Array1<'a, T>> for Value {
     fn from(t: Array1<T>) -> Value {
         t.0
     }
 }
 
-impl<T: BigarrayKind> From<Value> for Array1<T> {
-    fn from(v: Value) -> Array1<T> {
+impl<'a, T: BigarrayKind> From<Value> for Array1<'a, T> {
+    fn from(v: Value) -> Array1<'a, T> {
         Array1(v, PhantomData)
     }
 }
 
-impl<T: BigarrayKind> crate::ToValue for Array1<T> {
+impl<'a, T: BigarrayKind> crate::ToValue for Array1<'a, T> {
     fn to_value(&self) -> Value {
         self.0.to_value()
     }
 }
 
-impl<T: Copy + BigarrayKind> From<&[T]> for Array1<T> {
-    fn from(x: &[T]) -> Array1<T> {
+impl<'a, T: 'a + Copy + BigarrayKind> From<&'a [T]> for Array1<'a, T> {
+    fn from(x: &[T]) -> Array1<'a, T> {
         let mut arr = Array1::<T>::create(x.len());
         let data = arr.data_mut();
         for (n, i) in x.iter().enumerate() {
@@ -463,12 +165,12 @@ impl<T: Copy + BigarrayKind> From<&[T]> for Array1<T> {
     }
 }
 
-impl<T: BigarrayKind> Array1<T> {
+impl<'a, T: BigarrayKind> Array1<'a, T> {
     /// Array1::of_slice is used to convert from a slice to OCaml Bigarray,
     /// the `data` parameter must outlive the resulting bigarray or there is
     /// no guarantee the data will be valid. Use `Array1::from` to clone the
     /// contents of a slice.
-    pub fn of_slice(data: &mut [T]) -> Array1<T> {
+    pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
         let x = caml_frame!(|x| {
             x.0 = unsafe {
                 bigarray::caml_ba_alloc_dims(
@@ -484,7 +186,7 @@ impl<T: BigarrayKind> Array1<T> {
     }
 
     /// Create a new OCaml `Bigarray.Array1` with the given type and size
-    pub fn create(n: Size) -> Array1<T> {
+    pub fn create(n: Size) -> Array1<'a, T> {
         let x = caml_frame!(|x| {
             let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
             x.0 = unsafe {

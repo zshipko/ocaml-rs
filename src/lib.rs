@@ -39,12 +39,12 @@
 //! });
 //!
 //! caml!(average(arr) {
-//!     let arr = Array::from(arr);
+//!     let arr: Vec<f64> = Array::from(arr);
 //!     let len = arr.len();
 //!     let sum = 0f64;
 //!
 //!     for i in 0..len {
-//!         sum += arr.get_double_unchecked(i);
+//!         sum += arr[i];
 //!     }
 //!
 //!     Value::f64(sum / len as f64)
@@ -77,9 +77,45 @@ pub mod runtime;
 mod types;
 pub mod value;
 
+pub use ocaml_fn_derive::ocaml_func as func;
+
 pub use crate::core::tag::{self, Tag};
 pub use crate::error::Error;
 pub use crate::named::named_value;
 pub use crate::runtime::*;
-pub use crate::types::{Array, Array1, List, Str, Tuple};
+pub use crate::types::{Array1, List};
 pub use crate::value::{FromValue, ToValue, Value};
+
+/// Allocate a new value with the given size and tag.
+pub fn alloc(n: usize, tag: Tag) -> Value {
+    caml_frame!(|x| {
+        x.0 = unsafe { core::alloc::caml_alloc(n, tag) };
+        x
+    })
+}
+
+/// Allocate a new tuple value
+pub fn alloc_tuple(n: usize) -> Value {
+    caml_frame!(|x| {
+        x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
+        x
+    })
+}
+
+/// Allocate a new small value with the given size and tag
+pub fn alloc_small(n: usize, tag: Tag) -> Value {
+    caml_frame!(|x| {
+        x.0 = unsafe { core::alloc::caml_alloc_small(n, tag) };
+        x
+    })
+}
+
+/// Allocate a new value with a custom finalizer
+pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
+    caml_frame!(|x| {
+        x.0 = unsafe { core::alloc::caml_alloc_final(std::mem::size_of::<T>(), finalizer, 0, 1) };
+        let ptr = x.custom_ptr_val_mut::<T>();
+        unsafe { std::ptr::write(ptr, value) };
+        x
+    })
+}

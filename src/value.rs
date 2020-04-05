@@ -68,40 +68,6 @@ pub const NONE: Value = Value(core::mlvalues::val_int(0));
 pub const UNIT: Value = Value(core::mlvalues::UNIT);
 
 impl Value {
-    /// Allocate a new value with the given size and tag.
-    pub fn alloc(n: usize, tag: Tag) -> Value {
-        caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc(n, tag) };
-            x
-        })
-    }
-
-    /// Allocate a new tuple value
-    pub fn alloc_tuple(n: usize) -> Value {
-        caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
-            x
-        })
-    }
-
-    /// Allocate a new small value with the given size and tag
-    pub fn alloc_small(n: usize, tag: Tag) -> Value {
-        caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_small(n, tag) };
-            x
-        })
-    }
-
-    /// Allocate a new value with a custom finalizer
-    pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-        caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_final(mem::size_of::<T>(), finalizer, 0, 1) };
-            let ptr = x.custom_ptr_val_mut::<T>();
-            unsafe { ptr::write(ptr, value) };
-            x
-        })
-    }
-
     /// Set custom pointer value
     pub fn set_custom<T>(&mut self, value: T) -> T {
         let ptr = self.custom_ptr_val_mut::<T>();
@@ -485,7 +451,7 @@ impl Value {
         }
         unsafe {
             let wosize = core::mlvalues::wosize_val(self.0);
-            let val1 = Self::alloc(wosize, self.tag());
+            let val1 = crate::alloc(wosize, self.tag());
             let ptr0 = self.ptr_val::<core::mlvalues::Value>();
             let ptr1 = val1.mut_ptr_val::<core::mlvalues::Value>();
             if core::mlvalues::tag_val(self.0) >= tag::NO_SCAN {
