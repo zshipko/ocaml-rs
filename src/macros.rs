@@ -1,11 +1,25 @@
 #[macro_export]
+macro_rules! local {
+    ($($local:ident),*) => {
+        #[allow(unused_mut)]
+        $(let mut $local = $crate::Value($crate::sys::mlvalues::UNIT);)*
+        #[allow(unused_unsafe)]
+        $crate::sys::caml_param!($($local.0),*);
+    }
+}
+
+#[macro_export]
 /// Defines an external Rust function for FFI use by an OCaml program
 macro_rules! caml {
     (fn $name:ident($($param:ident),*) $code:block) => {
         #[allow(unused_mut)]
         #[no_mangle]
         pub unsafe extern "C" fn $name ($(mut $param: $crate::Value,)*) -> $crate::Value {
-            caml_body!(($($param.0),*) $code)
+            $crate::sys::caml_body!(($($param.0),*) {
+                let x = || $code;
+                let x = x();
+                $crate::ToValue::to_value(&x)
+            })
         }
     };
 }

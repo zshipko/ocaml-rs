@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-use crate::core::Value;
+use crate::Value;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -62,7 +62,7 @@ pub struct caml_domain_state {
     pub _compare_unordered: isize,
     pub _requested_major_slice: isize,
     pub _requested_minor_gc: isize,
-    pub _local_roots: *mut crate::core::memory::CamlRootsBlock,
+    pub _local_roots: *mut crate::memory::CamlRootsBlock,
     pub _stat_minor_words: f64,
     pub _stat_promoted_words: f64,
     pub _stat_major_words: f64,
@@ -85,30 +85,30 @@ extern "C" {
 extern "C" {
 
     #[doc(hidden)]
-    pub static mut caml_local_roots: *mut crate::core::memory::CamlRootsBlock;
+    pub static mut caml_local_roots: *mut crate::memory::CamlRootsBlock;
 }
 
 #[cfg(caml_state)]
 #[doc(hidden)]
-pub unsafe fn local_roots() -> *mut crate::core::memory::CamlRootsBlock {
+pub unsafe fn local_roots() -> *mut crate::memory::CamlRootsBlock {
     (*Caml_state)._local_roots
 }
 
 #[cfg(caml_state)]
 #[doc(hidden)]
-pub unsafe fn set_local_roots(x: *mut crate::core::memory::CamlRootsBlock) {
+pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
     (*Caml_state)._local_roots = x
 }
 
 #[cfg(not(caml_state))]
 #[doc(hidden)]
-pub unsafe fn local_roots() -> *mut crate::core::memory::CamlRootsBlock {
+pub unsafe fn local_roots() -> *mut crate::memory::CamlRootsBlock {
     caml_local_roots
 }
 
 #[cfg(not(caml_state))]
 #[doc(hidden)]
-pub unsafe fn set_local_roots(x: *mut crate::core::memory::CamlRootsBlock) {
+pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
     caml_local_roots = x
 }
 

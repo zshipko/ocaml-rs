@@ -100,10 +100,11 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let gen = quote! {
         #[no_mangle]
         pub extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value {
-            ::ocaml::caml_body!((#(#param_inner_values),*) {
+            ::ocaml::sys::caml_body!((#(#param_inner_values),*) {
                 #inner
                 #(#convert_params);*
-                inner(#param_names)
+                let res = inner(#param_names);
+                ::ocaml::ToValue::to_value(&res)
             })
         }
     };

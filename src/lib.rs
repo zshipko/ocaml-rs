@@ -7,13 +7,11 @@
 //!
 //! The following in Rust:
 //!
-//! ```norun
-//! caml!(ml_add_10(arg) {
-//!     caml_local!(x);
-//!     let n = arg.i32_val();
-//!     x = Value::i32(n + 10);
-//!     return x;
-//! });
+//! ```rust,no_run
+//! #[ocaml::func]
+//! pub fn ml_add_10(arg: isize) -> isize {
+//!     arg + 10
+//! };
 //! ```
 //!
 //! is equivalent to:
@@ -63,8 +61,8 @@
 //!
 //!
 
-/// The `core` module contains the low-level implementation of the OCaml runtime
-pub mod core;
+/// The `sys` module contains the low-level implementation of the OCaml runtime
+pub use ocaml_sys as sys;
 
 #[macro_use]
 pub mod macros;
@@ -80,43 +78,53 @@ pub mod value;
 #[cfg(feature = "derive")]
 pub use ocaml_fn_derive::ocaml_func as func;
 
-pub use crate::core::tag::{self, Tag};
 pub use crate::error::Error;
 pub use crate::named::named_value;
 pub use crate::runtime::*;
 pub use crate::types::{Array1, List};
 pub use crate::value::{FromValue, ToValue, Value};
 
+pub use sys::tag::{self, Tag};
+
 /// Allocate a new value with the given size and tag.
 pub fn alloc(n: usize, tag: Tag) -> Value {
-    caml_frame!(|x| {
-        x.0 = unsafe { core::alloc::caml_alloc(n, tag) };
+    Value(sys::caml_frame!(|x| {
+        x = unsafe { sys::alloc::caml_alloc(n, tag) };
         x
-    })
+    }))
 }
 
 /// Allocate a new tuple value
 pub fn alloc_tuple(n: usize) -> Value {
-    caml_frame!(|x| {
-        x.0 = unsafe { core::alloc::caml_alloc_tuple(n) };
+    Value(sys::caml_frame!(|x| {
+        x = unsafe { sys::alloc::caml_alloc_tuple(n) };
         x
-    })
+    }))
 }
 
 /// Allocate a new small value with the given size and tag
 pub fn alloc_small(n: usize, tag: Tag) -> Value {
-    caml_frame!(|x| {
-        x.0 = unsafe { core::alloc::caml_alloc_small(n, tag) };
+    Value(sys::caml_frame!(|x| {
+        x = unsafe { sys::alloc::caml_alloc_small(n, tag) };
         x
-    })
+    }))
 }
 
 /// Allocate a new value with a custom finalizer
-pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(core::Value)) -> Value {
-    caml_frame!(|x| {
-        x.0 = unsafe { core::alloc::caml_alloc_final(std::mem::size_of::<T>(), finalizer, 0, 1) };
-        let ptr = x.custom_ptr_val_mut::<T>();
-        unsafe { std::ptr::write(ptr, value) };
+pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(Value)) -> Value {
+    let x = Value(sys::caml_frame!(|x| {
+        x = unsafe {
+            sys::alloc::caml_alloc_final(
+                std::mem::size_of::<T>(),
+                std::mem::transmute(finalizer),
+                0,
+                1,
+            )
+        };
         x
-    })
+    }));
+
+    let ptr = x.custom_ptr_val_mut::<T>();
+    unsafe { std::ptr::write(ptr, value) };
+    x
 }

@@ -1,7 +1,7 @@
-use crate::caml_frame;
-use crate::core::bigarray;
-use crate::core::mlvalues;
-use crate::core::mlvalues::EMPTY_LIST;
+use crate::sys::bigarray;
+use crate::sys::caml_frame;
+use crate::sys::mlvalues;
+use crate::sys::mlvalues::EMPTY_LIST;
 
 use std::marker::PhantomData;
 use std::{mem, slice};
@@ -44,7 +44,7 @@ impl Default for List {
 impl List {
     /// Create a new OCaml list
     pub fn new() -> List {
-        List(caml_frame!(|x| { x }))
+        List(Value(caml_frame!(|x| { x })))
     }
 
     /// Returns the number of items in `self`
@@ -67,16 +67,16 @@ impl List {
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: Value) {
         let tmp = caml_frame!(|x, tmp| {
-            x.0 = (self.0).0;
-
-            let mut y = crate::alloc_small(2, 0);
-            y.store_field(0, v);
-            y.store_field(1, x);
-            tmp.0 = y.0;
-            tmp
+            x = (self.0).0;
+            unsafe {
+                tmp = crate::sys::alloc::caml_alloc_small(2, 0);
+                crate::sys::memory::store_field(tmp, 0, v.0);
+                crate::sys::memory::store_field(tmp, 1, x);
+                tmp
+            }
         });
 
-        self.0 = tmp;
+        self.0 = Value(tmp);
     }
 
     /// List head
@@ -172,7 +172,7 @@ impl<'a, T: BigarrayKind> Array1<'a, T> {
     /// contents of a slice.
     pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
         let x = caml_frame!(|x| {
-            x.0 = unsafe {
+            x = unsafe {
                 bigarray::caml_ba_alloc_dims(
                     T::kind() | bigarray::Managed::EXTERNAL as i32,
                     1,
@@ -182,14 +182,14 @@ impl<'a, T: BigarrayKind> Array1<'a, T> {
             };
             x
         });
-        Array1(x, PhantomData)
+        Array1(Value(x), PhantomData)
     }
 
     /// Create a new OCaml `Bigarray.Array1` with the given type and size
     pub fn create(n: Size) -> Array1<'a, T> {
         let x = caml_frame!(|x| {
             let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
-            x.0 = unsafe {
+            x = unsafe {
                 bigarray::caml_ba_alloc_dims(
                     T::kind() | bigarray::Managed::MANAGED as i32,
                     1,
@@ -199,7 +199,7 @@ impl<'a, T: BigarrayKind> Array1<'a, T> {
             };
             x
         });
-        Array1(x, PhantomData)
+        Array1(Value(x), PhantomData)
     }
 
     /// Returns the number of items in `self`

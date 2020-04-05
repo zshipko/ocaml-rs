@@ -14,11 +14,11 @@ macro_rules! caml_param {
     };
 
     ($($n:expr),*) => {
-        let mut caml_roots = $crate::core::memory::CamlRootsBlock::default();
+        let mut caml_roots = $crate::memory::CamlRootsBlock::default();
         #[allow(unused_unsafe)]
         unsafe {
-            caml_roots.next = $crate::core::state::local_roots();
-            $crate::core::state::set_local_roots(&mut caml_roots);
+            caml_roots.next = $crate::state::local_roots();
+            $crate::state::set_local_roots(&mut caml_roots);
         };
         caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
         $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
@@ -39,9 +39,9 @@ macro_rules! caml_param {
 macro_rules! caml_local {
     ($($local:ident),*) => {
         #[allow(unused_mut)]
-        $(let mut $local = $crate::Value::new($crate::core::mlvalues::UNIT);)*
+        $(let mut $local = $crate::mlvalues::UNIT;)*
         #[allow(unused_unsafe)]
-        $crate::caml_param!($($local.0),*);
+        $crate::caml_param!($($local),*);
     }
 }
 
@@ -51,11 +51,11 @@ macro_rules! caml_frame {
     (|$($local:ident),*| $code:block) => {
         {
             #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::core::state::local_roots() };
+            let caml_frame = unsafe { $crate::state::local_roots() };
             $crate::caml_local!($($local),*);
             let res = $code;
             #[allow(unused_unsafe)]
-            unsafe { $crate::core::state::set_local_roots(caml_frame) };
+            unsafe { $crate::state::set_local_roots(caml_frame) };
             res
         }
     };
@@ -66,17 +66,18 @@ macro_rules! caml_body {
     (($($param:expr),*) $code:block) => {
         {
             #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::core::state::local_roots() };
+            let caml_frame = unsafe { $crate::state::local_roots() };
             $crate::caml_param!($($param),*);
             let res = || $code;
             let res = res();
-            let res = ToValue::to_value(&res);
             #[allow(unused_unsafe)]
-            unsafe { $crate::core::state::set_local_roots(caml_frame) };
+            unsafe { $crate::state::set_local_roots(caml_frame) };
             res
         }
     }
 }
+
+pub const VERSION: &str = stringify!(include!(concat!(env!("OUT_DIR"), "version")));
 
 pub mod mlvalues;
 #[macro_use]

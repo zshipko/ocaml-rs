@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.9.3"
+version = "0.10.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -11,8 +11,16 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [dependencies]
+ocaml-sys = {path = "./sys"}
 ocaml-fn-derive = {path = "./derive", optional = true}
 
 [features]
 default = ["derive"]
 derive = ["ocaml-fn-derive"]
+
+[workspace]
+members = [
+  "derive",
+  "sys",
+  "example"
+]

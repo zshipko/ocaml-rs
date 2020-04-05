@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate ocaml;
-use ocaml::core::state;
+use ocaml::sys::state;
 use ocaml::{FromValue, ToValue, Value};
 
 #[ocaml::func]
@@ -13,7 +13,7 @@ pub fn ml_send_int(x: isize) -> isize {
 pub fn ml_send_two(v: Value, v2: Value) {
     unsafe {
         println!(
-            "local root addr: {:p} caml_local_roots: {:#?}, v: {:?}",
+            "local root addr: {:p} local_roots: {:#?}, v: {:?}",
             &state::local_roots(),
             state::local_roots(),
             v
@@ -28,7 +28,7 @@ pub fn ml_send_two(v: Value, v2: Value) {
 
 #[ocaml::func]
 pub fn ml_send_tuple(t: Value) -> Value {
-    caml_local!(dest);
+    local!(dest);
     let x = t.field(0).int_val();
     let y = t.field(1).int_val();
 
@@ -78,7 +78,7 @@ caml!(fn ml_send_first_variant(_unit) {
     return Value::variant(0, Some(2.0))
 });
 
-extern "C" fn finalizer(_value: ocaml::core::Value) {
+extern "C" fn finalizer(_value: Value) {
     println!("Finalizer");
 }
 
@@ -151,5 +151,5 @@ caml!(fn ml_make_array(length) {
 });
 
 caml!(fn ml_call(f, a) {
-    f.call_exn(a).unwrap()
+    f.call(a).unwrap()
 });

@@ -105,8 +105,8 @@ impl FromValue for bool {
 impl ToValue for String {
     fn to_value(&self) -> Value {
         unsafe {
-            let value = crate::core::alloc::caml_alloc_string(self.len());
-            let ptr = crate::core::mlvalues::string_val(value);
+            let value = crate::sys::alloc::caml_alloc_string(self.len());
+            let ptr = crate::sys::mlvalues::string_val(value);
             std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
             Value(value)
         }
@@ -115,8 +115,8 @@ impl ToValue for String {
 
 impl FromValue for String {
     fn from_value(value: Value) -> String {
-        let len = unsafe { crate::core::mlvalues::caml_string_length(value.0) };
-        let ptr = unsafe { crate::core::mlvalues::string_val(value.0) };
+        let len = unsafe { crate::sys::mlvalues::caml_string_length(value.0) };
+        let ptr = unsafe { crate::sys::mlvalues::string_val(value.0) };
         unsafe {
             let slice = ::std::slice::from_raw_parts(ptr, len);
             ::std::str::from_utf8(slice).expect("Invalid UTF-8").into()
@@ -132,8 +132,8 @@ impl ToValue for () {
 
 impl FromValue for &str {
     fn from_value(value: Value) -> Self {
-        let len = unsafe { crate::core::mlvalues::caml_string_length(value.0) };
-        let ptr = unsafe { crate::core::mlvalues::string_val(value.0) };
+        let len = unsafe { crate::sys::mlvalues::caml_string_length(value.0) };
+        let ptr = unsafe { crate::sys::mlvalues::string_val(value.0) };
         unsafe {
             let slice = ::std::slice::from_raw_parts(ptr, len);
             ::std::str::from_utf8(slice).expect("Invalid UTF-8")
@@ -144,8 +144,8 @@ impl FromValue for &str {
 impl ToValue for str {
     fn to_value(&self) -> Value {
         unsafe {
-            let value = crate::core::alloc::caml_alloc_string(self.len());
-            let ptr = crate::core::mlvalues::string_val(value);
+            let value = crate::sys::alloc::caml_alloc_string(self.len());
+            let ptr = crate::sys::mlvalues::string_val(value);
             std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
             Value(value)
         }
@@ -169,10 +169,10 @@ impl<V: ToValue> ToValue for Vec<V> {
 impl<V: FromValue> FromValue for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
         unsafe {
-            let len = crate::core::mlvalues::caml_array_length(v.0);
+            let len = crate::sys::mlvalues::caml_array_length(v.0);
             let mut dst = Vec::with_capacity(len);
             for i in 0..len {
-                dst.push(V::from_value(Value(*crate::core::mlvalues::field(v.0, i))))
+                dst.push(V::from_value(Value(*crate::sys::mlvalues::field(v.0, i))))
             }
             dst
         }

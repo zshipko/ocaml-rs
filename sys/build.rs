@@ -1,9 +1,14 @@
 fn run() -> std::io::Result<()> {
     let cmd = std::env::var("OCAML").unwrap_or("ocaml".to_string());
+    let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let output = std::process::Command::new(cmd)
         .arg("version.ml")
-        .arg(std::env::var("OUT_DIR").unwrap())
+        .arg(&out_dir)
         .output()?;
+
+    let mut f = std::fs::File::create(out_dir.join("version")).unwrap();
+    std::io::Write::write_all(&mut f, &output.stdout).unwrap();
+
     let output = String::from_utf8(output.stdout).unwrap();
     let split: Vec<&str> = output.split('.').collect();
 

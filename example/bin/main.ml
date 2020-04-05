@@ -39,6 +39,7 @@ let _ =
       assert (a = i && b = 2 * i && c = 3 * i);
     done;
 
+
     for i = 1 to 10 do
       (* new_array *)
       let arr = new_array i in
@@ -46,12 +47,14 @@ let _ =
       assert (arr = [| 0; i; 2 * i; 3 * i; 4 * i |]);
     done;
 
+
     for i = 1 to 10 do
       (* new list *)
       let lst = new_list i in
       List.iter (Printf.printf "%d\n") lst;
       assert (lst = [0; i; 2 * i; 3 * i; 4 * i]);
     done;
+
 
     (* testing_callback *)
     testing_callback 5 10;

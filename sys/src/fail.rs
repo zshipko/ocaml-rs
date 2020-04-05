@@ -1,4 +1,4 @@
-use crate::core::mlvalues::Value;
+use crate::mlvalues::Value;
 
 extern "C" {
     pub fn caml_raise(bucket: Value);
