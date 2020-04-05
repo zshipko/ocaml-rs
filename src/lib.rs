@@ -60,13 +60,17 @@
 //!
 //! For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example)
 //! or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
+//!
+//!
+
+/// The `core` module contains the low-level implementation of the OCaml runtime
+pub mod core;
 
 #[macro_use]
 pub mod macros;
 
 pub mod conv;
-/// The `core` module contains the low-level implementation of the OCaml runtime
-pub mod core;
+
 mod error;
 mod named;
 pub mod runtime;

@@ -1,3 +1,4 @@
+use crate::caml_frame;
 use crate::core;
 use crate::error::Error;
 use crate::runtime::hash_variant;
@@ -9,7 +10,7 @@ use std::{mem, ptr};
 pub type Size = core::mlvalues::Size;
 
 /// Value wraps the native OCaml `value` type
-#[derive(Debug)]
+#[derive(Debug, Copy)]
 #[repr(transparent)]
 pub struct Value(pub core::mlvalues::Value);
 
@@ -70,7 +71,7 @@ impl Value {
     /// Allocate a new value with the given size and tag.
     pub fn alloc(n: usize, tag: Tag) -> Value {
         caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc(n, tag.into()) };
+            x.0 = unsafe { core::alloc::caml_alloc(n, tag) };
             x
         })
     }
@@ -86,7 +87,7 @@ impl Value {
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
         caml_frame!(|x| {
-            x.0 = unsafe { core::alloc::caml_alloc_small(n, tag.into()) };
+            x.0 = unsafe { core::alloc::caml_alloc_small(n, tag) };
             x
         })
     }
@@ -114,27 +115,22 @@ impl Value {
     }
 
     /// Get array length
-    pub fn array_length(&self) -> usize {
+    pub fn array_length(self) -> usize {
         unsafe { core::mlvalues::caml_array_length(self.0) }
     }
 
     /// See caml_register_global_root
-    pub fn register_global_root(&self) {
+    pub fn register_global_root(self) {
         unsafe { core::memory::caml_register_global_root(&self.0) }
     }
 
     /// Set caml_remove_global_root
-    pub fn remove_global_root(&self) {
+    pub fn remove_global_root(self) {
         unsafe { core::memory::caml_remove_global_root(&self.0) }
     }
 
-    /// Get the underlying OCaml `value`
-    pub fn value(&self) -> core::mlvalues::Value {
-        self.0
-    }
-
     /// Get the tag for the underlying OCaml `value`
-    pub fn tag(&self) -> Tag {
+    pub fn tag(self) -> Tag {
         unsafe { core::mlvalues::tag_val(self.0) }
     }
 
@@ -224,18 +220,18 @@ impl Value {
 
     /// Check if a Value is an integer or block, returning true if
     /// the underlying value is a block
-    pub fn is_block(&self) -> bool {
+    pub fn is_block(self) -> bool {
         core::mlvalues::is_block(self.0)
     }
 
     /// Check if a Value is an integer or block, returning true if
     /// the underlying value is an integer
-    pub fn is_long(&self) -> bool {
+    pub fn is_long(self) -> bool {
         core::mlvalues::is_long(self.0)
     }
 
     /// Get index of underlying OCaml block value
-    pub fn field(&self, i: Size) -> Value {
+    pub fn field(self, i: Size) -> Value {
         unsafe { Value::new(*core::mlvalues::field(self.0, i)) }
     }
 
@@ -245,52 +241,52 @@ impl Value {
     }
 
     /// Convert an OCaml `int` to `isize`
-    pub fn int_val(&self) -> isize {
+    pub fn int_val(self) -> isize {
         core::mlvalues::int_val(self.0)
     }
 
     /// Convert an OCaml `Float` to `f64`
-    pub fn f64_val(&self) -> f64 {
+    pub fn f64_val(self) -> f64 {
         unsafe { *self.ptr_val::<f64>() }
     }
 
     /// Convert an OCaml `Int32` to `i32`
-    pub fn int32_val(&self) -> i32 {
+    pub fn int32_val(self) -> i32 {
         unsafe { *self.custom_ptr_val::<i32>() }
     }
 
     /// Convert an OCaml `Int64` to `i64`
-    pub fn int64_val(&self) -> i64 {
+    pub fn int64_val(self) -> i64 {
         unsafe { *self.custom_ptr_val::<i64>() }
     }
 
     /// Convert an OCaml `Nativeint` to `isize`
-    pub fn nativeint_val(&self) -> isize {
+    pub fn nativeint_val(self) -> isize {
         unsafe { *self.custom_ptr_val::<isize>() }
     }
 
     /// Get pointer to data stored in an OCaml custom value
-    pub fn custom_ptr_val<T>(&self) -> *const T {
+    pub fn custom_ptr_val<T>(self) -> *const T {
         unsafe { core::mlvalues::field(self.0, 1) as *const T }
     }
 
     /// Get mutable pointer to data stored in an OCaml custom value
-    pub fn custom_ptr_val_mut<T>(&self) -> *mut T {
+    pub fn custom_ptr_val_mut<T>(self) -> *mut T {
         unsafe { core::mlvalues::field(self.0, 1) as *mut T }
     }
 
     /// Get pointer to data stored in an opaque value
-    pub fn ptr_val<T>(&self) -> *const T {
+    pub fn ptr_val<T>(self) -> *const T {
         self.0 as *const T
     }
 
     /// Get mutable pointer to data stored in an opaque value
-    pub fn mut_ptr_val<T>(&self) -> *mut T {
+    pub fn mut_ptr_val<T>(self) -> *mut T {
         self.0 as *mut T
     }
 
     /// Call a closure with a single argument
-    pub fn call<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
+    pub fn call<A: ToValue>(self, arg: A) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -302,7 +298,7 @@ impl Value {
     }
 
     /// Call a closure with two arguments
-    pub fn call2<A: ToValue, B: ToValue>(&self, arg1: A, arg2: B) -> Result<Value, Error> {
+    pub fn call2<A: ToValue, B: ToValue>(self, arg1: A, arg2: B) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -317,7 +313,7 @@ impl Value {
 
     /// Call a closure with three arguments
     pub fn call3<A: ToValue, B: ToValue, C: ToValue>(
-        &self,
+        self,
         arg1: A,
         arg2: B,
         arg3: C,
@@ -340,7 +336,7 @@ impl Value {
     }
 
     /// Call a closure with `n` arguments
-    pub fn call_n<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
+    pub fn call_n<A: AsRef<[Value]>>(self, args: A) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -357,7 +353,7 @@ impl Value {
     }
 
     /// Call a closure with a single argument, returning an exception value
-    pub fn call_exn<A: ToValue>(&self, arg: A) -> Result<Value, Error> {
+    pub fn call_exn<A: ToValue>(self, arg: A) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -376,7 +372,7 @@ impl Value {
     }
 
     /// Call a closure with two arguments, returning an exception value
-    pub fn call2_exn<A: ToValue, B: ToValue>(&self, arg1: A, arg2: B) -> Result<Value, Error> {
+    pub fn call2_exn<A: ToValue, B: ToValue>(self, arg1: A, arg2: B) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -398,7 +394,7 @@ impl Value {
 
     /// Call a closure with three arguments, returning an exception value
     pub fn call3_exn<A: ToValue, B: ToValue, C: ToValue>(
-        &self,
+        self,
         arg1: A,
         arg2: B,
         arg3: C,
@@ -428,7 +424,7 @@ impl Value {
     }
 
     /// Call a closure with `n` arguments, returning an exception value
-    pub fn call_n_exn<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
+    pub fn call_n_exn<A: AsRef<[Value]>>(self, args: A) -> Result<Value, Error> {
         if self.tag() != tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -461,19 +457,17 @@ impl Value {
     }
 
     /// Determines if the current value is an exception
-    pub fn is_exception_result(&self) -> bool {
-        crate::core::callback::is_exception_result(self.value())
+    pub fn is_exception_result(self) -> bool {
+        crate::core::callback::is_exception_result(self.0)
     }
 
     /// Get object method
-    pub fn method<S: AsRef<str>>(&self, name: S) -> Option<Value> {
+    pub fn method<S: AsRef<str>>(self, name: S) -> Option<Value> {
         if self.tag() != tag::OBJECT {
             return None;
         }
 
-        let v = unsafe {
-            core::mlvalues::caml_get_public_method(self.value(), hash_variant(name).value())
-        };
+        let v = unsafe { core::mlvalues::caml_get_public_method(self.0, hash_variant(name).0) };
 
         if v == 0 {
             return None;
@@ -485,9 +479,9 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
-    pub fn deep_clone_to_ocaml(&self) -> Self {
+    pub fn deep_clone_to_ocaml(self) -> Self {
         if self.is_long() {
-            return self.clone();
+            return self;
         }
         unsafe {
             let wosize = core::mlvalues::wosize_val(self.0);
@@ -511,9 +505,9 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
-    pub fn deep_clone_to_rust(&self) -> Self {
+    pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
-            return self.clone();
+            return self;
         }
         unsafe {
             if core::mlvalues::tag_val(self.0) >= tag::NO_SCAN {

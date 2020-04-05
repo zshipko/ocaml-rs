@@ -1,3 +1,4 @@
+use crate::caml_frame;
 use crate::core::alloc;
 use crate::core::bigarray;
 use crate::core::mlvalues;
@@ -126,12 +127,12 @@ impl Array {
 
     /// Check if Array contains only doubles
     pub fn is_double_array(&self) -> bool {
-        unsafe { alloc::caml_is_double_array(self.0.value()) == 1 }
+        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
     }
 
     /// Array length
     pub fn len(&self) -> Size {
-        unsafe { mlvalues::caml_array_length(self.0.value()) }
+        unsafe { mlvalues::caml_array_length((self.0).0) }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -241,7 +242,7 @@ impl List {
     /// Returns the number of items in `self`
     pub fn len(&self) -> Size {
         let mut length = 0;
-        let mut tmp = self.0.clone();
+        let mut tmp = self.0;
         while tmp.0 != EMPTY_LIST {
             tmp = tmp.field(1);
             length += 1;
@@ -260,9 +261,10 @@ impl List {
         let tmp = caml_frame!(|x, tmp| {
             x.0 = (self.0).0;
 
-            tmp = Value::alloc_small(2, 0);
-            tmp.store_field(0, v);
-            tmp.store_field(1, x);
+            let mut y = Value::alloc_small(2, 0);
+            y.store_field(0, v);
+            y.store_field(1, x);
+            tmp.0 = y.0;
             tmp
         });
 
@@ -286,7 +288,7 @@ impl List {
     /// List as vector
     pub fn to_vec(&self) -> Vec<Value> {
         let mut vec: Vec<Value> = Vec::new();
-        let mut tmp = self.0.clone();
+        let mut tmp = self.0;
         while tmp.0 != EMPTY_LIST {
             let val = tmp.field(0);
             vec.push(val);
@@ -363,7 +365,7 @@ impl Str {
 
     /// String length
     pub fn len(&self) -> Size {
-        unsafe { mlvalues::caml_string_length(self.0.value()) }
+        unsafe { mlvalues::caml_string_length((self.0).0) }
     }
 
     /// Check if a string is empty

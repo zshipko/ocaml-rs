@@ -28,8 +28,8 @@ pub fn failwith<S: AsRef<str>>(arg: S) {
     unsafe { core::fail::caml_failwith(s.as_ptr()) }
 }
 
-pub fn failwith_value(msg: &Value) {
-    unsafe { core::fail::caml_failwith_value(msg.value()) }
+pub fn failwith_value(msg: Value) {
+    unsafe { core::fail::caml_failwith_value(msg.0) }
 }
 
 pub fn invalid_argument<S: AsRef<str>>(arg: S) {
@@ -37,25 +37,25 @@ pub fn invalid_argument<S: AsRef<str>>(arg: S) {
     unsafe { core::fail::caml_invalid_argument(s.as_ptr()) }
 }
 
-pub fn invalid_argument_value(msg: &Value) {
-    unsafe { core::fail::caml_invalid_argument_value(msg.value()) }
+pub fn invalid_argument_value(msg: Value) {
+    unsafe { core::fail::caml_invalid_argument_value(msg.0) }
 }
 
-pub fn raise(bucket: &Value) {
-    unsafe { core::fail::caml_raise(bucket.value()) }
+pub fn raise(bucket: Value) {
+    unsafe { core::fail::caml_raise(bucket.0) }
 }
 
-pub fn raise_constant(tag: &Value) {
-    unsafe { core::fail::caml_raise_constant(tag.value()) }
+pub fn raise_constant(tag: Value) {
+    unsafe { core::fail::caml_raise_constant(tag.0) }
 }
 
-pub fn raise_with_arg(tag: &Value, arg: &Value) {
-    unsafe { core::fail::caml_raise_with_arg(tag.value(), arg.value()) }
+pub fn raise_with_arg(tag: Value, arg: Value) {
+    unsafe { core::fail::caml_raise_with_arg(tag.0, arg.0) }
 }
 
-pub fn raise_with_string<S: AsRef<str>>(tag: &Value, msg: S) {
+pub fn raise_with_string<S: AsRef<str>>(tag: Value, msg: S) {
     let s = CString::new(msg.as_ref()).unwrap();
-    unsafe { core::fail::caml_raise_with_string(tag.value(), s.as_ptr()) }
+    unsafe { core::fail::caml_raise_with_string(tag.0, s.as_ptr()) }
 }
 
 pub fn raise_out_of_memory() {
@@ -66,8 +66,8 @@ pub fn raise_stack_overflow() {
     unsafe { core::fail::caml_raise_stack_overflow() }
 }
 
-pub fn raise_sys_error(arg1: &Value) {
-    unsafe { core::fail::caml_raise_sys_error(arg1.value()) }
+pub fn raise_sys_error(arg1: Value) {
+    unsafe { core::fail::caml_raise_sys_error(arg1.0) }
 }
 
 pub fn raise_end_of_file() {
