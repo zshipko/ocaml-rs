@@ -9,7 +9,7 @@
 //!
 //! ```rust,no_run
 //! #[ocaml::func]
-//! pub fn ml_add_10(arg: isize) -> isize {
+//! pub fn ml_add_10(arg: ocaml::Int) -> ocaml::Int {
 //!     arg + 10
 //! };
 //! ```
@@ -32,7 +32,7 @@
 //!
 //! ```rust,no_run
 //! #[ocaml::func]
-//! pub fn build_tuple(i: isize) -> (isize, isize, isize) {
+//! pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 //!     (i + 1, i + 2, i + 3)
 //! }
 //!
@@ -83,7 +83,7 @@ pub use crate::named::named_value;
 pub use crate::runtime::*;
 pub use crate::types::Array1;
 pub use crate::value::{FromValue, ToValue, Value};
-
+pub use sys::mlvalues::{Intnat as Int, Uintnat as Uint};
 pub use sys::tag::{self, Tag};
 
 /// Allocate a new value with the given size and tag.

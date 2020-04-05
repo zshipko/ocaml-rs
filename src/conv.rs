@@ -38,6 +38,9 @@ macro_rules! value_f {
     }
 }
 
+value_i!(i8, u8, i16, u16, crate::Int, crate::Uint);
+value_f!(f32, f64);
+
 impl ToValue for i64 {
     fn to_value(&self) -> crate::Value {
         Value::int64(*self)
@@ -143,10 +146,6 @@ tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L
 
 tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19);
 tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19, U: 20);
-
-// i32, u32, i64, u64,
-value_i!(i8, u8, i16, u16, isize, usize);
-value_f!(f32, f64);
 
 impl ToValue for bool {
     fn to_value(&self) -> Value {

@@ -18,7 +18,7 @@ Works with OCaml versions `4.06.0` and up
 
 ```rust
 #[ocaml::func]
-pub fn build_tuple(i: isize) -> (isize, isize, isize) {
+pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
     (i + 1, i + 2, i + 3)
 };
 
@@ -45,3 +45,24 @@ external average: float array -> float = "average"
 ```
 
 For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
+
+### Type conversion
+
+| Rust type | OCaml type |
+| --------- | ---------- |
+| `()`      | `unit`     |
+| `isize`   | `int`      |
+| `usize`   | `int`      |
+| `i8`      | `int`      |
+| `u8`      | `int`      |
+| `i16`     | `int`      |
+| `u16`     | `int`      |
+| `i32`     | `int32`    |
+| `u32`     | `int32`    |
+| `i64`     | `int64`    |
+| `u64`     | `int64`    |
+| `f32`     | `float`    |
+| `f64`     | `float`    |
+| `tuple`   | `tuple`    |
+| `Vec`     | `array`    |
+| `str`     | `string`   |
