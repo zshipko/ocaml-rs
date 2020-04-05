@@ -12,7 +12,7 @@ caml!(ml_send_int(v){
 });
 
 caml!(ml_send_two(v, v2) {
-    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &state::local_roots(), state::local_roots(), v.value());
+    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &state::local_roots(), state::local_roots(), v);
     let tag: u8 = v2.tag().into();
     println!("string tag: {}", tag);
     let x = v.int_val();
