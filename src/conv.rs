@@ -261,3 +261,22 @@ impl<'a> FromValue for &'a [Value] {
         unsafe { as_slice(v) }
     }
 }
+
+impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
+    fn to_value(&self) -> Value {
+        match self {
+            Ok(x) => x.to_value(),
+            Err(e) => {
+                let s = format!("{:?}", e);
+                crate::failwith(s);
+                Value::unit()
+            }
+        }
+    }
+}
+
+impl<T: FromValue, E> FromValue for Result<T, E> {
+    fn from_value(value: Value) -> Result<T, E> {
+        Ok(T::from_value(value))
+    }
+}

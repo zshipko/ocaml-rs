@@ -30,23 +30,23 @@
 //!
 //! Here are a few more examples...
 //!
-//! ```norun
-//! caml!(build_tuple(i) {
-//!     let i = i.val_i32();
-//!     Tuple::from(&[i + 1, i + 2, i + 3])
-//! });
+//! ```rust,no_run
+//! #[ocaml::func]
+//! pub fn build_tuple(i: isize) -> (isize, isize, isize) {
+//!     (i + 1, i + 2, i + 3)
+//! }
 //!
-//! caml!(average(arr) {
-//!     let arr: Vec<f64> = Array::from(arr);
-//!     let len = arr.len();
-//!     let sum = 0f64;
+//! #[ocaml::func]
+//! pub fn average(arr: ocaml::Value) -> Result<f64, ocaml::Error> {
+//!     let len = ocaml::array::len(arr);
+//!     let mut sum = 0f64;
 //!
 //!     for i in 0..len {
-//!         sum += arr[i];
+//!         sum += ocaml::array::get_double(arr, i)?;
 //!     }
 //!
-//!     Value::f64(sum / len as f64)
-//! });
+//!     Ok(sum / len as f64)
+//! }
 //! ```
 //!
 //! In OCaml the stubs for these functions looks like this:
@@ -249,7 +249,7 @@ pub mod array {
     }
 
     /// Get a value from a double array without checking if the array is actually a double array
-    unsafe fn get_double_unchecked(value: Value, i: usize) -> f64 {
+    pub unsafe fn get_double_unchecked(value: Value, i: usize) -> f64 {
         *value.ptr_val::<f64>().add(i)
     }
 
@@ -266,14 +266,14 @@ pub mod array {
     /// Get array index
     pub fn get<T: FromValue>(value: Value, i: usize) -> Result<T, Error> {
         if i < len(value) {
-            Ok(get_unchecked::<T>(value, i))
+            Ok(unsafe { get_unchecked::<T>(value, i) })
         } else {
             Err(Error::OutOfBounds)
         }
     }
 
     /// Get array index without bounds checking
-    pub fn get_unchecked<T: FromValue>(value: Value, i: usize) -> T {
+    pub unsafe fn get_unchecked<T: FromValue>(value: Value, i: usize) -> T {
         T::from_value(value.field(i))
     }
 }
