@@ -264,6 +264,7 @@ pub mod array {
     }
 
     /// Get a value from a double array without checking if the array is actually a double array
+    #[allow(clippy::missing_safety_doc)]
     pub unsafe fn get_double_unchecked(value: Value, i: usize) -> f64 {
         *value.ptr_val::<f64>().add(i)
     }
@@ -288,6 +289,7 @@ pub mod array {
     }
 
     /// Get array index without bounds checking
+    #[allow(clippy::missing_safety_doc)]
     pub unsafe fn get_unchecked<T: FromValue>(value: Value, i: usize) -> T {
         T::from_value(value.field(i))
     }

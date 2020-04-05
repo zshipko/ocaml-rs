@@ -89,15 +89,25 @@ impl FromValue for u32 {
     }
 }
 
+struct Incr(usize);
+
+impl Incr {
+    fn get(&mut self) -> usize {
+        let i = self.0;
+        self.0 = i + 1;
+        i
+    }
+}
+
 macro_rules! tuple_impl {
     ($($t:ident: $n:tt),*) => {
         impl<$($t: FromValue),*> FromValue for ($($t,)*) {
             fn from_value(v: crate::Value) -> ($($t,)*) {
-                let mut i = 0;
+                let mut i = Incr(0);
                 #[allow(unused)]
                 (
                     $(
-                        {let x = $t::from_value(v.field(i)); i += 1; x},
+                        $t::from_value(v.field(i.get())),
                     )*
                 )
             }
