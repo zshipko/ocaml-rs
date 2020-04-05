@@ -77,6 +77,7 @@ pub mod runtime;
 mod types;
 pub mod value;
 
+#[cfg(feature = "derive")]
 pub use ocaml_fn_derive::ocaml_func as func;
 
 pub use crate::core::tag::{self, Tag};

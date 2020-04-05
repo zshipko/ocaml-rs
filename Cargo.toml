@@ -11,4 +11,8 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [dependencies]
-ocaml-fn-derive = {path = "./derive"}
+ocaml-fn-derive = {path = "./derive", optional = true}
+
+[features]
+default = ["derive"]
+derive = ["ocaml-fn-derive"]
