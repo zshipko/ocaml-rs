@@ -25,14 +25,6 @@ macro_rules! caml {
 }
 
 #[macro_export]
-/// Create an OCaml tuple
-macro_rules! tuple {
-    ($($x:expr),*) => {{
-        array!($($x),*)
-    }}
-}
-
-#[macro_export]
 /// Create an OCaml array
 macro_rules! array {
     ($($x:expr),*) => {{
@@ -44,9 +36,9 @@ macro_rules! array {
 /// Create an OCaml list
 macro_rules! list {
     ($($x:expr),*) => {{
-        let mut l = $crate::List::new();
+        let mut l = $crate::list::empty();
         for i in (&[$($x),*]).into_iter().rev() {
-            l.push_hd($crate::ToValue::to_value(i));
+            $crate::list::push_hd(&mut l, $crate::ToValue::to_value(i));
         }
         l
     }};

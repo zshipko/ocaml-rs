@@ -19,11 +19,13 @@ Works with OCaml versions `4.06.0` and up
 ```rust
 use ocaml::*;
 
-caml!(build_tuple(i) {
-    let i = i.val_i32();
-    Tuple::from(&[i + 1, i + 2, i + 3])
-});
+#[ocaml::func]
+pub fn build_tuple(i: isize) -> (isize, isize, isize) {
+  (i + 1, i + 2, i + 3)
+}
 
+#[ocaml::func]
+pub fn average(arr: Value) -> f64 {
 caml!(average(arr) {
     let arr = Array::from(arr);
     let len = arr.len();
@@ -33,8 +35,8 @@ caml!(average(arr) {
         sum += arr.get_double_unchecked(i);
     }
 
-    Value::f64(sum / len as f64)
-})
+    sum / len as f64
+}
 ```
 
 This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn).

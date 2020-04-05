@@ -1,110 +1,11 @@
 use crate::sys::bigarray;
 use crate::sys::caml_frame;
 use crate::sys::mlvalues;
-use crate::sys::mlvalues::EMPTY_LIST;
 
 use std::marker::PhantomData;
 use std::{mem, slice};
 
 use crate::value::{Size, Value};
-
-/// OCaml list type
-pub struct List(Value);
-
-impl From<List> for Value {
-    fn from(t: List) -> Value {
-        t.0
-    }
-}
-
-impl From<Value> for List {
-    fn from(v: Value) -> List {
-        List(v)
-    }
-}
-
-/*impl<'a, V: crate::ToValue> From<&'a [V]> for List {
-    fn from(a: &'a [V]) -> List {
-        crate::ToValue::to_value(a)
-    }
-}*/
-
-impl crate::ToValue for List {
-    fn to_value(&self) -> Value {
-        self.0.to_value()
-    }
-}
-
-impl Default for List {
-    fn default() -> Self {
-        List::new()
-    }
-}
-
-impl List {
-    /// Create a new OCaml list
-    pub fn new() -> List {
-        List(Value(caml_frame!(|x| { x })))
-    }
-
-    /// Returns the number of items in `self`
-    pub fn len(&self) -> Size {
-        let mut length = 0;
-        let mut tmp = self.0;
-        while tmp.0 != EMPTY_LIST {
-            tmp = tmp.field(1);
-            length += 1;
-        }
-        length
-    }
-
-    /// Returns true when the list is empty
-    pub fn is_empty(&self) -> bool {
-        let item: usize = (self.0).0;
-        item == EMPTY_LIST
-    }
-
-    /// Add an element to the front of the list
-    pub fn push_hd(&mut self, v: Value) {
-        let tmp = caml_frame!(|x, tmp| {
-            x = (self.0).0;
-            unsafe {
-                tmp = crate::sys::alloc::caml_alloc_small(2, 0);
-                crate::sys::memory::store_field(tmp, 0, v.0);
-                crate::sys::memory::store_field(tmp, 1, x);
-                tmp
-            }
-        });
-
-        self.0 = Value(tmp);
-    }
-
-    /// List head
-    pub fn hd(&self) -> Option<Value> {
-        if self.is_empty() {
-            return None;
-        }
-
-        Some(self.0.field(0))
-    }
-
-    /// List tail
-    pub fn tl(&self) -> Value {
-        self.0.field(1)
-    }
-
-    /// List as vector
-    pub fn to_vec(&self) -> Vec<Value> {
-        let mut vec: Vec<Value> = Vec::new();
-        let mut tmp = self.0;
-        while tmp.0 != EMPTY_LIST {
-            let val = tmp.field(0);
-            vec.push(val);
-            tmp = tmp.field(1);
-        }
-        vec
-    }
-}
 
 pub trait BigarrayKind {
     type T;
@@ -136,19 +37,13 @@ make_kind!(char, CHAR);
 /// OCaml Bigarray.Array1 type
 pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
 
-impl<'a, T: BigarrayKind> From<Array1<'a, T>> for Value {
-    fn from(t: Array1<T>) -> Value {
-        t.0
+impl<'a, T> crate::FromValue for Array1<'a, T> {
+    fn from_value(value: Value) -> Array1<'a, T> {
+        Array1(value, PhantomData)
     }
 }
 
-impl<'a, T: BigarrayKind> From<Value> for Array1<'a, T> {
-    fn from(v: Value) -> Array1<'a, T> {
-        Array1(v, PhantomData)
-    }
-}
-
-impl<'a, T: BigarrayKind> crate::ToValue for Array1<'a, T> {
+impl<'a, T> crate::ToValue for Array1<'a, T> {
     fn to_value(&self) -> Value {
         self.0.to_value()
     }

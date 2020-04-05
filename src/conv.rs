@@ -86,6 +86,64 @@ impl FromValue for u32 {
     }
 }
 
+macro_rules! tuple_impl {
+    ($($t:ident: $n:tt),*) => {
+        impl<$($t: FromValue),*> FromValue for ($($t,)*) {
+            fn from_value(v: crate::Value) -> ($($t,)*) {
+                let mut i = 0;
+                #[allow(unused)]
+                (
+                    $(
+                        {let x = $t::from_value(v.field(i)); i += 1; x},
+                    )*
+                )
+            }
+        }
+
+        impl<$($t: ToValue),*> ToValue for ($($t,)*) {
+            fn to_value(&self) -> crate::Value {
+                #[allow(unused)]
+                let mut len = 0;
+                $(
+                    #[allow(unused)]
+                    {
+                        len = $n;
+                    }
+                )*
+
+                let mut v = $crate::alloc(len, 0);
+                $(
+                    v.store_field($n, $t::to_value(&self.$n));
+                )*
+                v
+            }
+        }
+    };
+}
+
+tuple_impl!(A: 0);
+tuple_impl!(A: 0, B: 1);
+tuple_impl!(A: 0, B: 1, C: 2);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18);
+
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19);
+tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19, U: 20);
+
 // i32, u32, i64, u64,
 value_i!(i8, u8, i16, u16, isize, usize);
 value_f!(f32, f64);
@@ -176,5 +234,30 @@ impl<V: FromValue> FromValue for Vec<V> {
             }
             dst
         }
+    }
+}
+
+impl<V: ToValue> ToValue for [V] {
+    fn to_value(&self) -> Value {
+        let len = self.len();
+        let mut arr = crate::alloc(len, 0);
+        for (i, v) in self.iter().enumerate() {
+            arr.store_field(i, v.to_value());
+        }
+
+        arr
+    }
+}
+
+unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
+    ::std::slice::from_raw_parts(
+        (value.0 as *const Value).offset(-1),
+        crate::sys::mlvalues::wosize_val(value.0) + 1,
+    )
+}
+
+impl<'a> FromValue for &'a [Value] {
+    fn from_value(v: Value) -> &'a [Value] {
+        unsafe { as_slice(v) }
     }
 }

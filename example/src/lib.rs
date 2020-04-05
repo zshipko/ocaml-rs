@@ -29,8 +29,8 @@ pub fn ml_send_two(v: Value, v2: Value) {
 #[ocaml::func]
 pub fn ml_send_tuple(t: Value) -> Value {
     local!(dest);
-    let x = t.field(0).int_val();
-    let y = t.field(1).int_val();
+    let x: isize = t.field(0);
+    let y: isize = t.field(1);
 
     dest = (x + y).to_value();
     dest
@@ -42,8 +42,8 @@ pub fn ml_send_int64(x: i64) -> i64 {
 }
 
 #[ocaml::func]
-pub fn ml_new_tuple(i: isize) -> Value {
-    tuple!(i, i * 2, i * 3)
+pub fn ml_new_tuple(i: isize) -> (isize, isize, isize) {
+    (i, i * 2, i * 3)
 }
 
 caml!(fn ml_new_array(i) {
@@ -65,10 +65,10 @@ caml!(fn ml_testing_callback(a, b) {
     return Value::unit();
 });
 
-caml!(fn ml_raise_not_found(_unit){
+#[ocaml::func]
+pub fn ml_raise_not_found() {
     ocaml::raise_not_found();
-    return Value::unit();
-});
+}
 
 caml!(fn ml_send_float(f){
     return (f.f64_val() * 2.0).to_value();
@@ -109,17 +109,17 @@ caml!(fn ml_string_test(s){
 
 caml!(fn ml_make_list(length) {
     let length = length.int_val();
-    let mut list = ocaml::List::new();
+    let mut list = ocaml::list::empty();
     let mut sum_list = 0;
     for v in 0..length {
         sum_list += v;
-        list.push_hd(Value::int(v));
+        ocaml::list::push_hd(&mut list, Value::int(v));
     }
 
     // list to vec
-    let vec: Vec<Value> = list.to_vec();
+    let vec: Vec<Value> = ocaml::list::to_vec(list);
     println!("vec.len: {:?}", vec.len());
-    assert_eq!(list.len(), vec.len());
+    assert_eq!(ocaml::list::len(list), vec.len());
     let mut sum_vec = 0;
     for i in 0..vec.len() {
         let v = vec[i].int_val();
@@ -127,7 +127,7 @@ caml!(fn ml_make_list(length) {
     }
 
     // check heads
-    let list_hd = list.hd().unwrap().int_val();
+    let list_hd: isize = ocaml::list::hd(list).unwrap();
     let vec_hd = vec[0].int_val();
     println!("list_hd: {:?} vs. vec_hd: {:?}", list_hd, vec_hd);
     assert_eq!(list_hd, vec_hd);

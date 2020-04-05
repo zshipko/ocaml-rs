@@ -24,39 +24,22 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
 
     let rust_args = &item_fn.sig.inputs;
 
-    let ocaml_args: Vec<_> = item_fn
+    if rust_args.len() > 5 {
+        panic!("OCaml functions must have 5 or fewer arguments");
+    }
+
+    let mut ocaml_args: Vec<_> = item_fn
         .sig
         .inputs
         .iter()
         .map(|arg| match arg {
             syn::FnArg::Receiver(_) => panic!("OCaml functions cannot take a self argument"),
-            syn::FnArg::Typed(t) => {
-                let ident = match t.pat.as_ref() {
-                    syn::Pat::Ident(ident) => ident,
-                    _ => panic!("OCaml argument must have a name"),
-                };
-                quote! { mut #ident: ::ocaml::Value }
-            }
+            syn::FnArg::Typed(t) => match t.pat.as_ref() {
+                syn::Pat::Ident(ident) => quote! { mut #ident: ::ocaml::Value },
+                _ => quote! { _: ::ocaml::Value },
+            },
         })
         .collect();
-
-    let body = &item_fn.block;
-
-    let inner = if returns {
-        quote! {
-            #[inline(always)]
-            fn inner(#rust_args) -> #rust_return_type {
-                #body
-            }
-        }
-    } else {
-        quote! {
-            #[inline(always)]
-            fn inner(#rust_args)  {
-                #body
-            }
-        }
-    };
 
     let param_inner_values: Vec<_> = rust_args
         .iter()
@@ -96,6 +79,28 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
             _ => panic!("OCaml function parameters must be named"),
         })
         .collect();
+
+    if ocaml_args.len() == 0 {
+        ocaml_args.push(quote! { _: ::ocaml::Value});
+    }
+
+    let body = &item_fn.block;
+
+    let inner = if returns {
+        quote! {
+            #[inline(always)]
+            fn inner(#rust_args) -> #rust_return_type {
+                #body
+            }
+        }
+    } else {
+        quote! {
+            #[inline(always)]
+            fn inner(#rust_args)  {
+                #body
+            }
+        }
+    };
 
     let gen = quote! {
         #[no_mangle]

@@ -10,25 +10,13 @@ use std::{mem, ptr};
 pub type Size = sys::mlvalues::Size;
 
 /// Value wraps the native OCaml `value` type
-#[derive(Debug, Copy)]
+#[derive(Debug, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
 pub struct Value(pub sys::mlvalues::Value);
 
 impl Clone for Value {
     fn clone(&self) -> Value {
         Value::new(self.0)
-    }
-}
-
-impl From<Value> for sys::mlvalues::Value {
-    fn from(v: Value) -> sys::mlvalues::Value {
-        v.0
-    }
-}
-
-impl From<sys::mlvalues::Value> for Value {
-    fn from(v: sys::mlvalues::Value) -> Value {
-        Value::new(v)
     }
 }
 
@@ -199,8 +187,8 @@ impl Value {
     }
 
     /// Get index of underlying OCaml block value
-    pub fn field(self, i: Size) -> Value {
-        unsafe { Value::new(*sys::mlvalues::field(self.0, i)) }
+    pub fn field<T: FromValue>(self, i: Size) -> T {
+        unsafe { T::from_value(Value(*sys::mlvalues::field(self.0, i))) }
     }
 
     /// Set index of underlying OCaml block value
