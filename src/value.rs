@@ -9,7 +9,8 @@ use std::{mem, ptr};
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::mlvalues::Size;
 
-/// Value wraps the native OCaml `value` type
+/// Value wraps the native OCaml `value` type transparently, this means it has the
+/// same representation as an `ocaml_sys::mlvalues::Value`
 #[derive(Debug, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
 pub struct Value(pub sys::mlvalues::Value);
@@ -34,26 +35,27 @@ pub trait FromValue {
 
 impl ToValue for Value {
     fn to_value(&self) -> Value {
-        Value::new(self.0)
+        Value(self.0)
     }
 }
 
 impl<'a> ToValue for &'a Value {
     fn to_value(&self) -> Value {
-        Value::new(self.0)
+        Value(self.0)
     }
 }
 
 impl FromValue for Value {
+    #[inline]
     fn from_value(v: Value) -> Value {
         v
     }
 }
 
-pub const TRUE: Value = Value(sys::mlvalues::val_int(1));
-pub const FALSE: Value = Value(sys::mlvalues::val_int(0));
-pub const NONE: Value = Value(sys::mlvalues::val_int(0));
-pub const UNIT: Value = Value(sys::mlvalues::UNIT);
+const TRUE: Value = Value(sys::mlvalues::val_int(1));
+const FALSE: Value = Value(sys::mlvalues::val_int(0));
+const NONE: Value = Value(sys::mlvalues::val_int(0));
+const UNIT: Value = Value(sys::mlvalues::UNIT);
 
 impl Value {
     /// Set custom pointer value
@@ -64,7 +66,7 @@ impl Value {
 
     /// Create a new Value from an existing OCaml `value`
     #[inline]
-    pub fn new(v: sys::mlvalues::Value) -> Value {
+    pub const fn new(v: sys::mlvalues::Value) -> Value {
         Value(v)
     }
 
@@ -109,14 +111,10 @@ impl Value {
     }
 
     /// OCaml None value
-    pub fn none() -> Value {
-        NONE
-    }
+    pub const NONE: Value = NONE;
 
     /// OCaml Unit value
-    pub fn unit() -> Value {
-        UNIT
-    }
+    pub const UNIT: Value = UNIT;
 
     /// Create a variant value
     pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {

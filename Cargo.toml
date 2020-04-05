@@ -12,11 +12,11 @@ edition = "2018"
 
 [dependencies]
 ocaml-sys = {path = "./sys"}
-ocaml-fn-derive = {path = "./derive", optional = true}
+ocaml-derive = {path = "./derive", optional = true}
 
 [features]
 default = ["derive"]
-derive = ["ocaml-fn-derive"]
+derive = ["ocaml-derive"]
 
 [workspace]
 members = [

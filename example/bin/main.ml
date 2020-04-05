@@ -97,8 +97,13 @@ let _ =
     assert (string_test "wow" = "testing");
 
     let l = make_list 250000 in
+    let next = ref 0 in
     Printf.printf "make_list: %d\n" (List.length l);
     assert (List.length l = 250000);
+    assert (List.for_all (fun i ->
+      let r = i = !next in
+      next := i + 1;
+      r) l);
 
     for _ = 1 to 3 do
       let l = make_array 100000 in
@@ -109,6 +114,15 @@ let _ =
     done;
 
     assert (call int_of_string "123" = 123);
+
+    let r = {
+      foo = "testing";
+      bar = 123.;
+    } in
+
+    let r = format_my_record r in
+    assert (r = "MyRecord { foo: \"testing\", bar: 123.0 }");
+    print_endline r;
 
     print_endline "cleanup";
     Gc.full_major ();

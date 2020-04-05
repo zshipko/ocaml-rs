@@ -183,7 +183,26 @@ impl FromValue for String {
 
 impl ToValue for () {
     fn to_value(&self) -> Value {
-        Value::unit()
+        Value::UNIT
+    }
+}
+
+impl<T: FromValue> FromValue for Option<T> {
+    fn from_value(value: Value) -> Option<T> {
+        if value == Value::NONE {
+            return None;
+        }
+
+        Some(value.field(0))
+    }
+}
+
+impl<T: ToValue> ToValue for Option<T> {
+    fn to_value(&self) -> Value {
+        match self {
+            Some(x) => Value::some(x.to_value()),
+            None => Value::NONE,
+        }
     }
 }
 
@@ -198,7 +217,29 @@ impl FromValue for &str {
     }
 }
 
-impl ToValue for str {
+impl ToValue for &str {
+    fn to_value(&self) -> Value {
+        unsafe {
+            let value = crate::sys::alloc::caml_alloc_string(self.len());
+            let ptr = crate::sys::mlvalues::string_val(value);
+            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+            Value(value)
+        }
+    }
+}
+
+impl FromValue for &mut str {
+    fn from_value(value: Value) -> Self {
+        let len = unsafe { crate::sys::mlvalues::caml_string_length(value.0) };
+        let ptr = unsafe { crate::sys::mlvalues::string_val(value.0) };
+        unsafe {
+            let slice = ::std::slice::from_raw_parts_mut(ptr, len);
+            ::std::str::from_utf8_mut(slice).expect("Invalid UTF-8")
+        }
+    }
+}
+
+impl ToValue for &mut str {
     fn to_value(&self) -> Value {
         unsafe {
             let value = crate::sys::alloc::caml_alloc_string(self.len());
@@ -268,7 +309,7 @@ impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
             Err(e) => {
                 let s = format!("{:?}", e);
                 crate::failwith(s);
-                Value::unit()
+                Value::UNIT
             }
         }
     }
@@ -277,5 +318,60 @@ impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
 impl<T: FromValue, E> FromValue for Result<T, E> {
     fn from_value(value: Value) -> Result<T, E> {
         Ok(T::from_value(value))
+    }
+}
+
+impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BTreeMap<K, V> {
+    fn from_value(v: Value) -> std::collections::BTreeMap<K, V> {
+        let mut dest = std::collections::BTreeMap::new();
+
+        let mut tmp = v;
+        while tmp.0 != crate::sys::mlvalues::EMPTY_LIST {
+            let (k, v) = tmp.field(0);
+            dest.insert(k, v);
+            tmp = tmp.field(1);
+        }
+
+        dest
+    }
+}
+
+impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V> {
+    fn to_value(&self) -> Value {
+        let mut list = crate::list::empty();
+
+        self.iter().rev().for_each(|(k, v)| {
+            let k = k.to_value();
+            let v = v.to_value();
+            crate::list::push_hd(&mut list, (k, v));
+        });
+        list
+    }
+}
+
+impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
+    fn from_value(v: Value) -> std::collections::LinkedList<T> {
+        let mut dest = std::collections::LinkedList::new();
+
+        let mut tmp = v;
+        while tmp.0 != crate::sys::mlvalues::EMPTY_LIST {
+            let t = tmp.field(0);
+            dest.push_front(t);
+            tmp = tmp.field(1);
+        }
+
+        dest
+    }
+}
+
+impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
+    fn to_value(&self) -> Value {
+        let mut list = crate::list::empty();
+
+        self.iter().rev().for_each(|t| {
+            let t = t.to_value();
+            crate::list::push_hd(&mut list, t);
+        });
+        list
     }
 }

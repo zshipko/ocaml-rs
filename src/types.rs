@@ -45,17 +45,21 @@ impl<'a, T> crate::FromValue for Array1<'a, T> {
 
 impl<'a, T> crate::ToValue for Array1<'a, T> {
     fn to_value(&self) -> Value {
-        self.0.to_value()
+        self.0
     }
 }
 
-impl<'a, T: 'a + Copy + BigarrayKind> From<&'a [T]> for Array1<'a, T> {
-    fn from(x: &[T]) -> Array1<'a, T> {
+impl<'a, T: 'a + Copy + BigarrayKind> From<&'a mut [T]> for Array1<'a, T> {
+    fn from(x: &'a mut [T]) -> Array1<'a, T> {
+        Array1::of_slice(x)
+    }
+}
+
+impl<'a, T: 'a + Copy + BigarrayKind> From<Vec<T>> for Array1<'a, T> {
+    fn from(x: Vec<T>) -> Array1<'a, T> {
         let mut arr = Array1::<T>::create(x.len());
         let data = arr.data_mut();
-        for (n, i) in x.iter().enumerate() {
-            data[n] = *i;
-        }
+        data.copy_from_slice(x.as_slice());
         arr
     }
 }

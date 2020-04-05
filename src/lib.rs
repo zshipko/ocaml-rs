@@ -28,9 +28,24 @@
 //!
 //! using the traditional C bindings.
 //!
+//! When constructing an `ocaml::func` any type that implements `FromValue` can be used as a
+//! parameter and any type that implements `ToValue` can be used as a return type
+//!
 //! Here are a few more examples...
 //!
 //! ```rust,no_run
+//! // Automatically derive `ToValue` and `FromValue`
+//! #[derive(ocaml::ToValue, ocaml::FromValue)]
+//! struct Example<'a> {
+//!     name: &'a str,
+//!     i: ocaml::Int,
+//! }
+//!
+//! #[ocaml::func]
+//! pub fn struct_example(e: Example) -> ocaml::Int {
+//!     e.i + 1
+//! }
+//!
 //! #[ocaml::func]
 //! pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 //!     (i + 1, i + 2, i + 3)
@@ -64,6 +79,9 @@
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
 
+#[cfg(feature = "derive")]
+pub use ocaml_derive::{ocaml_bare_func as bare_func, ocaml_func as func, FromValue, ToValue};
+
 #[macro_use]
 pub mod macros;
 
@@ -74,9 +92,6 @@ mod named;
 pub mod runtime;
 mod types;
 pub mod value;
-
-#[cfg(feature = "derive")]
-pub use ocaml_fn_derive::ocaml_func as func;
 
 pub use crate::error::Error;
 pub use crate::named::named_value;

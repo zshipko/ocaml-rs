@@ -6,6 +6,11 @@ type testing =
 
 type something
 
+type my_record = {
+  foo: string;
+  bar: float;
+}
+
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
@@ -24,3 +29,4 @@ external string_test : string -> string = "ml_string_test"
 external make_list: int -> int list = "ml_make_list"
 external make_array: int -> int array = "ml_make_array"
 external call: ('a -> 'b) -> 'a -> 'b = "ml_call"
+external format_my_record: my_record -> string = "ml_format_my_record"

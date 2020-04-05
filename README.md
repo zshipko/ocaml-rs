@@ -17,10 +17,22 @@ Works with OCaml versions `4.06.0` and up
 ### Examples:
 
 ```rust
+// Automatically derive `ToValue` and `FromValue`
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+struct Example<'a> {
+    name: &'a str,
+    i: ocaml::Int,
+}
+
+#[ocaml::func]
+pub fn struct_example(e: Example) -> ocaml::Int {
+    e.i + 1
+}
+
 #[ocaml::func]
 pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
     (i + 1, i + 2, i + 3)
-};
+}
 
 #[ocaml::func]
 pub fn average(arr: ocaml::Value) -> Result<f64, ocaml::Error> {
@@ -32,7 +44,7 @@ pub fn average(arr: ocaml::Value) -> Result<f64, ocaml::Error> {
     }
 
     Ok(sum / len as f64)
-};
+}
 ```
 
 This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn).
@@ -48,21 +60,28 @@ For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/maste
 
 ### Type conversion
 
-| Rust type | OCaml type |
-| --------- | ---------- |
-| `()`      | `unit`     |
-| `isize`   | `int`      |
-| `usize`   | `int`      |
-| `i8`      | `int`      |
-| `u8`      | `int`      |
-| `i16`     | `int`      |
-| `u16`     | `int`      |
-| `i32`     | `int32`    |
-| `u32`     | `int32`    |
-| `i64`     | `int64`    |
-| `u64`     | `int64`    |
-| `f32`     | `float`    |
-| `f64`     | `float`    |
-| `tuple`   | `tuple`    |
-| `Vec`     | `array`    |
-| `str`     | `string`   |
+This chart contains the mapping between Rust and OCaml types used by `ocaml::func`
+
+| Rust type        | OCaml type      |
+| ---------------- | --------------- |
+| `()`             | `unit`          |
+| `isize`          | `int`           |
+| `usize`          | `int`           |
+| `i8`             | `int`           |
+| `u8`             | `int`           |
+| `i16`            | `int`           |
+| `u16`            | `int`           |
+| `i32`            | `int32`         |
+| `u32`            | `int32`         |
+| `i64`            | `int64`         |
+| `u64`            | `int64`         |
+| `f32`            | `float`         |
+| `f64`            | `float`         |
+| `str`            | `string`        |
+| `String`         | `string`        |
+| `Option<'a>`     | `'a option`     |
+| `(A, B, C)`      | `'a * 'b * 'c`  |
+| `Vec<A>`         | `'a array`      |
+| `BTreeMap<A, B>` | `('a, 'b) list` |
+| `LinkedList<A>`  | `'a list`       |
+

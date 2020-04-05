@@ -3,14 +3,16 @@ extern crate ocaml;
 use ocaml::sys::state;
 use ocaml::{FromValue, ToValue, Value};
 
+use std::collections::LinkedList;
+
 #[ocaml::func]
 pub fn ml_send_int(x: isize) -> isize {
     println!("send_int  0x{:x}", x);
     0xbeef
 }
 
-#[ocaml::func]
-pub fn ml_send_two(v: Value, v2: Value) {
+#[ocaml::bare_func]
+pub fn ml_send_two(v: Value, v2: Value) -> Value {
     unsafe {
         println!(
             "local root addr: {:p} local_roots: {:#?}, v: {:?}",
@@ -24,6 +26,7 @@ pub fn ml_send_two(v: Value, v2: Value) {
     let x = v.int_val();
     let string: &str = FromValue::from_value(v2);
     println!("got  0x{:x}, {}", x, string);
+    Value::UNIT
 }
 
 #[ocaml::func]
@@ -42,79 +45,98 @@ pub fn ml_send_int64(x: i64) -> i64 {
 }
 
 #[ocaml::func]
-pub fn ml_new_tuple(i: isize) -> (isize, isize, isize) {
+pub fn ml_new_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
     (i, i * 2, i * 3)
 }
 
-caml!(fn ml_new_array(i) {
-    let i = i.int_val();
-    let x: Vec<isize> = (0..5).map(|x| x * i).collect();
-    return x.to_value();
-});
+#[ocaml::func]
+pub fn ml_new_array(i: ocaml::Int) -> Vec<ocaml::Int> {
+    (0..5).map(|x| x * i).collect()
+}
 
-caml!(fn ml_new_list(i){
-    let i = i.int_val();
-    return list!(0 * i, 1 * i, 2 * i, 3 * i, 4 * i);
-});
+#[ocaml::func]
+pub fn ml_new_list(i: ocaml::Int) -> LinkedList<ocaml::Int> {
+    let mut l = LinkedList::new();
+    l.push_back(0 * i);
+    l.push_back(1 * i);
+    l.push_back(2 * i);
+    l.push_back(3 * i);
+    l.push_back(4 * i);
+    l
+}
 
-caml!(fn ml_testing_callback(a, b) {
-    let f = ocaml::named_value("print_testing")
-        .expect("print_testing not registered");
+#[ocaml::func]
+pub fn ml_testing_callback(a: Value, b: Value) {
+    let f = ocaml::named_value("print_testing").expect("print_testing not registered");
 
     f.call_n(&[a, b]).unwrap();
-    return Value::unit();
-});
+}
 
 #[ocaml::func]
 pub fn ml_raise_not_found() {
-    ocaml::raise_not_found();
+    ocaml::raise_not_found()
 }
 
-caml!(fn ml_send_float(f){
-    return (f.f64_val() * 2.0).to_value();
-});
+#[ocaml::func]
+pub fn ml_send_float(f: f64) -> f64 {
+    f * 2.0
+}
 
-caml!(fn ml_send_first_variant(_unit) {
-    return Value::variant(0, Some(2.0))
-});
+#[derive(ToValue, FromValue)]
+enum Testing {
+    First(f64),
+    Second(ocaml::Int),
+}
+
+#[ocaml::func]
+pub fn ml_send_first_variant() -> Testing {
+    Testing::First(2.0)
+}
 
 extern "C" fn finalizer(_value: Value) {
     println!("Finalizer");
 }
 
-caml!(fn ml_custom_value(_unit) {
-    return ocaml::alloc_custom(1, finalizer);
-});
+#[ocaml::func]
+pub fn ml_custom_value() -> Value {
+    ocaml::alloc_custom(1, finalizer)
+}
 
-caml!(fn ml_array1(len) {
-    let mut ba = ocaml::Array1::<u8>::create(len.int_val() as usize);
+#[ocaml::func]
+pub fn ml_array1(len: ocaml::Int) -> ocaml::Array1<'static, u8> {
+    let mut ba = ocaml::Array1::<u8>::create(len as usize);
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
     }
     return ba;
-});
+}
 
-caml!(fn ml_array2(s) {
-    let mut a: &str = FromValue::from_value(s);
-    let ba = ocaml::Array1::from(a.as_bytes()); // Note: `b` is still owned by OCaml since it was passed as a parameter
+#[ocaml::func]
+pub fn ml_array2(s: &mut str) -> ocaml::Array1<u8> {
+    let ba = unsafe {
+        ocaml::Array1::from(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
+    };
     return ba;
-});
+}
 
-caml!(fn ml_string_test(s){
+#[ocaml::func]
+pub fn ml_string_test(s: Value) -> &'static str {
     let st: &str = FromValue::from_value(s);
     println!("{:?}", s.tag());
     println!("{} {}", st.len(), st);
-    ToValue::to_value("testing")
-});
+    "testing"
+}
 
-caml!(fn ml_make_list(length) {
-    let length = length.int_val();
-    let mut list = ocaml::list::empty();
+#[ocaml::func]
+pub fn ml_make_list(length: ocaml::Int) -> Value {
     let mut sum_list = 0;
+    let mut list = LinkedList::new();
     for v in 0..length {
         sum_list += v;
-        ocaml::list::push_hd(&mut list, Value::int(v));
+        list.push_back(v);
     }
+
+    let list = list.to_value();
 
     // list to vec
     let vec: Vec<Value> = ocaml::list::to_vec(list);
@@ -138,18 +160,30 @@ caml!(fn ml_make_list(length) {
     assert_ne!(0, sum_vec);
     assert_eq!(sum_list, sum_vec);
 
-    return list;
-});
+    list
+}
 
-caml!(fn ml_make_array(length) {
-    let length = length.int_val() as usize;
-    let mut value = ocaml::alloc(length, 0);
+#[ocaml::func]
+pub fn ml_make_array(length: ocaml::Int) -> Value {
+    let mut value = ocaml::alloc(length as usize, 0);
     for v in 0..length {
-        value.store_field(v, Value::int(v as isize));
+        value.store_field(v as usize, Value::int(v));
     }
     value
-});
+}
 
-caml!(fn ml_call(f, a) {
-    f.call(a).unwrap()
-});
+#[ocaml::func]
+pub fn ml_call(f: Value, a: Value) -> Result<Value, ocaml::Error> {
+    f.call(a)
+}
+
+#[derive(ToValue, FromValue, Debug)]
+struct MyRecord<'a> {
+    foo: &'a str,
+    bar: f64,
+}
+
+#[ocaml::func]
+pub fn ml_format_my_record(s: MyRecord) -> String {
+    format!("{:?}", s)
+}
