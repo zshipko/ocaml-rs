@@ -23,6 +23,16 @@ impl<'a, T: ToValue + FromValue> FromValue for Pointer<'a, T> {
     }
 }
 
+impl<'a, T: ToValue + FromValue> Pointer<'a, T> {
+    pub fn new(ptr: *mut T, finalizer: Option<extern "C" fn(Value)>) -> Pointer<'a, T> {
+        let p = match finalizer {
+            Some(f) => Value::alloc_custom(ptr, f),
+            None => Value::ptr(ptr),
+        };
+        Self::from_value(p)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
