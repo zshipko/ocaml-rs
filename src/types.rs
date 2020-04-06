@@ -1,11 +1,192 @@
-use crate::sys::bigarray;
-use crate::sys::caml_frame;
-use crate::sys::mlvalues;
+use crate::sys::{alloc, bigarray, caml_frame, mlvalues};
+use crate::Error;
 
 use std::marker::PhantomData;
 use std::{mem, slice};
 
-use crate::value::{Size, Value};
+use crate::value::{FromValue, Size, ToValue, Value};
+
+#[derive(Clone, Copy, PartialEq)]
+#[repr(transparent)]
+pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
+
+impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
+    fn to_value(&self) -> Value {
+        self.0
+    }
+}
+
+impl<'a, T: ToValue + FromValue> FromValue for Array<'a, T> {
+    fn from_value(value: Value) -> Self {
+        Array(value, PhantomData)
+    }
+}
+
+impl<'a, T: ToValue + FromValue> Array<'a, T> {
+    pub fn alloc(n: usize) -> Array<'a, T> {
+        let x = caml_frame!(|x| {
+            x = unsafe { alloc::caml_alloc(n, 0) };
+            x
+        });
+        Array(Value(x), PhantomData)
+    }
+
+    /// Check if Array contains only doubles
+    pub fn is_double_array(&self) -> bool {
+        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
+    }
+
+    /// Array length
+    pub fn len(&self) -> usize {
+        unsafe { mlvalues::caml_array_length((self.0).0) }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Set value to double array
+    pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
+        if i >= self.len() {
+            return Err(Error::OutOfBounds);
+        }
+
+        if !self.is_double_array() {
+            return Err(Error::NotDoubleArray);
+        }
+
+        unsafe {
+            let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
+            *ptr = f;
+        };
+
+        Ok(())
+    }
+
+    /// Get a value from a double array
+    pub fn get_double(&self, i: usize) -> Result<f64, Error> {
+        if i >= self.len() {
+            return Err(Error::OutOfBounds);
+        }
+        if !self.is_double_array() {
+            return Err(Error::NotDoubleArray);
+        }
+
+        Ok(unsafe { self.get_double_unchecked(i) })
+    }
+
+    /// Get a value from a double array without checking if the array is actually a double array
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
+        *self.0.ptr_val::<f64>().add(i)
+    }
+
+    /// Set array index
+    pub fn set(&mut self, i: usize, v: T) -> Result<(), Error> {
+        if i >= self.len() {
+            return Err(Error::OutOfBounds);
+        }
+        self.0.store_field(i, v);
+        Ok(())
+    }
+
+    /// Get array index
+    pub fn get(&self, i: usize) -> Result<T, Error> {
+        if i >= self.len() {
+            return Err(Error::OutOfBounds);
+        }
+        Ok(unsafe { self.get_unchecked(i) })
+    }
+
+    /// Get array index without bounds checking
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn get_unchecked(&self, i: usize) -> T {
+        T::from_value(self.0.field(i))
+    }
+
+    /// List as `Vec`
+    pub fn to_vec(&self) -> Vec<T> {
+        FromValue::from_value(self.to_value())
+    }
+}
+
+pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
+
+impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
+    fn to_value(&self) -> Value {
+        self.0
+    }
+}
+
+impl<'a, T: ToValue + FromValue> FromValue for List<'a, T> {
+    fn from_value(value: Value) -> Self {
+        List(value, PhantomData)
+    }
+}
+
+impl<'a, T: ToValue + FromValue> List<'a, T> {
+    #[inline(always)]
+    pub fn empty() -> List<'a, T> {
+        List(Value::UNIT, PhantomData)
+    }
+
+    /// Returns the number of items in `self`
+    pub fn len(&self) -> usize {
+        let mut length = 0;
+        let mut tmp = self.0;
+        while tmp.0 != mlvalues::EMPTY_LIST {
+            tmp = tmp.field(1);
+            length += 1;
+        }
+        length
+    }
+
+    /// Add an element to the front of the list
+    pub fn push_hd(&mut self, v: T) {
+        let tmp = caml_frame!(|x, tmp| {
+            x = (self.0).0;
+            unsafe {
+                tmp = crate::sys::alloc::caml_alloc_small(2, 0);
+                crate::sys::memory::store_field(tmp, 0, v.to_value().0);
+                crate::sys::memory::store_field(tmp, 1, x);
+                tmp
+            }
+        });
+
+        (self.0).0 = tmp;
+    }
+
+    /// List head
+    pub fn hd(&self) -> Option<T> {
+        if self.0 == Self::empty().0 {
+            return None;
+        }
+
+        Some(self.0.field(0))
+    }
+
+    /// List tail
+    pub fn tl(&self) -> List<T> {
+        if self.0 == Self::empty().0 {
+            return Self::empty();
+        }
+
+        self.0.field(1)
+    }
+
+    /// List as `Vec`
+    pub fn to_vec(&self) -> Vec<T> {
+        let mut vec: Vec<T> = Vec::new();
+        let mut value = self.0;
+        let empty = Self::empty().0;
+        while value != empty {
+            let val = value.field(0);
+            vec.push(T::from_value(val));
+            value = value.field(1);
+        }
+        vec
+    }
+}
 
 pub trait BigarrayKind {
     type T;

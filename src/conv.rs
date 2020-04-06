@@ -124,7 +124,7 @@ macro_rules! tuple_impl {
                     }
                 )*
 
-                let mut v = $crate::alloc(len, 0);
+                let mut v = $crate::Value::alloc(len, 0);
                 $(
                     v.store_field($n, $t::to_value(&self.$n));
                 )*
@@ -264,7 +264,7 @@ impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(&self) -> Value {
         let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
         let len = tmp.len();
-        let mut arr = crate::alloc(len, 0);
+        let mut arr = Value::alloc(len, 0);
 
         for (i, v) in tmp.into_iter().enumerate() {
             arr.store_field(i, v);
@@ -290,7 +290,7 @@ impl<V: FromValue> FromValue for Vec<V> {
 impl<V: ToValue> ToValue for [V] {
     fn to_value(&self) -> Value {
         let len = self.len();
-        let mut arr = crate::alloc(len, 0);
+        let mut arr = Value::alloc(len, 0);
         for (i, v) in self.iter().enumerate() {
             arr.store_field(i, v.to_value());
         }
@@ -348,14 +348,15 @@ impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BTreeMap<
 
 impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V> {
     fn to_value(&self) -> Value {
-        let mut list = crate::list::empty();
+        let mut list = crate::List::empty();
 
         self.iter().rev().for_each(|(k, v)| {
             let k = k.to_value();
             let v = v.to_value();
-            crate::list::push_hd(&mut list, (k, v));
+            list.push_hd((k, v));
         });
-        list
+
+        list.to_value()
     }
 }
 
@@ -376,12 +377,12 @@ impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
 
 impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
     fn to_value(&self) -> Value {
-        let mut list = crate::list::empty();
+        let mut list = crate::List::empty();
 
         self.iter().rev().for_each(|t| {
             let t = t.to_value();
-            crate::list::push_hd(&mut list, t);
+            list.push_hd(t);
         });
-        list
+        list.to_value()
     }
 }

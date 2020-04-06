@@ -99,7 +99,7 @@ extern "C" fn finalizer(_value: Value) {
 
 #[ocaml::func]
 pub fn ml_custom_value() -> Value {
-    ocaml::alloc_custom(1, finalizer)
+    ocaml::Value::alloc_custom(1, finalizer)
 }
 
 #[ocaml::func]
@@ -128,29 +128,27 @@ pub fn ml_string_test(s: Value) -> &'static str {
 }
 
 #[ocaml::func]
-pub fn ml_make_list(length: ocaml::Int) -> Value {
+pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<'static, ocaml::Int> {
     let mut sum_list = 0;
-    let mut list = LinkedList::new();
+    let mut list = ocaml::List::empty();
     for v in 0..length {
         sum_list += v;
-        list.push_back(v);
+        list.push_hd(length - v - 1);
     }
 
-    let list = list.to_value();
-
     // list to vec
-    let vec: Vec<Value> = ocaml::list::to_vec(list);
+    let vec: Vec<ocaml::Int> = list.to_vec();
     println!("vec.len: {:?}", vec.len());
-    assert_eq!(ocaml::list::len(list), vec.len());
+    assert_eq!(list.len(), vec.len());
     let mut sum_vec = 0;
     for i in 0..vec.len() {
-        let v = vec[i].int_val();
+        let v = vec[i];
         sum_vec += v;
     }
 
     // check heads
-    let list_hd: isize = ocaml::list::hd(list).unwrap();
-    let vec_hd = vec[0].int_val();
+    let list_hd: ocaml::Int = list.hd().unwrap();
+    let vec_hd = vec[0];
     println!("list_hd: {:?} vs. vec_hd: {:?}", list_hd, vec_hd);
     assert_eq!(list_hd, vec_hd);
 
@@ -164,12 +162,14 @@ pub fn ml_make_list(length: ocaml::Int) -> Value {
 }
 
 #[ocaml::func]
-pub fn ml_make_array(length: ocaml::Int) -> Value {
-    let mut value = ocaml::alloc(length as usize, 0);
+pub fn ml_make_array(
+    length: ocaml::Int,
+) -> Result<ocaml::Array<'static, ocaml::Int>, ocaml::Error> {
+    let mut value = ocaml::Array::alloc(length as usize);
     for v in 0..length {
-        value.store_field(v as usize, Value::int(v));
+        value.set(v as usize, v)?;
     }
-    value
+    Ok(value)
 }
 
 #[ocaml::func]

@@ -76,7 +76,7 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         } else if attrs.floats {
             let mut idx = 0usize;
             let init = quote!(
-                value = ::ocaml::alloc(#arity, ::ocaml::tag::DOUBLE_ARRAY);
+                value = ::ocaml::Value::alloc(#arity, ::ocaml::tag::DOUBLE_ARRAY);
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
@@ -94,7 +94,7 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
                 .into_iter()
                 .map(|idx| quote!(value.store_field(#idx, ::ocaml::Value::UNIT)));
             let init = quote!(
-            value = ::ocaml::alloc(#arity, #tag);
+            value = ::ocaml::Value::alloc(#arity, #tag);
             #(#ghost);*;
             );
             variant.fold(init, |acc, b| {
