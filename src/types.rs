@@ -8,6 +8,23 @@ use crate::value::{FromValue, Size, ToValue, Value};
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
+pub struct Pointer<'a, T>(*mut T, PhantomData<&'a T>);
+
+impl<'a, T: ToValue + FromValue> ToValue for Pointer<'a, T> {
+    fn to_value(&self) -> Value {
+        Value::ptr(self.0)
+    }
+}
+
+impl<'a, T: ToValue + FromValue> FromValue for Pointer<'a, T> {
+    fn from_value(value: Value) -> Self {
+        let ptr = value.custom_ptr_val_mut();
+        Pointer(ptr, PhantomData)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+#[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
 impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
@@ -110,6 +127,8 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+#[repr(transparent)]
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
 impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
