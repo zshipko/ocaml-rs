@@ -31,6 +31,22 @@ impl<'a, T: ToValue + FromValue> Pointer<'a, T> {
         };
         Self::from_value(p)
     }
+
+    pub fn ptr(&self) -> *const T {
+        self.0
+    }
+
+    pub fn ptr_mut(&mut self) -> *const T {
+        self.0
+    }
+
+    pub fn data(&self) -> &T {
+        unsafe { &*self.0 }
+    }
+
+    pub fn data_mut(&mut self) -> &mut T {
+        unsafe { &mut *self.0 }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
