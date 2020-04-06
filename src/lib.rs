@@ -11,8 +11,9 @@
 //! }
 //!
 //! #[ocaml::func]
-//! pub fn struct_example(e: Example) -> ocaml::Int {
-//!     e.i + 1
+//! pub fn incr_example(mut e: Example) -> Example {
+//!     e.i += 1;
+//!     e
 //! }
 //!
 //! #[ocaml::func]
@@ -30,6 +31,14 @@
 //!
 //!     Ok(sum / arr.len() as f64)
 //! }
+//!
+//! // A `bare_func` must take `ocaml::Value` for every argument and return an `ocaml::Value`
+//! // these functions have minimal overhead compared to wrapping with `func`
+//! #[ocaml::bare_func]
+//! pub fn incr(value: ocaml::Value) -> ocaml::Value {
+//!     let i = value.int_val();
+//!     ocaml::Value::int(i + 1)
+//! }
 //! ```
 //!
 //! The OCaml stubs would look like this:
@@ -40,9 +49,10 @@
 //!     i: int;
 //! }
 //!
-//! external struct_example: example -> int = "struct_example"
+//! external incr_example: example -> example = "incr_example"
 //! external build_tuple: int -> int * int * int = "build_tuple"
 //! external average: float array -> float = "average"
+//! external incr: int -> int = "incr"
 //! ```
 //!
 

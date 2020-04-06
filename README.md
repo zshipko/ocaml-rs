@@ -14,7 +14,7 @@ Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 [https://docs.rs/ocaml](https://docs.rs/ocaml)
 
-### Examples:
+### Examples
 
 ```rust
 // Automatically derive `ToValue` and `FromValue`
@@ -24,9 +24,11 @@ struct Example<'a> {
     i: ocaml::Int,
 }
 
+
 #[ocaml::func]
-pub fn struct_example(e: Example) -> ocaml::Int {
-    e.i + 1
+pub fn incr_example(mut e: Example) -> Example {
+    e.i += 1;
+    e
 }
 
 #[ocaml::func]
@@ -35,19 +37,24 @@ pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 }
 
 #[ocaml::func]
-pub fn average(arr: ocaml::Value) -> Result<f64, ocaml::Error> {
-    let len = ocaml::array::len(arr);
+pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
     let mut sum = 0f64;
 
-    for i in 0..len {
-        sum += ocaml::array::get_double(arr, i)?;
+    for i in 0..arr.len() {
+        sum += arr.get_double(i)?;
     }
 
-    Ok(sum / len as f64)
+    Ok(sum / arr.len() as f64)
+}
+
+// A `bare_func` must take `ocaml::Value` for every argument and return an `ocaml::Value`
+// these functions have minimal overhead compared to wrapping with `func`
+#[ocaml::bare_func]
+pub fn incr(value: ocaml::Value) -> ocaml::Value {
+    let i = value.int_val();
+    Value::int(i + 1)
 }
 ```
-
-This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn).
 
 The OCaml stubs would look like this:
 
@@ -56,10 +63,11 @@ type example = {
     name: string;
     i: int;
 }
-//!
-external struct_example: example -> int = "struct_example"
+
+external incr_example: example -> example = "incr_example"
 external build_tuple: int -> int * int * int = "build_tuple"
 external average: float array -> float = "average"
+external incr: int -> int = "incr"
 ```
 
 For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
