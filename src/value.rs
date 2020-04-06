@@ -84,7 +84,7 @@ impl Value {
 
     /// Allocate a new value with a custom finalizer
     pub fn alloc_custom<T>(value: T, finalizer: extern "C" fn(Value)) -> Value {
-        let x = Value(sys::caml_frame!(|x| {
+        Value(sys::caml_frame!(|x| {
             x = unsafe {
                 sys::alloc::caml_alloc_final(
                     std::mem::size_of::<T>(),
@@ -93,12 +93,11 @@ impl Value {
                     1,
                 )
             };
-            x
-        }));
 
-        let ptr = x.custom_ptr_val_mut::<T>();
-        unsafe { std::ptr::write(ptr, value) };
-        x
+            let ptr = Value(x).custom_ptr_val_mut::<T>();
+            unsafe { std::ptr::replace(ptr, value) };
+            x
+        }))
     }
 
     /// Set custom pointer value

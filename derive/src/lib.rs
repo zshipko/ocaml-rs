@@ -147,7 +147,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         syn::ReturnType::Type(_, t) => (true, Some(t)),
     };
 
-    let rust_args = &item_fn.sig.inputs;
+    let rust_args: Vec<_> = item_fn.sig.inputs.iter().collect();
 
     if rust_args.len() > 5 {
         panic!("OCaml functions must have 5 or fewer arguments");
@@ -169,7 +169,10 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { mut #ident: ::ocaml::Value },
+            Some(ident) => {
+                let ident = &ident.ident;
+                quote! { mut #ident: ::ocaml::Value }
+            }
             None => quote! { _: ::ocaml::Value },
         })
         .collect();
@@ -178,7 +181,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .iter()
         .filter_map(|arg| match arg {
             Some(ident) => {
-                let ident = ident.ident.clone();
+                let ident = &ident.ident;
                 Some(quote! {#ident.0})
             }
             None => None,
@@ -198,7 +201,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let #ident = ::ocaml::FromValue::from_value(#ident); })
+                Some(quote! { let mut #ident = ::ocaml::FromValue::from_value(#ident); })
             }
             None => None,
         })
@@ -213,14 +216,14 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let inner = if returns {
         quote! {
             #[inline(always)]
-            fn inner(#rust_args) -> #rust_return_type {
+            fn inner(#(#rust_args),*) -> #rust_return_type {
                 #body
             }
         }
     } else {
         quote! {
             #[inline(always)]
-            fn inner(#rust_args)  {
+            fn inner(#(#rust_args),*)  {
                 #body
             }
         }

@@ -8,44 +8,46 @@ use crate::value::{FromValue, Size, ToValue, Value};
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Pointer<'a, T>(*mut T, PhantomData<&'a T>);
+pub struct Pointer<'a, T>(Value, PhantomData<&'a T>);
 
 impl<'a, T: ToValue + FromValue> ToValue for Pointer<'a, T> {
     fn to_value(&self) -> Value {
-        Value::ptr(self.0)
+        self.0
     }
 }
 
 impl<'a, T: ToValue + FromValue> FromValue for Pointer<'a, T> {
     fn from_value(value: Value) -> Self {
-        let ptr = value.custom_ptr_val_mut();
-        Pointer(ptr, PhantomData)
+        Pointer(value, PhantomData)
     }
 }
 
+extern "C" fn ignore(_: Value) {}
+
 impl<'a, T: ToValue + FromValue> Pointer<'a, T> {
-    pub fn new(ptr: *mut T, finalizer: Option<extern "C" fn(Value)>) -> Pointer<'a, T> {
+    pub fn new(ptr: T, finalizer: Option<extern "C" fn(Value)>) -> Pointer<'a, T> {
         let p = match finalizer {
             Some(f) => Value::alloc_custom(ptr, f),
-            None => Value::ptr(ptr),
+            None => Value::alloc_custom(ptr, ignore),
         };
+
         Self::from_value(p)
     }
 
     pub fn ptr(&self) -> *const T {
-        self.0
+        self.0.custom_ptr_val()
     }
 
-    pub fn ptr_mut(&mut self) -> *const T {
-        self.0
+    pub fn ptr_mut(&mut self) -> *mut T {
+        self.0.custom_ptr_val_mut()
     }
 
     pub fn data(&self) -> &T {
-        unsafe { &*self.0 }
+        unsafe { &*self.ptr() }
     }
 
     pub fn data_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.0 }
+        unsafe { &mut *self.ptr_mut() }
     }
 }
 
