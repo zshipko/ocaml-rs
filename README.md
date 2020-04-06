@@ -4,11 +4,11 @@
     <img src="https://img.shields.io/crates/v/ocaml.svg">
 </a>
 
-**Note:** `ocaml-rs` is still experimental, please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
-
-`ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was forked from [raml](https://crates.io/crates/raml) with the goal of creating a safer, high-level interface.
+`ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was forked from [raml](https://crates.io/crates/raml), but has been almost entirely re-written thanks to support from the [OCaml Software Foundation](http://ocaml-sf.org/).
 
 Works with OCaml versions `4.06.0` and up
+
+Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 ### Documentation
 
@@ -49,9 +49,15 @@ pub fn average(arr: ocaml::Value) -> Result<f64, ocaml::Error> {
 
 This will take care of all the OCaml garbage collector related bookkeeping (CAMLparam, CAMLlocal and CAMLreturn).
 
-In OCaml the stubs for these functions looks like this:
+The OCaml stubs would look like this:
 
 ```ocaml
+type example = {
+    name: string;
+    i: int;
+}
+//!
+external struct_example: example -> int = "struct_example"
 external build_tuple: int -> int * int * int = "build_tuple"
 external average: float array -> float = "average"
 ```

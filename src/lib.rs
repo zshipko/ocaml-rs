@@ -1,37 +1,6 @@
 //! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
-//! **Note:** `ocaml-rs` is still experimental, please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
-//!
-//! This crate will allow you to write OCaml C stubs directly in Rust. It is suggested to build
-//! a static library to link to when compiling your OCaml code.
-//!
-//! The following in Rust:
-//!
-//! ```rust,no_run
-//! #[ocaml::func]
-//! pub fn ml_add_10(arg: ocaml::Int) -> ocaml::Int {
-//!     arg + 10
-//! };
-//! ```
-//!
-//! is equivalent to:
-//!
-//! ```c
-//! value ml_add_10(value arg) {
-//!     CAMLparam1(arg);
-//!     CAMLlocal(result);
-//!     int n = Int_val(arg);
-//!     result = Val_int(arg + 10)
-//!     CAMLreturn(result);
-//! }
-//! ```
-//!
-//! using the traditional C bindings.
-//!
-//! When constructing an `ocaml::func` any type that implements `FromValue` can be used as a
-//! parameter and any type that implements `ToValue` can be used as a return type
-//!
-//! Here are a few more examples...
+//! ## Examples
 //!
 //! ```rust,no_run
 //! // Automatically derive `ToValue` and `FromValue`
@@ -63,16 +32,18 @@
 //! }
 //! ```
 //!
-//! In OCaml the stubs for these functions looks like this:
+//! The OCaml stubs would look like this:
 //!
 //! ```ocaml
+//! type example = {
+//!     name: string;
+//!     i: int;
+//! }
+//!
+//! external struct_example: example -> int = "struct_example"
 //! external build_tuple: int -> int * int * int = "build_tuple"
 //! external average: float array -> float = "average"
 //! ```
-//!
-//! For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example)
-//! or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
-//!
 //!
 
 /// The `sys` module contains the low-level implementation of the OCaml runtime
