@@ -13,7 +13,8 @@ build: [
 
 depends: [
   "ocaml"   {>= "4.03.0"}
-  "dune"    {build & >= "1.1.0"}
+  "dune"
+  "conf-rust-2018"
 ]
 synopsis: """
 Example program using ocaml-rs
