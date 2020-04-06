@@ -83,6 +83,8 @@ impl Value {
     }
 
     /// Allocate a new value with a custom finalizer
+    /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
+    /// responsible for managing the lifetime of the value on the Rust side
     pub fn alloc_custom<T>(value: *const T, finalizer: extern "C" fn(Value)) -> Value {
         Value(sys::caml_frame!(|x| {
             x = unsafe {

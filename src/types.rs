@@ -6,6 +6,7 @@ use std::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
+/// An opaque handle to a Rust value
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Opaque<'a, T>(Value, PhantomData<&'a T>);
@@ -25,6 +26,9 @@ impl<'a, T> FromValue for Opaque<'a, T> {
 extern "C" fn ignore(_: Value) {}
 
 impl<'a, T> Opaque<'a, T> {
+    /// Allocate a new value with an optional custom finalizer
+    /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
+    /// responsible for managing the lifetime of the value on the Rust side
     pub fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
         let p = match finalizer {
             Some(f) => Value::alloc_custom(ptr, f),
