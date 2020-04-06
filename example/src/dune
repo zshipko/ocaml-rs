@@ -6,7 +6,7 @@
     (action
         (progn
             (run cargo build -Z unstable-options --out-dir . --target-dir ../rust --release)
-            (run mv libexample_stubs.so ./dllexample_stubs.so)
+            (run sh -c "mv libexample_stubs.dylib ./dllexample_stubs.so || mv libexample_stubs.so ./dllexample_stubs.so")
         )
     )
 )
