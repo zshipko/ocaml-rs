@@ -92,7 +92,7 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             let mut idx = 0usize;
             let ghost = (0..arity)
                 .into_iter()
-                .map(|idx| quote!(value.store_field(#idx, ::ocaml::Value::UNIT)));
+                .map(|idx| quote!(value.store_field(#idx, ::ocaml::Value::unit())));
             let init = quote!(
             value = ::ocaml::Value::alloc(#arity, #tag);
             #(#ghost);*;

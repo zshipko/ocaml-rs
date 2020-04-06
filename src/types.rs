@@ -1,4 +1,4 @@
-use crate::sys::{alloc, bigarray, caml_frame, mlvalues};
+use crate::sys::{alloc, caml_frame, mlvalues};
 use crate::Error;
 
 use std::marker::PhantomData;
@@ -38,23 +38,28 @@ impl<'a, T> Opaque<'a, T> {
         Self::from_value(p)
     }
 
+    /// Access the underlying pointer
     pub fn ptr(&self) -> *const T {
         self.0.custom_ptr_val()
     }
 
+    /// Access the underlying mutable pointer
     pub fn ptr_mut(&mut self) -> *mut T {
         self.0.custom_ptr_val_mut()
     }
 
+    /// Access the underlying data
     pub fn data(&self) -> &T {
         unsafe { &*self.ptr() }
     }
 
+    /// Access the underlying inner data
     pub fn data_mut(&mut self) -> &mut T {
         unsafe { &mut *self.ptr_mut() }
     }
 }
 
+/// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
@@ -71,29 +76,7 @@ impl<'a, T: ToValue + FromValue> FromValue for Array<'a, T> {
     }
 }
 
-impl<'a, T: ToValue + FromValue> Array<'a, T> {
-    pub fn alloc(n: usize) -> Array<'a, T> {
-        let x = caml_frame!(|x| {
-            x = unsafe { alloc::caml_alloc(n, 0) };
-            x
-        });
-        Array(Value(x), PhantomData)
-    }
-
-    /// Check if Array contains only doubles
-    pub fn is_double_array(&self) -> bool {
-        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
-    }
-
-    /// Array length
-    pub fn len(&self) -> usize {
-        unsafe { mlvalues::caml_array_length((self.0).0) }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
+impl<'a> Array<'a, f64> {
     /// Set value to double array
     pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {
@@ -129,6 +112,33 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
         *self.0.ptr_val::<f64>().add(i)
     }
+}
+
+impl<'a, T: ToValue + FromValue> Array<'a, T> {
+    /// Allocate a new Array
+    pub fn alloc(n: usize) -> Array<'a, T> {
+        let x = caml_frame!(|x| {
+            x = unsafe { alloc::caml_alloc(n, 0) };
+            x
+        });
+        Array(Value(x), PhantomData)
+    }
+
+    /// Check if Array contains only doubles, if so `get_double` and `set_double` should be used
+    /// to access values
+    pub fn is_double_array(&self) -> bool {
+        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
+    }
+
+    /// Array length
+    pub fn len(&self) -> usize {
+        unsafe { mlvalues::caml_array_length((self.0).0) }
+    }
+
+    /// Returns true when the array is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     /// Set array index
     pub fn set(&mut self, i: usize, v: T) -> Result<(), Error> {
@@ -147,7 +157,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
         Ok(unsafe { self.get_unchecked(i) })
     }
 
-    /// Get array index without bounds checking
+    /// Get array index (without bounds checking)
     #[allow(clippy::missing_safety_doc)]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
         T::from_value(self.0.field(i))
@@ -159,6 +169,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     }
 }
 
+/// `List<A>` wraps an OCaml `'a list` without converting it to Rust
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
@@ -176,9 +187,10 @@ impl<'a, T: ToValue + FromValue> FromValue for List<'a, T> {
 }
 
 impl<'a, T: ToValue + FromValue> List<'a, T> {
+    /// An empty list
     #[inline(always)]
     pub fn empty() -> List<'a, T> {
-        List(Value::UNIT, PhantomData)
+        List(Value::unit(), PhantomData)
     }
 
     /// Returns the number of items in `self`
@@ -190,6 +202,10 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
             length += 1;
         }
         length
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0 == Self::empty().0
     }
 
     /// Add an element to the front of the list
@@ -209,7 +225,7 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
 
     /// List head
     pub fn hd(&self) -> Option<T> {
-        if self.0 == Self::empty().0 {
+        if self.is_empty() {
             return None;
         }
 
@@ -218,7 +234,7 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
 
     /// List tail
     pub fn tl(&self) -> List<T> {
-        if self.0 == Self::empty().0 {
+        if self.is_empty() {
             return Self::empty();
         }
 
@@ -239,120 +255,133 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
     }
 }
 
-pub trait BigarrayKind {
-    type T;
-    fn kind() -> i32;
-}
+/// `bigarray` contains wrappers for OCaml `Bigarray` values. These types can be used to transfer arrays of numbers between Rust
+/// and OCaml directly without the allocation overhead of an `array` or `list`
+pub mod bigarray {
+    use super::*;
+    use crate::sys::bigarray;
 
-macro_rules! make_kind {
-    ($t:ty, $k:ident) => {
-        impl BigarrayKind for $t {
-            type T = $t;
+    pub trait Kind {
+        type T: Clone + Copy;
+        fn kind() -> i32;
+    }
 
-            fn kind() -> i32 {
-                bigarray::Kind::$k as i32
+    macro_rules! make_kind {
+        ($t:ty, $k:ident) => {
+            impl Kind for $t {
+                type T = $t;
+
+                fn kind() -> i32 {
+                    bigarray::Kind::$k as i32
+                }
             }
+        };
+    }
+
+    make_kind!(u8, UINT8);
+    make_kind!(i8, SINT8);
+    make_kind!(u16, UINT16);
+    make_kind!(i16, SINT16);
+    make_kind!(f32, FLOAT32);
+    make_kind!(f64, FLOAT64);
+    make_kind!(i64, INT64);
+    make_kind!(i32, INT32);
+    make_kind!(char, CHAR);
+
+    /// OCaml Bigarray.Array1 type
+    pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
+
+    impl<'a, T> crate::FromValue for Array1<'a, T> {
+        fn from_value(value: Value) -> Array1<'a, T> {
+            Array1(value, PhantomData)
         }
-    };
-}
-
-make_kind!(u8, UINT8);
-make_kind!(i8, SINT8);
-make_kind!(u16, UINT16);
-make_kind!(i16, SINT16);
-make_kind!(f32, FLOAT32);
-make_kind!(f64, FLOAT64);
-make_kind!(i64, INT64);
-make_kind!(i32, INT32);
-make_kind!(char, CHAR);
-
-/// OCaml Bigarray.Array1 type
-pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
-
-impl<'a, T> crate::FromValue for Array1<'a, T> {
-    fn from_value(value: Value) -> Array1<'a, T> {
-        Array1(value, PhantomData)
-    }
-}
-
-impl<'a, T> crate::ToValue for Array1<'a, T> {
-    fn to_value(&self) -> Value {
-        self.0
-    }
-}
-
-impl<'a, T: 'a + Copy + BigarrayKind> From<&'a mut [T]> for Array1<'a, T> {
-    fn from(x: &'a mut [T]) -> Array1<'a, T> {
-        Array1::of_slice(x)
-    }
-}
-
-impl<'a, T: 'a + Copy + BigarrayKind> From<Vec<T>> for Array1<'a, T> {
-    fn from(x: Vec<T>) -> Array1<'a, T> {
-        let mut arr = Array1::<T>::create(x.len());
-        let data = arr.data_mut();
-        data.copy_from_slice(x.as_slice());
-        arr
-    }
-}
-
-impl<'a, T: BigarrayKind> Array1<'a, T> {
-    /// Array1::of_slice is used to convert from a slice to OCaml Bigarray,
-    /// the `data` parameter must outlive the resulting bigarray or there is
-    /// no guarantee the data will be valid. Use `Array1::from` to clone the
-    /// contents of a slice.
-    pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
-        let x = caml_frame!(|x| {
-            x = unsafe {
-                bigarray::caml_ba_alloc_dims(
-                    T::kind() | bigarray::Managed::EXTERNAL as i32,
-                    1,
-                    data.as_mut_ptr() as bigarray::Data,
-                    data.len() as i32,
-                )
-            };
-            x
-        });
-        Array1(Value(x), PhantomData)
     }
 
-    /// Create a new OCaml `Bigarray.Array1` with the given type and size
-    pub fn create(n: Size) -> Array1<'a, T> {
-        let x = caml_frame!(|x| {
-            let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
-            x = unsafe {
-                bigarray::caml_ba_alloc_dims(
-                    T::kind() | bigarray::Managed::MANAGED as i32,
-                    1,
-                    data,
-                    n as mlvalues::Intnat,
-                )
-            };
-            x
-        });
-        Array1(Value(x), PhantomData)
+    impl<'a, T> crate::ToValue for Array1<'a, T> {
+        fn to_value(&self) -> Value {
+            self.0
+        }
     }
 
-    /// Returns the number of items in `self`
-    pub fn len(&self) -> Size {
-        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe { (*ba).dim as usize }
+    impl<'a, T: 'a + Copy + Kind> From<&'a [T]> for Array1<'a, T> {
+        fn from(x: &'a [T]) -> Array1<'a, T> {
+            Array1::from_slice(x)
+        }
     }
 
-    /// Returns true when `self.len() == 0`
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
+    impl<'a, T: 'a + Copy + Kind> From<Vec<T>> for Array1<'a, T> {
+        fn from(x: Vec<T>) -> Array1<'a, T> {
+            let mut arr = Array1::<T>::create(x.len());
+            let data = arr.data_mut();
+            data.copy_from_slice(x.as_slice());
+            arr
+        }
     }
 
-    /// Get underlying data as Rust slice
-    pub fn data(&self) -> &[T] {
-        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe { slice::from_raw_parts((*ba).data as *const T, self.len()) }
-    }
+    impl<'a, T: Copy + Kind> Array1<'a, T> {
+        /// Array1::of_slice is used to convert from a slice to OCaml Bigarray,
+        /// the `data` parameter must outlive the resulting bigarray or there is
+        /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
+        /// contents of a slice.
+        pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
+            let x = caml_frame!(|x| {
+                x = unsafe {
+                    bigarray::caml_ba_alloc_dims(
+                        T::kind() | bigarray::Managed::EXTERNAL as i32,
+                        1,
+                        data.as_mut_ptr() as bigarray::Data,
+                        data.len() as i32,
+                    )
+                };
+                x
+            });
+            Array1(Value(x), PhantomData)
+        }
 
-    /// Get underlying data as mutable Rust slice
-    pub fn data_mut(&mut self) -> &mut [T] {
-        let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-        unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
+        /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
+        /// used by `Array1::from` for slices to avoid any potential lifetime issues
+        pub fn from_slice(data: &'a [T]) -> Array1<'a, T> {
+            Array1::from(data.to_vec())
+        }
+
+        /// Create a new OCaml `Bigarray.Array1` with the given type and size
+        pub fn create(n: Size) -> Array1<'a, T> {
+            let x = caml_frame!(|x| {
+                let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
+                x = unsafe {
+                    bigarray::caml_ba_alloc_dims(
+                        T::kind() | bigarray::Managed::MANAGED as i32,
+                        1,
+                        data,
+                        n as mlvalues::Intnat,
+                    )
+                };
+                x
+            });
+            Array1(Value(x), PhantomData)
+        }
+
+        /// Returns the number of items in `self`
+        pub fn len(&self) -> Size {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe { (*ba).dim as usize }
+        }
+
+        /// Returns true when `self.len() == 0`
+        pub fn is_empty(&self) -> bool {
+            self.len() == 0
+        }
+
+        /// Get underlying data as Rust slice
+        pub fn data(&self) -> &[T] {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe { slice::from_raw_parts((*ba).data as *const T, self.len()) }
+        }
+
+        /// Get underlying data as mutable Rust slice
+        pub fn data_mut(&mut self) -> &mut [T] {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
+        }
     }
 }

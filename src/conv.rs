@@ -193,13 +193,13 @@ impl FromValue for String {
 
 impl ToValue for () {
     fn to_value(&self) -> Value {
-        Value::UNIT
+        Value::unit()
     }
 }
 
 impl<T: FromValue> FromValue for Option<T> {
     fn from_value(value: Value) -> Option<T> {
-        if value == Value::NONE {
+        if value == Value::none() {
             return None;
         }
 
@@ -211,7 +211,7 @@ impl<T: ToValue> ToValue for Option<T> {
     fn to_value(&self) -> Value {
         match self {
             Some(x) => Value::some(x.to_value()),
-            None => Value::NONE,
+            None => Value::none(),
         }
     }
 }
@@ -319,7 +319,7 @@ impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
             Err(e) => {
                 let s = format!("{:?}", e);
                 crate::failwith(s);
-                Value::UNIT
+                Value::unit()
             }
         }
     }

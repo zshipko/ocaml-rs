@@ -52,8 +52,6 @@ impl FromValue for Value {
     }
 }
 
-const TRUE: Value = Value(sys::mlvalues::val_int(1));
-const FALSE: Value = Value(sys::mlvalues::val_int(0));
 const NONE: Value = Value(sys::mlvalues::val_int(0));
 const UNIT: Value = Value(sys::mlvalues::UNIT);
 
@@ -135,12 +133,8 @@ impl Value {
     }
 
     /// Convert a boolean to OCaml value
-    pub fn bool(b: bool) -> Value {
-        if b {
-            TRUE
-        } else {
-            FALSE
-        }
+    pub const fn bool(b: bool) -> Value {
+        Value::int(b as crate::Int)
     }
 
     /// OCaml Some value
@@ -155,10 +149,16 @@ impl Value {
     }
 
     /// OCaml None value
-    pub const NONE: Value = NONE;
+    #[inline(always)]
+    pub const fn none() -> Value {
+        NONE
+    }
 
     /// OCaml Unit value
-    pub const UNIT: Value = UNIT;
+    #[inline(always)]
+    pub const fn unit() -> Value {
+        UNIT
+    }
 
     /// Create a variant value
     pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
@@ -180,7 +180,7 @@ impl Value {
     }
 
     /// Create an OCaml `int`
-    pub fn int(i: isize) -> Value {
+    pub const fn int(i: isize) -> Value {
         Value(sys::mlvalues::val_int(i))
     }
 

@@ -26,7 +26,7 @@ pub fn ml_send_two(v: Value, v2: Value) -> Value {
     let x = v.int_val();
     let string: &str = FromValue::from_value(v2);
     println!("got  0x{:x}, {}", x, string);
-    Value::UNIT
+    Value::unit()
 }
 
 #[ocaml::func]
@@ -106,8 +106,8 @@ pub fn ml_custom_value() -> ocaml::Opaque<'static, &'static str> {
 }
 
 #[ocaml::func]
-pub fn ml_array1(len: ocaml::Int) -> ocaml::Array1<'static, u8> {
-    let mut ba = ocaml::Array1::<u8>::create(len as usize);
+pub fn ml_array1(len: ocaml::Int) -> ocaml::bigarray::Array1<'static, u8> {
+    let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
     }
@@ -115,9 +115,9 @@ pub fn ml_array1(len: ocaml::Int) -> ocaml::Array1<'static, u8> {
 }
 
 #[ocaml::func]
-pub fn ml_array2(s: &mut str) -> ocaml::Array1<u8> {
+pub fn ml_array2(s: &mut str) -> ocaml::bigarray::Array1<u8> {
     let ba = unsafe {
-        ocaml::Array1::from(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
+        ocaml::bigarray::Array1::of_slice(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
     };
     return ba;
 }
