@@ -8,24 +8,24 @@ use crate::value::{FromValue, Size, ToValue, Value};
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Pointer<'a, T>(Value, PhantomData<&'a T>);
+pub struct Opaque<'a, T>(Value, PhantomData<&'a T>);
 
-impl<'a, T: ToValue + FromValue> ToValue for Pointer<'a, T> {
+impl<'a, T> ToValue for Opaque<'a, T> {
     fn to_value(&self) -> Value {
         self.0
     }
 }
 
-impl<'a, T: ToValue + FromValue> FromValue for Pointer<'a, T> {
+impl<'a, T> FromValue for Opaque<'a, T> {
     fn from_value(value: Value) -> Self {
-        Pointer(value, PhantomData)
+        Opaque(value, PhantomData)
     }
 }
 
 extern "C" fn ignore(_: Value) {}
 
-impl<'a, T: ToValue + FromValue> Pointer<'a, T> {
-    pub fn new(ptr: T, finalizer: Option<extern "C" fn(Value)>) -> Pointer<'a, T> {
+impl<'a, T> Opaque<'a, T> {
+    pub fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
         let p = match finalizer {
             Some(f) => Value::alloc_custom(ptr, f),
             None => Value::alloc_custom(ptr, ignore),

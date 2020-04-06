@@ -94,14 +94,13 @@ pub fn ml_send_first_variant() -> Testing {
 }
 
 extern "C" fn finalizer(value: Value) {
-    let ptr: ocaml::Pointer<&str> = ocaml::Pointer::from_value(value);
+    let ptr: ocaml::Opaque<&str> = ocaml::Opaque::from_value(value);
     println!("Finalizer: {}", ptr.data());
 }
 
 #[ocaml::func]
-pub fn ml_custom_value() -> ocaml::Pointer<'static, &'static str> {
-    let x = ocaml::Pointer::new("testing", Some(finalizer));
-
+pub fn ml_custom_value() -> ocaml::Opaque<'static, &'static str> {
+    let x = ocaml::Opaque::new(&mut "testing", Some(finalizer));
     assert!(x.data() == &"testing");
     x
 }
