@@ -56,6 +56,22 @@ const NONE: Value = Value(sys::mlvalues::val_int(0));
 const UNIT: Value = Value(sys::mlvalues::UNIT);
 
 impl Value {
+    /// Returns a named value registered by OCaml
+    pub fn named<T: FromValue>(name: &str) -> Option<T> {
+        unsafe {
+            let s = match std::ffi::CString::new(name) {
+                Ok(s) => s,
+                Err(_) => return None,
+            };
+            let named = sys::callback::caml_named_value(s.as_ptr() as *const u8);
+            if named.is_null() {
+                return None;
+            }
+
+            Some(FromValue::from_value(Value(*named)))
+        }
+    }
+
     /// Allocate a new value with the given size and tag.
     pub fn alloc(n: usize, tag: Tag) -> Value {
         Value(sys::caml_frame!(|x| {

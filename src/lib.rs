@@ -68,13 +68,11 @@ pub mod macros;
 pub mod conv;
 
 mod error;
-mod named;
 pub mod runtime;
 mod types;
 pub mod value;
 
 pub use crate::error::Error;
-pub use crate::named::named_value;
 pub use crate::runtime::*;
 pub use crate::types::{bigarray, Array, List, Opaque};
 pub use crate::value::{FromValue, ToValue, Value};

@@ -67,7 +67,7 @@ pub fn ml_new_list(i: ocaml::Int) -> LinkedList<ocaml::Int> {
 
 #[ocaml::func]
 pub fn ml_testing_callback(a: Value, b: Value) {
-    let f = ocaml::named_value("print_testing").expect("print_testing not registered");
+    let f: Value = Value::named("print_testing").expect("print_testing not registered");
 
     f.call_n(&[a, b]).unwrap();
 }

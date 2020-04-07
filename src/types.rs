@@ -59,7 +59,8 @@ impl<'a, T> Opaque<'a, T> {
     }
 }
 
-/// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
+/// `Array<A>` wraps an OCaml `'a array` without converting it to Rust, this introduces no
+/// additional overhead compared to a `Value` type
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
@@ -169,7 +170,9 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     }
 }
 
-/// `List<A>` wraps an OCaml `'a list` without converting it to Rust
+/// `List<A>` wraps an OCaml `'a list` without converting it to Rust, this introduces no
+/// additional overhead compared to a `Value` type
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
@@ -288,7 +291,8 @@ pub mod bigarray {
     make_kind!(i32, INT32);
     make_kind!(char, CHAR);
 
-    /// OCaml Bigarray.Array1 type
+    /// OCaml Bigarray.Array1 type, , this introduces no
+    /// additional overhead compared to a `Value` type
     pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
 
     impl<'a, T> crate::FromValue for Array1<'a, T> {
