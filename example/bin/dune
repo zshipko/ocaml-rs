@@ -1,5 +1,4 @@
 (executable
-   (name main)
-   (modules main)
-   (libraries example)
-)
+ (name main)
+ (modules main)
+ (libraries example))

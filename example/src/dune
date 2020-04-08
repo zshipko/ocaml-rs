@@ -1,30 +1,24 @@
 (include_subdirs unqualified)
 
 (rule
-    (deps (source_tree .))
-
-    ; Library names go here
-    (targets libexample_stubs.a dllexample_stubs.so)
-
-    (action
-        (progn
-            ; Build the Rust code
-            (run cargo build --target-dir ../rust --release)
-
-            ; This is needed to support Linux and macOS shared libraries
-            (run sh -c "mv ../rust/release/libexample_stubs.so ./dllexample_stubs.so || mv ../rust/release/libexample_stubs.dylib ./dllexample_stubs.so")
-
-            ; Copy over the static library too
-            (run mv ../rust/release/libexample_stubs.a libexample_stubs.a)
-        )
-    )
-)
+ (deps
+  (source_tree .))
+ ; Library names go here
+ (targets libexample_stubs.a dllexample_stubs.so)
+ (action
+  (progn
+   ; Build the Rust code
+   (run cargo build --target-dir ../rust --release)
+   ; This is needed to support Linux and macOS shared libraries
+   (run sh -c
+     "mv ../rust/release/libexample_stubs.so ./dllexample_stubs.so || mv ../rust/release/libexample_stubs.dylib ./dllexample_stubs.so")
+   ; Copy over the static library too
+   (run mv ../rust/release/libexample_stubs.a libexample_stubs.a))))
 
 (library
-   (name example)
-   (public_name example)
-
-   ; Link the Rust library
-   (foreign_archives example_stubs)
-   (c_library_flags (-lpthread -lc -lm))
-)
+ (name example)
+ (public_name example)
+ ; Link the Rust library
+ (foreign_archives example_stubs)
+ (c_library_flags
+  (-lpthread -lc -lm)))
