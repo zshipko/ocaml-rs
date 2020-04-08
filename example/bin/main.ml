@@ -115,6 +115,7 @@ let _ =
 
     assert (call int_of_string "123" = 123);
 
+    (* Records *)
     let r = {
       foo = "testing";
       bar = 123.;
@@ -123,6 +124,9 @@ let _ =
     let r = format_my_record r in
     assert (r = "MyRecord { foo: \"testing\", bar: 123.0 }");
     print_endline r;
+
+    (* Unboxed float *)
+    assert (unboxed_float 1.0 3.0 = 2.0);
 
     print_endline "cleanup";
     Gc.full_major ();

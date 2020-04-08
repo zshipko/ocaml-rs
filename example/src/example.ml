@@ -30,3 +30,4 @@ external make_list: int -> int list = "ml_make_list"
 external make_array: int -> int array = "ml_make_array"
 external call: ('a -> 'b) -> 'a -> 'b = "ml_call"
 external format_my_record: my_record -> string = "ml_format_my_record"
+external unboxed_float: float -> float -> float = "ml_unboxed_float_bytecode" "ml_unboxed_float" [@@unboxed] [@@noalloc]

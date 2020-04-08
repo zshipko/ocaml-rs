@@ -9,7 +9,7 @@ pub fn ml_send_int(x: isize) -> isize {
     0xbeef
 }
 
-#[ocaml::bare_func]
+#[ocaml::native_func]
 pub fn ml_send_two(v: Value, v2: Value) -> Value {
     unsafe {
         println!(
@@ -187,4 +187,14 @@ struct MyRecord<'a> {
 #[ocaml::func]
 pub fn ml_format_my_record(s: MyRecord) -> String {
     format!("{:?}", s)
+}
+
+#[no_mangle]
+pub extern "C" fn ml_unboxed_float(a: f64, b: f64) -> f64 {
+    (a + b) / 2.0
+}
+
+#[ocaml::bytecode_func]
+pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
+    ml_unboxed_float(a, b)
 }

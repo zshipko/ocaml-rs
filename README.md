@@ -74,9 +74,9 @@ pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
     Ok(sum / arr.len() as f64)
 }
 
-// A `bare_func` must take `ocaml::Value` for every argument and return an `ocaml::Value`
+// A `native_func` must take `ocaml::Value` for every argument and return an `ocaml::Value`
 // these functions have minimal overhead compared to wrapping with `func`
-#[ocaml::bare_func]
+#[ocaml::native_func]
 pub fn incr(value: ocaml::Value) -> ocaml::Value {
     let i = value.int_val();
     Value::int(i + 1)
@@ -91,8 +91,23 @@ pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
     })
 }
 
-// `ocaml::bare_func` ensures that #[no_mangle] and extern "C" are added, in addition to wrapping
-// the function body using `ocaml::body!`
+// `ocaml::native_func` is responsible for:
+// - Ensures that #[no_mangle] and extern "C" are added, in addition to wrapping
+// - Wraps the function body using `ocaml::body!`
+
+// Finally, if your function is marked [@@unboxed] and [@@noalloc] in OCaml then you can avoid
+// boxing altogether for f64 arguments using a plain C function and a bytecode function
+// definition:
+#[no_mangle]
+pub extern "C" fn incrf(input: f64) -> f64 {
+    input + 1.0
+}
+
+#[cfg(feature = "derive")]
+#[ocaml::bytecode_func]
+pub fn incrf_bytecode(input: f64) -> f64 {
+    incrf(input)
+}
 ```
 
 The OCaml stubs would look like this:
@@ -107,6 +122,8 @@ external incr_example: example -> example = "incr_example"
 external build_tuple: int -> int * int * int = "build_tuple"
 external average: float array -> float = "average"
 external incr: int -> int = "incr"
+external incr2: int -> int = "incr2"
+external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
 For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
