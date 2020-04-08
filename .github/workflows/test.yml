@@ -6,9 +6,9 @@ jobs:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
         ocaml-version: ["4.10.0", "4.09.0", "4.08.1", "4.07.0", "4.06.0"]
     steps:
       - name: Checkout code
