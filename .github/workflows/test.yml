@@ -17,8 +17,8 @@ jobs:
         uses: avsm/setup-ocaml@v1.0
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
-      - run: opam install dune && eval $(opam env)
+      - run: opam install dune
       - name: Build
-        run: cargo build --tests
+        run: eval $(opam env) && cargo build --tests
       - name: Run tests
-        run: make test
+        run: eval $(opam env) && make test
