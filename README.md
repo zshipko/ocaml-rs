@@ -10,6 +10,33 @@ Works with OCaml versions `4.06.0` and up
 
 Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
+### Getting started
+
+**OCaml**:
+
+Take a look at [example/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/example/src/dune) for an example `dune` file to get you started.
+
+**Rust**
+
+Typically just include:
+
+```toml
+ocaml = {git = "https://github.com/zshipko/ocaml-rs"}
+```
+
+in your `Cargo.toml`.
+
+
+
+On macOS you will need also to add the following to your project's `.cargo/config` file:
+
+```toml
+[build]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
+```
+
+This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
+
 ### Documentation
 
 [https://docs.rs/ocaml](https://docs.rs/ocaml)
@@ -70,7 +97,7 @@ external average: float array -> float = "average"
 external incr: int -> int = "incr"
 ```
 
-For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
+For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
 
 ### Type conversion
 
