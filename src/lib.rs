@@ -68,7 +68,7 @@ pub mod macros;
 pub mod conv;
 
 mod error;
-pub mod runtime;
+mod runtime;
 mod types;
 pub mod value;
 

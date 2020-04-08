@@ -4,22 +4,22 @@ use crate::{sys, FromValue};
 use std::ffi::CString;
 
 /// Hash variant name
-pub fn hash_variant<S: AsRef<str>>(name: S) -> Value {
+pub(crate) fn hash_variant<S: AsRef<str>>(name: S) -> Value {
     unsafe { Value::new(sys::mlvalues::caml_hash_variant(name.as_ref().as_ptr())) }
 }
 
 /// Hash variant name as Rust `str`
-pub fn hash_variant_str<'a, S: AsRef<str>>(name: S) -> &'a str {
+pub(crate) fn hash_variant_str<'a, S: AsRef<str>>(name: S) -> &'a str {
     FromValue::from_value(hash_variant(name))
 }
 
 /// Release global lock
-pub fn release_runtime_system() {
+pub fn release_lock() {
     unsafe { sys::memory::caml_enter_blocking_section() }
 }
 
 /// Obtain global lock
-pub fn acquire_runtime_system() {
+pub fn acquire_lock() {
     unsafe { sys::memory::caml_leave_blocking_section() }
 }
 

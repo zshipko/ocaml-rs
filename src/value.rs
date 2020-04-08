@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::runtime::hash_variant;
+use crate::runtime::{hash_variant, hash_variant_str};
 use crate::sys;
 use crate::sys::caml_frame;
 use crate::{tag, Tag};
@@ -99,19 +99,24 @@ impl Value {
     /// Allocate a new value with a custom finalizer
     /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
     /// responsible for managing the lifetime of the value on the Rust side
-    pub fn alloc_custom<T>(value: *const T, finalizer: extern "C" fn(Value)) -> Value {
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    pub unsafe fn alloc_custom<T>(value: *const T, finalizer: extern "C" fn(Value)) -> Value {
+        if value.is_null() {
+            return Value::int(0);
+        }
+
         Value(sys::caml_frame!(|x| {
-            x = unsafe {
-                sys::alloc::caml_alloc_final(
-                    std::mem::size_of::<T>(),
-                    std::mem::transmute(finalizer),
-                    0,
-                    1,
-                )
-            };
+            x = sys::alloc::caml_alloc_final(
+                std::mem::size_of::<T>(),
+                std::mem::transmute(finalizer),
+                0,
+                1,
+            );
 
             let ptr = Value(x).custom_ptr_val_mut::<T>();
-            unsafe { std::ptr::copy(value, ptr, 1) };
+            if !ptr.is_null() {
+                std::ptr::copy(value, ptr, 1);
+            }
             x
         }))
     }
@@ -255,7 +260,7 @@ impl Value {
     }
 
     /// Convert an OCaml `int` to `isize`
-    pub fn int_val(self) -> isize {
+    pub const fn int_val(self) -> isize {
         sys::mlvalues::int_val(self.0)
     }
 
@@ -406,6 +411,14 @@ impl Value {
     /// Determines if the current value is an exception
     pub fn is_exception_result(self) -> bool {
         crate::sys::callback::is_exception_result(self.0)
+    }
+
+    pub fn hash_variant<S: AsRef<str>>(name: S) -> Value {
+        hash_variant(name)
+    }
+
+    pub fn hash_variant_str<'a, S: AsRef<str>>(name: S) -> &'a str {
+        hash_variant_str(name)
     }
 
     /// Get object method

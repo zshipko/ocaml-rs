@@ -287,7 +287,7 @@ impl<V: FromValue> FromValue for Vec<V> {
     }
 }
 
-impl<V: ToValue> ToValue for [V] {
+impl<V: ToValue> ToValue for &[V] {
     fn to_value(&self) -> Value {
         let len = self.len();
         let mut arr = Value::alloc(len, 0);

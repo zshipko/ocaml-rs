@@ -29,7 +29,7 @@ impl<'a, T> Opaque<'a, T> {
     /// Allocate a new value with an optional custom finalizer
     /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
     /// responsible for managing the lifetime of the value on the Rust side
-    pub fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
+    pub unsafe fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
         let p = match finalizer {
             Some(f) => Value::alloc_custom(ptr, f),
             None => Value::alloc_custom(ptr, ignore),
@@ -47,14 +47,16 @@ impl<'a, T> Opaque<'a, T> {
     pub fn ptr_mut(&mut self) -> *mut T {
         self.0.custom_ptr_val_mut()
     }
+}
 
-    /// Access the underlying data
-    pub fn data(&self) -> &T {
+impl<'a, T> AsRef<T> for Opaque<'a, T> {
+    fn as_ref(&self) -> &T {
         unsafe { &*self.ptr() }
     }
+}
 
-    /// Access the underlying inner data
-    pub fn data_mut(&mut self) -> &mut T {
+impl<'a, T> AsMut<T> for Opaque<'a, T> {
+    fn as_mut(&mut self) -> &mut T {
         unsafe { &mut *self.ptr_mut() }
     }
 }
@@ -97,7 +99,7 @@ impl<'a> Array<'a, f64> {
     }
 
     /// Get a value from a double array
-    pub fn get_double(&self, i: usize) -> Result<f64, Error> {
+    pub fn get_double(self, i: usize) -> Result<f64, Error> {
         if i >= self.len() {
             return Err(Error::OutOfBounds);
         }
@@ -110,7 +112,7 @@ impl<'a> Array<'a, f64> {
 
     /// Get a value from a double array without checking if the array is actually a double array
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
+    pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
         *self.0.ptr_val::<f64>().add(i)
     }
 }

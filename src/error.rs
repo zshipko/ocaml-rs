@@ -14,7 +14,4 @@ pub enum Error {
 
     /// Array is not a double array
     NotDoubleArray,
-
-    /// C String is invalid
-    InvalidCString,
 }
