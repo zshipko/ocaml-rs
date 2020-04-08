@@ -19,6 +19,6 @@ jobs:
           ocaml-version: ${{ matrix.ocaml-version }}
       - run: opam install dune
       - name: Build
-        run: eval $(opam env) && cargo build --tests
+        run: opam exec -- cargo build --tests
       - name: Run tests
-        run: eval $(opam env) && make test
+        run: opam exec -- make test
