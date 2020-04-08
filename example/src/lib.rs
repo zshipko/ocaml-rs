@@ -198,3 +198,15 @@ pub extern "C" fn ml_unboxed_float(a: f64, b: f64) -> f64 {
 pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
     ml_unboxed_float(a, b)
 }
+
+#[ocaml::func]
+pub fn ml_more_than_five_params(
+    a: ocaml::Int,
+    b: ocaml::Int,
+    c: ocaml::Int,
+    d: ocaml::Int,
+    e: ocaml::Int,
+    f: ocaml::Int,
+) -> ocaml::Int {
+    a + b + c + d + e + f
+}

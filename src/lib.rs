@@ -36,8 +36,9 @@
 //!     Ok(sum / arr.len() as f64)
 //! }
 //!
-//! // A `native_func` must take `ocaml::Value` for every argument or `f64` for every unboxed argument
-//! // and return an `ocaml::Value` (or `f64`). `native_func`  minimal overhead compared to wrapping with `func`
+//! // A `native_func` must take `ocaml::Value` for every argument or `f64` for
+//! // every unboxed argument and return an `ocaml::Value` (or `f64`).
+//! // `native_func` has minimal overhead compared to wrapping with `func`
 //! #[cfg(feature = "derive")]
 //! #[ocaml::native_func]
 //! pub fn incr(value: ocaml::Value) -> ocaml::Value {
@@ -99,14 +100,13 @@ pub use ocaml_derive::{
 };
 
 #[macro_use]
-pub mod macros;
+mod macros;
 
-pub mod conv;
-
+mod conv;
 mod error;
 mod runtime;
 mod types;
-pub mod value;
+mod value;
 
 pub use crate::error::Error;
 pub use crate::runtime::*;

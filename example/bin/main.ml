@@ -128,6 +128,8 @@ let _ =
     (* Unboxed float *)
     assert (unboxed_float 1.0 3.0 = 2.0);
 
+    assert (more_than_five_params 1 1 1 1 1 1 = 6);
+
     print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()

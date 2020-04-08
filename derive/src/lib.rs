@@ -3,11 +3,25 @@ use quote::quote;
 
 mod derive;
 
+/// `func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
+/// automatically.
+///
+/// - Wraps the body using `ocaml::body`
+/// - Automatic type conversion for arguments/return value (including Result types)
+/// - Defines a bytecode function automatically (for `my_func` the bytecode function would be
+/// `my_func_bytecode)
 #[proc_macro_attribute]
 pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
 
     let name = &item_fn.sig.ident;
+    let unsafety = &item_fn.sig.unsafety;
+
+    let bytecode = {
+        let mut bc = item_fn.clone();
+        bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
+        ocaml_bytecode_func_impl(bc, Some(name))
+    };
 
     match item_fn.vis {
         syn::Visibility::Public(_) => (),
@@ -112,7 +126,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         #(
             #attr
         )*
-        pub extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
+        pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
             ::ocaml::body!((#param_names) {
                 #inner
                 #(#convert_params);*
@@ -121,14 +135,25 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
             })
         }
     };
-    gen.into()
+
+    let r = quote! {
+        #gen
+
+        #bytecode
+    };
+    r.into()
 }
 
+/// `native_func` is used export Rust functions to OCaml, it has much lower overhead than `func`
+/// and expects all arguments to be OCaml values.
+///
+/// - Wraps the body using `ocaml::body`
 #[proc_macro_attribute]
 pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
 
     let name = &item_fn.sig.ident;
+    let unsafety = &item_fn.sig.unsafety;
     let where_clause = &item_fn.sig.generics.where_clause;
     let attr: Vec<_> = item_fn
         .attrs
@@ -202,7 +227,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
         #(
             #attr
         )*
-        pub extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
+        pub #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
             ::ocaml::body!((#param_names) {
                 #body
             })
@@ -211,11 +236,25 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
     gen.into()
 }
 
+/// `bytecode_func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
+/// automatically.
+///
+/// Since this is automatically applied to `func` functions, this is primarily be used when working with
+/// unboxed functions, or `native_func`s directly.
+///
+/// - Automatic type conversion for arguments/return value (including Result types)
 #[proc_macro_attribute]
 pub fn ocaml_bytecode_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
-    let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
+    let item_fn: syn::ItemFn = syn::parse(item).unwrap();
+    ocaml_bytecode_func_impl(item_fn, None).into()
+}
 
+fn ocaml_bytecode_func_impl(
+    mut item_fn: syn::ItemFn,
+    original: Option<&proc_macro2::Ident>,
+) -> proc_macro2::TokenStream {
     let name = &item_fn.sig.ident;
+    let unsafety = &item_fn.sig.unsafety;
 
     match item_fn.vis {
         syn::Visibility::Public(_) => (),
@@ -247,7 +286,15 @@ pub fn ocaml_bytecode_func(_attribute: TokenStream, item: TokenStream) -> TokenS
         })
         .collect();
 
-    let param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
+    let mut ocaml_args: Vec<_> = args
+        .iter()
+        .map(|t| match t {
+            Some(ident) => quote! { #ident: ::ocaml::Value },
+            None => quote! { _: ::ocaml::Value },
+        })
+        .collect();
+
+    let mut param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
         .iter()
         .filter_map(|arg| match arg {
             Some(ident) => Some(ident.ident.clone()),
@@ -255,33 +302,36 @@ pub fn ocaml_bytecode_func(_attribute: TokenStream, item: TokenStream) -> TokenS
         })
         .collect();
 
-    let convert_params: Vec<_> = args
-        .iter()
-        .filter_map(|arg| match arg {
-            Some(ident) => Some(quote! {
-                let mut #ident = ::ocaml::FromValue::from_value(unsafe {
-                    *__ocaml_argv.add(__ocaml_arg_index)
-                });
-                __ocaml_arg_index += 1 ;
-            }),
-            None => None,
-        })
-        .collect();
+    if ocaml_args.len() == 0 {
+        ocaml_args.push(quote! { _unit: ::ocaml::Value});
+        param_names.push(syn::Ident::new("__ocaml_unit", name.span()));
+    }
 
     let body = &item_fn.block;
 
-    let inner = if returns {
-        quote! {
-            #[inline(always)]
-            fn inner(#(#rust_args),*) -> #rust_return_type {
-                #body
+    let inner = match original {
+        Some(o) => {
+            quote! {
+                #[allow(unused)]
+                let __ocaml_unit = ::ocaml::Value::unit();
+                let inner = #o;
             }
         }
-    } else {
-        quote! {
-            #[inline(always)]
-            fn inner(#(#rust_args),*)  {
-                #body
+        None => {
+            if returns {
+                quote! {
+                    #[inline(always)]
+                    fn inner(#(#rust_args),*) -> #rust_return_type {
+                        #body
+                    }
+                }
+            } else {
+                quote! {
+                    #[inline(always)]
+                    fn inner(#(#rust_args),*)  {
+                        #body
+                    }
+                }
             }
         }
     };
@@ -298,29 +348,72 @@ pub fn ocaml_bytecode_func(_attribute: TokenStream, item: TokenStream) -> TokenS
                 .map(|x| format!("{}", x.ident))
                 .collect();
             let s = seg.join("::");
-            s != "ocaml_bytecode_func" && s != "ocaml::bytecode_func" && s != "bytecode_func"
+            s != "ocaml_bytecode_func"
+                && s != "ocaml::bytecode_func"
+                && s != "bytecode_func"
+                && s != "ocaml_func"
+                && s != "ocaml::func"
+                && s != "func"
         })
         .collect();
 
     let len = rust_args.len();
 
-    let gen = quote! {
-        #[no_mangle]
-        #(
-            #attr
-        )*
-        pub extern "C" fn #name(__ocaml_argv: *const ::ocaml::Value, __ocaml_argc: ::ocaml::Int) -> ::ocaml::Value #where_clause {
-            assert!(#len == __ocaml_argc as usize);
+    let gen = if len > 5 {
+        let convert_params: Vec<_> = args
+            .iter()
+            .filter_map(|arg| match arg {
+                Some(ident) => Some(quote! {
+                    let mut #ident = ::ocaml::FromValue::from_value(unsafe {
+                        *__ocaml_argv.add(__ocaml_arg_index as usize)
+                    });
+                    __ocaml_arg_index += 1 ;
+                }),
+                None => None,
+            })
+            .collect();
+        quote! {
+            #[no_mangle]
+            #(
+                #attr
+            )*
+            pub #unsafety extern "C" fn #name(__ocaml_argv: *mut ::ocaml::Value, __ocaml_argc: i32) -> ::ocaml::Value #where_clause {
+                assert!(#len == __ocaml_argc as usize);
 
-            #inner
+                #inner
 
-            let mut __ocaml_arg_index = 0;
-            #(#convert_params);*
-            let res = inner(#param_names);
-            ::ocaml::ToValue::to_value(&res)
+                let mut __ocaml_arg_index = 0;
+                #(#convert_params);*
+                let res = inner(#param_names);
+                ::ocaml::ToValue::to_value(&res)
+            }
+        }
+    } else {
+        let convert_params: Vec<_> = args
+            .iter()
+            .filter_map(|arg| match arg {
+                Some(ident) => {
+                    let ident = ident.ident.clone();
+                    Some(quote! { let mut #ident = ::ocaml::FromValue::from_value(#ident); })
+                }
+                None => None,
+            })
+            .collect();
+        quote! {
+            #[no_mangle]
+            #(
+                #attr
+            )*
+            pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
+                #inner
+
+                #(#convert_params);*
+                let res = inner(#param_names);
+                ::ocaml::ToValue::to_value(&res)
+            }
         }
     };
-    gen.into()
+    gen
 }
 
 synstructure::decl_derive!([ToValue, attributes(ocaml)] => derive::tovalue_derive);

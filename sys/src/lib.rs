@@ -10,7 +10,12 @@ macro_rules! caml_param {
 
     (@step $idx:expr, $caml_roots:ident, $param:expr, $($tail:expr,)*) => {
         $caml_roots.tables[$idx] = &$param as *const _ as *mut _;
-        $crate::caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
+        if $idx == 4 {
+            $caml_roots.ntables = 5;
+            $crate::caml_param!(@step 0, $caml_roots, $($tail,)*);
+        } else {
+            $crate::caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
+        }
     };
 
     ($($n:expr),*) => {
