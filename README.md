@@ -81,6 +81,18 @@ pub fn incr(value: ocaml::Value) -> ocaml::Value {
     let i = value.int_val();
     Value::int(i + 1)
 }
+
+// This is equivalent to:
+#[no_mangle]
+pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
+    ocaml::body((value) {
+        let i = value.int_val();
+        ocaml::Value::int( i + 1)
+    })
+}
+
+// `ocaml::bare_func` ensures that #[no_mangle] and extern "C" are added, in addition to wrapping
+// the function body using `ocaml::body!`
 ```
 
 The OCaml stubs would look like this:

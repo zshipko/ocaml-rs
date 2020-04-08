@@ -37,11 +37,6 @@ pub fn ocaml_bare_func(_attribute: TokenStream, item: TokenStream) -> TokenStrea
         name: Some(syn::LitStr::new("C", item_fn.sig.ident.span())),
     });
 
-    let (returns, rust_return_type) = match &item_fn.sig.output {
-        syn::ReturnType::Default => (false, None),
-        syn::ReturnType::Type(_, t) => (true, Some(t)),
-    };
-
     let rust_args = &item_fn.sig.inputs;
 
     if rust_args.len() > 5 {
@@ -74,16 +69,8 @@ pub fn ocaml_bare_func(_attribute: TokenStream, item: TokenStream) -> TokenStrea
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! {#ident.0})
+                Some(quote! {#ident})
             }
-            None => None,
-        })
-        .collect();
-
-    let param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
-        .iter()
-        .filter_map(|arg| match arg {
-            Some(ident) => Some(ident.ident.clone()),
             None => None,
         })
         .collect();
@@ -94,32 +81,14 @@ pub fn ocaml_bare_func(_attribute: TokenStream, item: TokenStream) -> TokenStrea
 
     let body = &item_fn.block;
 
-    let inner = if returns {
-        quote! {
-            #[inline(always)]
-            fn inner(#rust_args) -> #rust_return_type {
-                #body
-            }
-        }
-    } else {
-        quote! {
-            #[inline(always)]
-            fn inner(#rust_args)  {
-                #body
-            }
-        }
-    };
-
     let gen = quote! {
         #[no_mangle]
         #(
             #attr
         )*
         pub extern "C" fn #name #lt #generic_params #gt (#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
-            ::ocaml::sys::caml_body!((#(#param_inner_values),*) {
-                #inner
-                let res = inner(#param_names);
-                res
+            ::ocaml::body!((#(#param_inner_values),*) {
+                #body
             })
         }
     };
@@ -182,7 +151,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = &ident.ident;
-                Some(quote! {#ident.0})
+                Some(quote! {#ident})
             }
             None => None,
         })
@@ -232,7 +201,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let gen = quote! {
         #[no_mangle]
         pub extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value {
-            ::ocaml::sys::caml_body!((#(#param_inner_values),*) {
+            ::ocaml::body!((#(#param_inner_values),*) {
                 #inner
                 #(#convert_params);*
                 let res = inner(#param_names);

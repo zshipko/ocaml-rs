@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate ocaml;
 use ocaml::sys::state;
 use ocaml::{FromValue, ToValue, Value};
 
@@ -29,14 +27,14 @@ pub fn ml_send_two(v: Value, v2: Value) -> Value {
     Value::unit()
 }
 
-#[ocaml::func]
-pub fn ml_send_tuple(t: Value) -> Value {
-    local!(dest);
-    let x: isize = t.field(0);
-    let y: isize = t.field(1);
+#[no_mangle]
+pub unsafe extern "C" fn ml_send_tuple(t: Value) -> Value {
+    ocaml::body!((t) {
+        let x: isize = t.field(0);
+        let y: isize = t.field(1);
 
-    dest = (x + y).to_value();
-    dest
+        (x + y).to_value()
+    })
 }
 
 #[ocaml::func]

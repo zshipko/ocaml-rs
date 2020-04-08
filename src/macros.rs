@@ -9,6 +9,13 @@ macro_rules! local {
 }
 
 #[macro_export]
+macro_rules! body {
+    (($($param:expr),*) $code:block) => {
+        $crate::sys::caml_body!(($($param.0),*) $code);
+    }
+}
+
+#[macro_export]
 /// Create an OCaml array
 macro_rules! array {
     ($($x:expr),*) => {{

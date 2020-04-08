@@ -4,23 +4,27 @@
 //!
 //! ```rust,no_run
 //! // Automatically derive `ToValue` and `FromValue`
+//! #[cfg(feature = "derive")]
 //! #[derive(ocaml::ToValue, ocaml::FromValue)]
 //! struct Example<'a> {
 //!     name: &'a str,
 //!     i: ocaml::Int,
 //! }
 //!
+//! #[cfg(feature = "derive")]
 //! #[ocaml::func]
 //! pub fn incr_example(mut e: Example) -> Example {
 //!     e.i += 1;
 //!     e
 //! }
 //!
+//! #[cfg(feature = "derive")]
 //! #[ocaml::func]
 //! pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 //!     (i + 1, i + 2, i + 3)
 //! }
 //!
+//! #[cfg(feature = "derive")]
 //! #[ocaml::func]
 //! pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
 //!     let mut sum = 0f64;
@@ -34,11 +38,24 @@
 //!
 //! // A `bare_func` must take `ocaml::Value` for every argument and return an `ocaml::Value`
 //! // these functions have minimal overhead compared to wrapping with `func`
+//! #[cfg(feature = "derive")]
 //! #[ocaml::bare_func]
 //! pub fn incr(value: ocaml::Value) -> ocaml::Value {
 //!     let i = value.int_val();
 //!     ocaml::Value::int(i + 1)
 //! }
+//!
+//! // This is equivalent to:
+//! #[no_mangle]
+//! pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
+//!     ocaml::body!((value) {
+//!         let i = value.int_val();
+//!         ocaml::Value::int( i + 1)
+//!     })
+//! }
+//!
+//! // `ocaml::bare_func` ensures that #[no_mangle] and extern "C" are added, in addition to wrapping
+//! // the function body using `ocaml::body!`
 //! ```
 //!
 //! The OCaml stubs would look like this:

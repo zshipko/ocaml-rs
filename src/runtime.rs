@@ -5,7 +5,7 @@ use std::ffi::CString;
 
 /// Hash variant name
 pub(crate) fn hash_variant<S: AsRef<str>>(name: S) -> Value {
-    unsafe { Value::new(sys::mlvalues::caml_hash_variant(name.as_ref().as_ptr())) }
+    unsafe { Value(sys::mlvalues::caml_hash_variant(name.as_ref().as_ptr())) }
 }
 
 /// Hash variant name as Rust `str`

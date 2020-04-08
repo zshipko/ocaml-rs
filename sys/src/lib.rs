@@ -9,7 +9,7 @@ macro_rules! caml_param {
     };
 
     (@step $idx:expr, $caml_roots:ident, $param:expr, $($tail:expr,)*) => {
-        $caml_roots.tables[$idx] = &mut $param;
+        $caml_roots.tables[$idx] = &$param as *const _ as *mut _;
         $crate::caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
     };
 

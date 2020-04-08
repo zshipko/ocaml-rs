@@ -174,7 +174,6 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
 
 /// `List<A>` wraps an OCaml `'a list` without converting it to Rust, this introduces no
 /// additional overhead compared to a `Value` type
-
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
