@@ -11,8 +11,8 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [dependencies]
-ocaml-sys = {path = "./sys"}
-ocaml-derive = {path = "./derive", optional = true}
+ocaml-sys = {path = "./sys", version = "0.10"}
+ocaml-derive = {path = "./derive", version = "0.10", optional = true}
 
 [features]
 default = ["derive"]
