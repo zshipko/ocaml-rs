@@ -11,13 +11,13 @@ use crate::value::{FromValue, Size, ToValue, Value};
 #[repr(transparent)]
 pub struct Opaque<'a, T>(Value, PhantomData<&'a T>);
 
-impl<'a, T> ToValue for Opaque<'a, T> {
+unsafe impl<'a, T> ToValue for Opaque<'a, T> {
     fn to_value(&self) -> Value {
         self.0
     }
 }
 
-impl<'a, T> FromValue for Opaque<'a, T> {
+unsafe impl<'a, T> FromValue for Opaque<'a, T> {
     fn from_value(value: Value) -> Self {
         Opaque(value, PhantomData)
     }
@@ -67,13 +67,13 @@ impl<'a, T> AsMut<T> for Opaque<'a, T> {
 #[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
-impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
+unsafe impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
     fn to_value(&self) -> Value {
         self.0
     }
 }
 
-impl<'a, T: ToValue + FromValue> FromValue for Array<'a, T> {
+unsafe impl<'a, T: ToValue + FromValue> FromValue for Array<'a, T> {
     fn from_value(value: Value) -> Self {
         Array(value, PhantomData)
     }
@@ -178,13 +178,13 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
 #[repr(transparent)]
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
-impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
+unsafe impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
     fn to_value(&self) -> Value {
         self.0
     }
 }
 
-impl<'a, T: ToValue + FromValue> FromValue for List<'a, T> {
+unsafe impl<'a, T: ToValue + FromValue> FromValue for List<'a, T> {
     fn from_value(value: Value) -> Self {
         List(value, PhantomData)
     }
@@ -208,6 +208,7 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
         length
     }
 
+    /// Returns true when the list is empty
     pub fn is_empty(&self) -> bool {
         self.0 == Self::empty().0
     }
@@ -265,8 +266,12 @@ pub mod bigarray {
     use super::*;
     use crate::sys::bigarray;
 
+    /// Bigarray kind
     pub trait Kind {
+        /// Array type
         type T: Clone + Copy;
+
+        /// OCaml bigarray type identifier
         fn kind() -> i32;
     }
 
@@ -296,13 +301,13 @@ pub mod bigarray {
     /// additional overhead compared to a `Value` type
     pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
 
-    impl<'a, T> crate::FromValue for Array1<'a, T> {
+    unsafe impl<'a, T> crate::FromValue for Array1<'a, T> {
         fn from_value(value: Value) -> Array1<'a, T> {
             Array1(value, PhantomData)
         }
     }
 
-    impl<'a, T> crate::ToValue for Array1<'a, T> {
+    unsafe impl<'a, T> crate::ToValue for Array1<'a, T> {
         fn to_value(&self) -> Value {
             self.0
         }

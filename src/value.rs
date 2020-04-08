@@ -1,10 +1,9 @@
 use crate::error::Error;
-use crate::runtime::{hash_variant, hash_variant_str};
 use crate::sys;
 use crate::sys::caml_frame;
-use crate::{tag, Tag};
+use crate::tag::Tag;
 
-use std::{mem, ptr};
+use std::ptr;
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::mlvalues::Size;
@@ -22,30 +21,30 @@ impl Clone for Value {
 }
 
 /// `ToValue` is used to convert from Rust types to OCaml values
-pub trait ToValue {
+pub unsafe trait ToValue {
     /// Convert to OCaml value
     fn to_value(&self) -> Value;
 }
 
 /// `FromValue` is used to convert from OCaml values to Rust types
-pub trait FromValue {
+pub unsafe trait FromValue {
     /// Convert from OCaml value
     fn from_value(v: Value) -> Self;
 }
 
-impl ToValue for Value {
+unsafe impl ToValue for Value {
     fn to_value(&self) -> Value {
         Value(self.0)
     }
 }
 
-impl<'a> ToValue for &'a Value {
+unsafe impl<'a> ToValue for &'a Value {
     fn to_value(&self) -> Value {
         Value(self.0)
     }
 }
 
-impl FromValue for Value {
+unsafe impl FromValue for Value {
     #[inline]
     fn from_value(v: Value) -> Value {
         v
@@ -75,7 +74,7 @@ impl Value {
     /// Allocate a new value with the given size and tag.
     pub fn alloc(n: usize, tag: Tag) -> Value {
         Value(sys::caml_frame!(|x| {
-            x = unsafe { sys::alloc::caml_alloc(n, tag) };
+            x = unsafe { sys::alloc::caml_alloc(n, tag.into()) };
             x
         }))
     }
@@ -91,7 +90,7 @@ impl Value {
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
         Value(sys::caml_frame!(|x| {
-            x = unsafe { sys::alloc::caml_alloc_small(n, tag) };
+            x = unsafe { sys::alloc::caml_alloc_small(n, tag.into()) };
             x
         }))
     }
@@ -150,7 +149,7 @@ impl Value {
 
     /// Get the tag for the underlying OCaml `value`
     pub fn tag(self) -> Tag {
-        unsafe { sys::mlvalues::tag_val(self.0) }
+        unsafe { sys::mlvalues::tag_val(self.0).into() }
     }
 
     /// Convert a boolean to OCaml value
@@ -306,7 +305,7 @@ impl Value {
 
     /// Call a closure with a single argument, returning an exception value
     pub fn call<A: ToValue>(self, arg: A) -> Result<Value, Error> {
-        if self.tag() != tag::CLOSURE {
+        if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -325,7 +324,7 @@ impl Value {
 
     /// Call a closure with two arguments, returning an exception value
     pub fn call2<A: ToValue, B: ToValue>(self, arg1: A, arg2: B) -> Result<Value, Error> {
-        if self.tag() != tag::CLOSURE {
+        if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -351,7 +350,7 @@ impl Value {
         arg2: B,
         arg3: C,
     ) -> Result<Value, Error> {
-        if self.tag() != tag::CLOSURE {
+        if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -377,7 +376,7 @@ impl Value {
 
     /// Call a closure with `n` arguments, returning an exception value
     pub fn call_n<A: AsRef<[Value]>>(self, args: A) -> Result<Value, Error> {
-        if self.tag() != tag::CLOSURE {
+        if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
@@ -413,21 +412,19 @@ impl Value {
         crate::sys::callback::is_exception_result(self.0)
     }
 
+    /// Get hash variant as OCaml value
     pub fn hash_variant<S: AsRef<str>>(name: S) -> Value {
-        hash_variant(name)
-    }
-
-    pub fn hash_variant_str<'a, S: AsRef<str>>(name: S) -> &'a str {
-        hash_variant_str(name)
+        unsafe { Value(sys::mlvalues::caml_hash_variant(name.as_ref().as_ptr())) }
     }
 
     /// Get object method
     pub fn method<S: AsRef<str>>(self, name: S) -> Option<Value> {
-        if self.tag() != tag::OBJECT {
+        if self.tag() != Tag::OBJECT {
             return None;
         }
 
-        let v = unsafe { sys::mlvalues::caml_get_public_method(self.0, hash_variant(name).0) };
+        let v =
+            unsafe { sys::mlvalues::caml_get_public_method(self.0, Self::hash_variant(name).0) };
 
         if v == 0 {
             return None;
@@ -439,6 +436,7 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
+    #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_ocaml(self) -> Self {
         if self.is_long() {
             return self;
@@ -448,7 +446,7 @@ impl Value {
             let val1 = Self::alloc(wosize, self.tag());
             let ptr0 = self.ptr_val::<sys::mlvalues::Value>();
             let ptr1 = val1.mut_ptr_val::<sys::mlvalues::Value>();
-            if sys::mlvalues::tag_val(self.0) >= tag::NO_SCAN {
+            if self.tag() >= Tag::NO_SCAN {
                 ptr0.copy_to_nonoverlapping(ptr1, wosize);
                 return val1;
             }
@@ -465,16 +463,17 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
+    #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
             return self;
         }
         unsafe {
-            if sys::mlvalues::tag_val(self.0) >= tag::NO_SCAN {
+            if self.tag() >= Tag::NO_SCAN {
                 let slice0 = sys::mlvalues::as_slice(self.0);
                 let vec1 = slice0.to_vec();
                 let ptr1 = vec1.as_ptr();
-                mem::forget(vec1);
+                std::mem::forget(vec1);
                 return Value::ptr(ptr1.offset(1));
             }
             let slice0 = sys::mlvalues::as_slice(self.0);

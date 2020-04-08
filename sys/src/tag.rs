@@ -1,3 +1,6 @@
+//! Contains defintions for OCaml tags
+
+/// Used to store OCaml value tags, which are used to determine the underlying type of values
 pub type Tag = u8;
 
 pub const FORWARD: Tag = 250;

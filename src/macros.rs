@@ -1,3 +1,4 @@
+/// `local!` is used to define local variables in OCaml functions
 #[macro_export]
 macro_rules! local {
     ($($local:ident),*) => {
@@ -8,6 +9,18 @@ macro_rules! local {
     }
 }
 
+/// `body!` is needed to help the OCaml runtime to manage garbage collection
+///
+/// ```rust
+/// #[no_mangle]
+/// pub extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
+///     ocaml::body!((a, b) {
+///         let a = a.int_val();
+///         let b = b.int_val();
+///         ocaml::Value::int(a + b)
+///     })
+/// }
+/// ```
 #[macro_export]
 macro_rules! body {
     (($($param:expr),*) $code:block) => {
@@ -16,7 +29,7 @@ macro_rules! body {
 }
 
 #[macro_export]
-/// Create an OCaml array
+/// Convenience macro to create an OCaml array
 macro_rules! array {
     ($($x:expr),*) => {{
         $crate::ToValue::to_value(&vec![$($crate::ToValue::to_value(&$x)),*])
@@ -24,7 +37,7 @@ macro_rules! array {
 }
 
 #[macro_export]
-/// Create an OCaml list
+/// Convenience macro to create an OCaml list
 macro_rules! list {
     ($($x:expr),*) => {{
         let mut l = $crate::list::empty();

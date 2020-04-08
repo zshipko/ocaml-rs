@@ -17,6 +17,7 @@ ocaml-derive = {path = "./derive", version = "0.10", optional = true}
 [features]
 default = ["derive"]
 derive = ["ocaml-derive"]
+deep-clone = []
 
 [workspace]
 members = [

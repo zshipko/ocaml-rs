@@ -1,4 +1,10 @@
+#![deny(missing_docs)]
+
 //! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
+//!
+//! The OCaml manual chapter [Interfacing C with OCaml](https://caml.inria.fr/pub/docs/manual-ocaml/intfc.html) does
+//! a great job of explaining low-level details about how to safely interact with the OCaml runtime. This crate aims to
+//! be a slightly higher-level of abstraction, with minimal added overhead.
 //!
 //! ## Examples
 //!
@@ -105,6 +111,7 @@ mod macros;
 mod conv;
 mod error;
 mod runtime;
+mod tag;
 mod types;
 mod value;
 
@@ -113,4 +120,6 @@ pub use crate::runtime::*;
 pub use crate::types::{bigarray, Array, List, Opaque};
 pub use crate::value::{FromValue, ToValue, Value};
 pub use sys::mlvalues::{Intnat as Int, Uintnat as Uint};
-pub use sys::tag::{self, Tag};
+/// OCaml `float`
+pub type Float = f64;
+pub use tag::Tag;

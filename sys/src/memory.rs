@@ -1,32 +1,31 @@
 //! Defines types and macros primarily for interacting with the OCaml GC.
-//! In addition, a few extra convenience macros are added, in particular, `caml!` and `caml_body!` which are the primary API endpoints of raml.
 //!
 //! # `CAMLParam` Macros
 //! The following macros are used to declare C local variables and
-//! function parameters of type [value].
+//! function parameters of type `value`.
 //!
-//! The function body must start with one of the [CAMLparam] macros.
-//! If the function has no parameter of type [value], use [CAMLparam0].
-//! If the function has 1 to 5 [value] parameters, use the corresponding
+//! The function body must start with one of the `CAMLparam` macros.
+//! If the function has no parameter of type `value], use [CAMLparam0`.
+//! If the function has 1 to 5 `value` parameters, use the corresponding
 //!
-//! [CAMLparam] with the parameters as arguments.
-//! If the function has more than 5 [value] parameters, use [CAMLparam5]
-//! for the first 5 parameters, and one or more calls to the [CAMLxparam]
+//! `CAMLparam` with the parameters as arguments.
+//! If the function has more than 5 `value] parameters, use [CAMLparam5`
+//! for the first 5 parameters, and one or more calls to the `CAMLxparam`
 //! macros for the others.
 //!
-//! If the function takes an array of [value]s as argument, use
-//! [CAMLparamN] to declare it (or [CAMLxparamN] if you already have a
-//! call to [CAMLparam] for some other arguments).
+//! If the function takes an array of `value`s as argument, use
+//! `CAMLparamN] to declare it (or [CAMLxparamN` if you already have a
+//! call to `CAMLparam` for some other arguments).
 //!
-//! If you need local variables of type [value], declare them with one
-//! or more calls to the [CAMLlocal] macros at the beginning of the
-//! function, after the call to CAMLparam.  Use [CAMLlocalN] (at the
-//! beginning of the function) to declare an array of [value]s.
+//! If you need local variables of type `value`, declare them with one
+//! or more calls to the `CAMLlocal` macros at the beginning of the
+//! function, after the call to CAMLparam.  Use `CAMLlocalN` (at the
+//! beginning of the function) to declare an array of `value`s.
 //!
-//! Your function may raise an exception or return a [value] with the
-//! [CAMLreturn] macro.  Its argument is simply the [value] returned by
-//! your function.  Do NOT directly return a [value] with the [return]
-//! keyword.  If your function returns void, use [CAMLreturn0].
+//! Your function may raise an exception or return a `value` with the
+//! `CAMLreturn] macro.  Its argument is simply the [value` returned by
+//! your function.  Do NOT directly return a `value] with the [return`
+//! keyword.  If your function returns void, use `CAMLreturn0`.
 //!
 //! All the identifiers beginning with "caml__" are reserved by OCaml.
 //! Do not use them for anything (local or global variables, struct or

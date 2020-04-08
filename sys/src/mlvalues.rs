@@ -1,10 +1,17 @@
 //! Contains OCaml types and conversion functions from runtime representations.
+use crate::tag::Tag;
 
+/// OCaml `value` type
 pub type Value = usize;
+
+/// OCaml's integer type
 pub type Intnat = isize;
+
+/// OCaml's unsigned integer type
 pub type Uintnat = usize;
+
+/// OCaml's size type
 pub type Size = Uintnat;
-pub type Tag = u8; //typedef unsigned int tag_t; // Actually, an unsigned char
 pub type Color = Uintnat;
 pub type Mark = Uintnat;
 
