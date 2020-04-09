@@ -58,9 +58,9 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .map(|t| match t {
             Some(ident) => {
                 let ident = &ident.ident;
-                quote! { mut #ident: ::ocaml::Value }
+                quote! { mut #ident: ocaml::Value }
             }
-            None => quote! { _: ::ocaml::Value },
+            None => quote! { _: ocaml::Value },
         })
         .collect();
 
@@ -77,14 +77,14 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let mut #ident = ::ocaml::FromValue::from_value(#ident); })
+                Some(quote! { let mut #ident = ocaml::FromValue::from_value(#ident); })
             }
             None => None,
         })
         .collect();
 
     if ocaml_args.len() == 0 {
-        ocaml_args.push(quote! { _: ::ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::Value});
     }
 
     let body = &item_fn.block;
@@ -126,12 +126,12 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         #(
             #attr
         )*
-        pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
-            ::ocaml::body!((#param_names) {
+        pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+            ocaml::body!((#param_names) {
                 #inner
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ::ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(&res)
             })
         }
     };
@@ -198,8 +198,8 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { mut #ident: ::ocaml::Value },
-            None => quote! { _: ::ocaml::Value },
+            Some(ident) => quote! { mut #ident: ocaml::Value },
+            None => quote! { _: ocaml::Value },
         })
         .collect();
 
@@ -212,7 +212,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
         .collect();
 
     if ocaml_args.len() == 0 {
-        ocaml_args.push(quote! { _: ::ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::Value});
     }
 
     let body = &item_fn.block;
@@ -228,7 +228,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
             #attr
         )*
         pub #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
-            ::ocaml::body!((#param_names) {
+            ocaml::body!((#param_names) {
                 #body
             })
         }
@@ -289,8 +289,8 @@ fn ocaml_bytecode_func_impl(
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { #ident: ::ocaml::Value },
-            None => quote! { _: ::ocaml::Value },
+            Some(ident) => quote! { #ident: ocaml::Value },
+            None => quote! { _: ocaml::Value },
         })
         .collect();
 
@@ -303,7 +303,7 @@ fn ocaml_bytecode_func_impl(
         .collect();
 
     if ocaml_args.len() == 0 {
-        ocaml_args.push(quote! { _unit: ::ocaml::Value});
+        ocaml_args.push(quote! { _unit: ocaml::Value});
         param_names.push(syn::Ident::new("__ocaml_unit", name.span()));
     }
 
@@ -313,7 +313,7 @@ fn ocaml_bytecode_func_impl(
         Some(o) => {
             quote! {
                 #[allow(unused)]
-                let __ocaml_unit = ::ocaml::Value::unit();
+                let __ocaml_unit = ocaml::Value::unit();
                 let inner = #o;
             }
         }
@@ -364,7 +364,7 @@ fn ocaml_bytecode_func_impl(
             .iter()
             .filter_map(|arg| match arg {
                 Some(ident) => Some(quote! {
-                    let mut #ident = ::ocaml::FromValue::from_value(unsafe {
+                    let mut #ident = ocaml::FromValue::from_value(unsafe {
                         *__ocaml_argv.add(__ocaml_arg_index as usize)
                     });
                     __ocaml_arg_index += 1 ;
@@ -377,7 +377,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #unsafety extern "C" fn #name(__ocaml_argv: *mut ::ocaml::Value, __ocaml_argc: i32) -> ::ocaml::Value #where_clause {
+            pub #unsafety extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
                 assert!(#len == __ocaml_argc as usize);
 
                 #inner
@@ -385,7 +385,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ::ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(&res)
             }
         }
     } else {
@@ -394,7 +394,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let mut #ident = ::ocaml::FromValue::from_value(#ident); })
+                    Some(quote! { let mut #ident = ocaml::FromValue::from_value(#ident); })
                 }
                 None => None,
             })
@@ -404,12 +404,12 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ::ocaml::Value #where_clause {
+            pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
                 #inner
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ::ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(&res)
             }
         }
     };

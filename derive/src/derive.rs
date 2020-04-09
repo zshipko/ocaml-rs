@@ -71,17 +71,17 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             panic!("ocaml cannot derive unboxed or float arrays for enums")
         }
         if arity == 0 {
-            let init = quote!(value = ::ocaml::Value::int(#tag as ::ocaml::Int));
+            let init = quote!(value = ocaml::Value::int(#tag as ocaml::Int));
             variant.fold(init, |_, _| quote!())
         } else if attrs.floats {
             let mut idx = 0usize;
             let init = quote!(
-                value = ::ocaml::Value::alloc(#arity, ::ocaml::Tag::DOUBLE_ARRAY);
+                value = ocaml::Value::alloc(#arity, ocaml::Tag::DOUBLE_ARRAY);
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
                 idx += 1;
-                quote!(#acc; ::ocaml::array::set_double(value, #i, *#b as f64).unwrap();)
+                quote!(#acc; ocaml::array::set_double(value, #i, *#b as f64).unwrap();)
             })
         } else if attrs.unboxed {
             if variant.bindings().len() > 1 {
@@ -92,9 +92,9 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             let mut idx = 0usize;
             let ghost = (0..arity)
                 .into_iter()
-                .map(|idx| quote!(value.store_field(#idx, ::ocaml::Value::unit())));
+                .map(|idx| quote!(value.store_field(#idx, ocaml::Value::unit())));
             let init = quote!(
-                value = ::ocaml::Value::alloc(#arity, ::ocaml::Tag(#tag));
+                value = ocaml::Value::alloc(#arity, ocaml::Tag(#tag));
                 #(#ghost);*;
             );
             variant.fold(init, |acc, b| {
@@ -105,8 +105,8 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         }
     });
     s.gen_impl(quote! {
-        gen unsafe impl ::ocaml::ToValue for @Self {
-            fn to_value(&self) -> ::ocaml::Value {
+        gen unsafe impl ocaml::ToValue for @Self {
+            fn to_value(&self) -> ocaml::Value {
                 unsafe {
                     ocaml::local!(value);
                     match *self {
@@ -147,14 +147,14 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             if arity > 1 {
                 panic!("ocaml cannot derive unboxed records with several fields")
             }
-            variant.construct(|_, _| quote!(::ocaml::FromValue::from_value(value)))
+            variant.construct(|_, _| quote!(ocaml::FromValue::from_value(value)))
         } else {
             let construct = variant.construct(|field, idx| {
                 if attrs.floats {
                     let ty = &field.ty;
-                    quote!(::ocaml::array::get_double(value, #idx).unwrap() as #ty)
+                    quote!(ocaml::array::get_double(value, #idx).unwrap() as #ty)
                 } else {
-                    quote!(::ocaml::FromValue::from_value(value.field(#idx)))
+                    quote!(ocaml::FromValue::from_value(value.field(#idx)))
                 }
             });
             quote!((#is_block, #tag) => {
@@ -166,8 +166,8 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     if attrs.unboxed {
         s.gen_impl(quote! {
             extern crate ocaml;
-            gen unsafe impl ::ocaml::FromValue for @Self {
-                fn from_value(value: ::ocaml::Value) -> Self {
+            gen unsafe impl ocaml::FromValue for @Self {
+                fn from_value(value: ocaml::Value) -> Self {
                     #(#body),*
                 }
             }
@@ -178,7 +178,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             quote!({ value.tag() })
         } else {
             quote!({
-                if value.tag() != ::ocaml::Tag::DOUBLE_ARRAY {
+                if value.tag() != ocaml::Tag::DOUBLE_ARRAY {
                     panic!("ocaml ffi: trying to convert a value which is not a double array to an unboxed record")
                 };
                 0
@@ -187,7 +187,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         s.gen_impl(quote! {
             extern crate ocaml;
             gen unsafe impl ocaml::FromValue for @Self {
-                fn from_value(value: ::ocaml::Value) -> Self {
+                fn from_value(value: ocaml::Value) -> Self {
                     let is_block = value.is_block();
                     let tag = if !is_block { value.int_val() as u8 } else { #tag.0 };
                     match (is_block, tag) {

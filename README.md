@@ -132,26 +132,28 @@ For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/maste
 
 This chart contains the mapping between Rust and OCaml types used by `ocaml::func`
 
-| Rust type        | OCaml type      |
-| ---------------- | --------------- |
-| `()`             | `unit`          |
-| `isize`          | `int`           |
-| `usize`          | `int`           |
-| `i8`             | `int`           |
-| `u8`             | `int`           |
-| `i16`            | `int`           |
-| `u16`            | `int`           |
-| `i32`            | `int32`         |
-| `u32`            | `int32`         |
-| `i64`            | `int64`         |
-| `u64`            | `int64`         |
-| `f32`            | `float`         |
-| `f64`            | `float`         |
-| `str`            | `string`        |
-| `String`         | `string`        |
-| `Option<'a>`     | `'a option`     |
-| `(A, B, C)`      | `'a * 'b * 'c`  |
-| `Vec<A>`         | `'a array`      |
-| `BTreeMap<A, B>` | `('a, 'b) list` |
-| `LinkedList<A>`  | `'a list`       |
+| Rust type        | OCaml type        |
+| ---------------- | ----------------- |
+| `()`             | `unit`            |
+| `isize`          | `int`             |
+| `usize`          | `int`             |
+| `i8`             | `int`             |
+| `u8`             | `int`             |
+| `i16`            | `int`             |
+| `u16`            | `int`             |
+| `i32`            | `int32`           |
+| `u32`            | `int32`           |
+| `i64`            | `int64`           |
+| `u64`            | `int64`           |
+| `f32`            | `float`           |
+| `f64`            | `float`           |
+| `str`            | `string`          |
+| `String`         | `string`          |
+| `Option<A>`      | `'a option`       |
+| `Result<A, B>`   | `exception`       |
+| `(A, B, C)`      | `'a * 'b * 'c`    |
+| `Vec<A>`         | `'a array`        |
+| `BTreeMap<A, B>` | `('a, 'b) list`   |
+| `LinkedList<A>`  | `'a list`         |
+
 

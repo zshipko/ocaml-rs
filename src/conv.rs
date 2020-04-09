@@ -320,15 +320,18 @@ unsafe impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
             Ok(x) => x.to_value(),
             Err(e) => {
                 let s = format!("{:?}", e);
-                crate::failwith(s);
-                Value::unit()
+                crate::failwith(s)
             }
         }
     }
 }
 
-unsafe impl<T: FromValue, E> FromValue for Result<T, E> {
+unsafe impl<T: FromValue, E: FromValue> FromValue for Result<T, E> {
     fn from_value(value: Value) -> Result<T, E> {
+        if value.is_exception_result() {
+            return Err(E::from_value(value.exception().unwrap()));
+        }
+
         Ok(T::from_value(value))
     }
 }

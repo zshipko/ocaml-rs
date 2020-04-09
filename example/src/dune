@@ -18,6 +18,7 @@
 (library
  (name example)
  (public_name example)
+
  ; Link the Rust library
  (foreign_archives example_stubs)
  (c_library_flags

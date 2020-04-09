@@ -3,30 +3,30 @@
 #[macro_export]
 /// Registers OCaml parameters with the GC
 macro_rules! caml_param {
-
-    (@step $idx:expr, $caml_roots:ident,) => {
-        $caml_roots.ntables = $idx;
-    };
-
-    (@step $idx:expr, $caml_roots:ident, $param:expr, $($tail:expr,)*) => {
-        $caml_roots.tables[$idx] = &$param as *const _ as *mut _;
-        if $idx == 4 {
-            $caml_roots.ntables = 5;
-            $crate::caml_param!(@step 0, $caml_roots, $($tail,)*);
-        } else {
-            $crate::caml_param!(@step $idx + 1usize, $caml_roots, $($tail,)*);
-        }
-    };
-
     ($($n:expr),*) => {
         let mut caml_roots = $crate::memory::CamlRootsBlock::default();
-        #[allow(unused_unsafe)]
-        unsafe {
-            caml_roots.next = $crate::state::local_roots();
-            $crate::state::set_local_roots(&mut caml_roots);
-        };
-        caml_roots.nitems = 1; // this is = N when CAMLxparamN is used
-        $crate::caml_param!(@step 0usize, caml_roots, $($n,)*);
+
+        let mut n = 0;
+        $(
+            if n == 5 {
+                n = 0;
+            }
+
+            if n == 0 {
+                caml_roots = $crate::memory::CamlRootsBlock::default();
+                #[allow(unused_unsafe)]
+                unsafe {
+                    caml_roots.next = $crate::state::local_roots();
+                    $crate::state::set_local_roots(&mut caml_roots);
+                };
+                caml_roots.nitems = 1;
+            }
+
+            caml_roots.tables[n] = &$n as *const _ as *mut _;
+
+            n += 1;
+            caml_roots.ntables = n;
+        )*
     }
 }
 

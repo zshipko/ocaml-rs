@@ -303,6 +303,17 @@ impl Value {
         self.0 as *mut T
     }
 
+    /// Extract OCaml exception
+    pub fn exception<A: FromValue>(self) -> Option<A> {
+        if !self.is_exception_result() {
+            return None;
+        }
+
+        Some(A::from_value(Value(
+            crate::sys::callback::extract_exception(self.0),
+        )))
+    }
+
     /// Call a closure with a single argument, returning an exception value
     pub fn call<A: ToValue>(self, arg: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
@@ -436,6 +447,8 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
+    ///
+    /// Requires the `deep-clone` feature
     #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_ocaml(self) -> Self {
         if self.is_long() {
@@ -463,6 +476,8 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
+    ///
+    /// Requires the `deep-clone` feature
     #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
