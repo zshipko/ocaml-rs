@@ -11,6 +11,11 @@ type my_record = {
   bar: float;
 }
 
+type hash_variant = [
+  | `Abc of int
+  | `Def of float
+]
+
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
@@ -32,4 +37,4 @@ external call: ('a -> 'b) -> 'a -> 'b = "ml_call"
 external format_my_record: my_record -> string = "ml_format_my_record"
 external unboxed_float: float -> float -> float = "ml_unboxed_float_bytecode" "ml_unboxed_float" [@@unboxed] [@@noalloc]
 external more_than_five_params: int -> int -> int -> int -> int -> int -> int = "ml_more_than_five_params_bytecode" "ml_more_than_five_params"
-
+external hash_variant: unit -> hash_variant = "ml_hash_variant"

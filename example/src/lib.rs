@@ -210,3 +210,8 @@ pub fn ml_more_than_five_params(
 ) -> ocaml::Int {
     a + b + c + d + e + f
 }
+
+#[ocaml::func]
+pub fn ml_hash_variant() -> Value {
+    Value::hash_variant("Abc", Some(Value::int(123)))
+}

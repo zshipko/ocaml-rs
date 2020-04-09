@@ -130,6 +130,10 @@ let _ =
 
     assert (more_than_five_params 1 1 1 1 1 1 = 6);
 
+    let () = match hash_variant () with
+    | `Abc x -> assert (x = 123)
+    | _ -> assert false in
+
     print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()

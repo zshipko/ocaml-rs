@@ -182,12 +182,12 @@ impl Value {
     }
 
     /// Create a variant value
-    pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
+    pub fn variant(tag: u8, value: Option<Value>) -> Value {
         crate::frame!((x) {
             match value {
                 Some(v) => unsafe {
                     x = Value(sys::alloc::caml_alloc(1, tag));
-                    x.store_field(0, v.to_value())
+                    x.store_field(0, v)
                 },
                 None => x = Value(unsafe { sys::alloc::caml_alloc(0, tag) }),
             }
@@ -425,8 +425,18 @@ impl Value {
     }
 
     /// Get hash variant as OCaml value
-    pub fn hash_variant<S: AsRef<str>>(name: S) -> Value {
-        unsafe { Value(sys::mlvalues::caml_hash_variant(name.as_ref().as_ptr())) }
+    pub fn hash_variant<S: AsRef<str>>(name: S, a: Option<Value>) -> Value {
+        let s = std::ffi::CString::new(name.as_ref()).expect("Invalid C string");
+        let hash = unsafe { Value(sys::mlvalues::caml_hash_variant(s.as_ptr() as *const u8)) };
+        match a {
+            Some(x) => {
+                let mut output = Value::alloc_small(2, Tag(0));
+                output.store_field(0, hash);
+                output.store_field(1, x);
+                output
+            }
+            None => hash,
+        }
     }
 
     /// Get object method
@@ -435,14 +445,15 @@ impl Value {
             return None;
         }
 
-        let v =
-            unsafe { sys::mlvalues::caml_get_public_method(self.0, Self::hash_variant(name).0) };
+        let v = unsafe {
+            sys::mlvalues::caml_get_public_method(self.0, Self::hash_variant(name, None).0)
+        };
 
         if v == 0 {
             return None;
         }
 
-        Some(Value::new(v))
+        Some(Value(v))
     }
 
     /// This will recursively clone any OCaml value
