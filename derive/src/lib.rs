@@ -3,6 +3,32 @@ use quote::quote;
 
 mod derive;
 
+fn check_func(item_fn: &mut syn::ItemFn) {
+    match &item_fn.sig.asyncness {
+        Some(_) => panic!("OCaml functions cannot be async"),
+        _ => (),
+    }
+
+    match &item_fn.sig.variadic {
+        Some(_) => panic!("OCaml functions cannot be variadic"),
+        _ => (),
+    }
+
+    match item_fn.vis {
+        syn::Visibility::Public(_) => (),
+        _ => panic!("OCaml functions must be public"),
+    }
+
+    if item_fn.sig.generics.params.len() > 0 {
+        panic!("OCaml functions may not contain generics")
+    }
+
+    item_fn.sig.abi = Some(syn::Abi {
+        extern_token: syn::token::Extern::default(),
+        name: Some(syn::LitStr::new("C", item_fn.sig.ident.span())),
+    });
+}
+
 /// `func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
 /// automatically.
 ///
@@ -13,19 +39,11 @@ mod derive;
 #[proc_macro_attribute]
 pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
+    check_func(&mut item_fn);
 
     let name = &item_fn.sig.ident;
     let unsafety = &item_fn.sig.unsafety;
-
-    match item_fn.vis {
-        syn::Visibility::Public(_) => (),
-        _ => panic!("OCaml functions must be public"),
-    }
-
-    item_fn.sig.abi = Some(syn::Abi {
-        extern_token: syn::token::Extern::default(),
-        name: Some(syn::LitStr::new("C", item_fn.sig.ident.span())),
-    });
+    let constness = &item_fn.sig.constness;
 
     let (returns, rust_return_type) = match &item_fn.sig.output {
         syn::ReturnType::Default => (false, None),
@@ -86,14 +104,14 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let inner = if returns {
         quote! {
             #[inline(always)]
-            fn inner(#(#rust_args),*) -> #rust_return_type {
+            #constness #unsafety fn inner(#(#rust_args),*) -> #rust_return_type {
                 #body
             }
         }
     } else {
         quote! {
             #[inline(always)]
-            fn inner(#(#rust_args),*)  {
+            #constness #unsafety fn inner(#(#rust_args),*)  {
                 #body
             }
         }
@@ -129,7 +147,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         #(
             #attr
         )*
-        pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+        pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
             ocaml::body!((#param_names) {
                 #inner
                 #(#convert_params);*
@@ -164,9 +182,12 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
+    check_func(&mut item_fn);
 
     let name = &item_fn.sig.ident;
     let unsafety = &item_fn.sig.unsafety;
+    let constness = &item_fn.sig.constness;
+
     let where_clause = &item_fn.sig.generics.where_clause;
     let attr: Vec<_> = item_fn
         .attrs
@@ -191,16 +212,6 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
             s != "ocaml_native_func" && s != "ocaml::native_func" && s != "native_func"
         })
         .collect();
-
-    match item_fn.vis {
-        syn::Visibility::Public(_) => (),
-        _ => panic!("OCaml functions must be public"),
-    }
-
-    item_fn.sig.abi = Some(syn::Abi {
-        extern_token: syn::token::Extern::default(),
-        name: Some(syn::LitStr::new("C", item_fn.sig.ident.span())),
-    });
 
     let rust_args = &item_fn.sig.inputs;
 
@@ -249,7 +260,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
         #(
             #attr
         )*
-        pub #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
+        pub #constness #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
             ocaml::body!((#param_names) {
                 #body
             })
@@ -275,18 +286,11 @@ fn ocaml_bytecode_func_impl(
     mut item_fn: syn::ItemFn,
     original: Option<&proc_macro2::Ident>,
 ) -> proc_macro2::TokenStream {
+    check_func(&mut item_fn);
+
     let name = &item_fn.sig.ident;
     let unsafety = &item_fn.sig.unsafety;
-
-    match item_fn.vis {
-        syn::Visibility::Public(_) => (),
-        _ => panic!("OCaml functions must be public"),
-    }
-
-    item_fn.sig.abi = Some(syn::Abi {
-        extern_token: syn::token::Extern::default(),
-        name: Some(syn::LitStr::new("C", item_fn.sig.ident.span())),
-    });
+    let constness = &item_fn.sig.constness;
 
     let (returns, rust_return_type) = match &item_fn.sig.output {
         syn::ReturnType::Default => (false, None),
@@ -343,14 +347,14 @@ fn ocaml_bytecode_func_impl(
             if returns {
                 quote! {
                     #[inline(always)]
-                    fn inner(#(#rust_args),*) -> #rust_return_type {
+                    #constness #unsafety fn inner(#(#rust_args),*) -> #rust_return_type {
                         #body
                     }
                 }
             } else {
                 quote! {
                     #[inline(always)]
-                    fn inner(#(#rust_args),*)  {
+                    #constness #unsafety fn inner(#(#rust_args),*)  {
                         #body
                     }
                 }
@@ -408,7 +412,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #unsafety extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
+            pub #constness #unsafety extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
                 assert!(#len == __ocaml_argc as usize);
 
                 #inner
@@ -435,7 +439,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+            pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
                 #inner
 
                 #(#convert_params);*
