@@ -73,7 +73,7 @@ impl Value {
 
     /// Allocate a new value with the given size and tag.
     pub fn alloc(n: usize, tag: Tag) -> Value {
-        Value(sys::caml_frame!(|x| {
+        Value(sys::caml_frame!((x) {
             x = unsafe { sys::alloc::caml_alloc(n, tag.into()) };
             x
         }))
@@ -81,7 +81,7 @@ impl Value {
 
     /// Allocate a new tuple value
     pub fn alloc_tuple(n: usize) -> Value {
-        Value(sys::caml_frame!(|x| {
+        Value(sys::caml_frame!((x) {
             x = unsafe { sys::alloc::caml_alloc_tuple(n) };
             x
         }))
@@ -89,7 +89,7 @@ impl Value {
 
     /// Allocate a new small value with the given size and tag
     pub fn alloc_small(n: usize, tag: Tag) -> Value {
-        Value(sys::caml_frame!(|x| {
+        Value(sys::caml_frame!((x) {
             x = unsafe { sys::alloc::caml_alloc_small(n, tag.into()) };
             x
         }))
@@ -104,7 +104,7 @@ impl Value {
             return Value::int(0);
         }
 
-        Value(sys::caml_frame!(|x| {
+        Value(sys::caml_frame!((x) {
             x = sys::alloc::caml_alloc_final(
                 std::mem::size_of::<T>(),
                 std::mem::transmute(finalizer),
@@ -159,7 +159,7 @@ impl Value {
 
     /// OCaml Some value
     pub fn some<V: ToValue>(v: V) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             unsafe {
                 x = sys::alloc::caml_alloc(1, 0);
                 sys::memory::store_field(x, 0, v.to_value().0);
@@ -182,7 +182,7 @@ impl Value {
 
     /// Create a variant value
     pub fn variant<V: ToValue>(tag: u8, value: Option<V>) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             match value {
                 Some(v) => unsafe {
                     x = sys::alloc::caml_alloc(1, tag);
@@ -206,7 +206,7 @@ impl Value {
 
     /// Create an OCaml `Int64` from `i64`
     pub fn int64(i: i64) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             unsafe { x = sys::alloc::caml_copy_int64(i) };
             x
         }))
@@ -214,7 +214,7 @@ impl Value {
 
     /// Create an OCaml `Int32` from `i32`
     pub fn int32(i: i32) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             unsafe { x = sys::alloc::caml_copy_int32(i) };
             x
         }))
@@ -222,7 +222,7 @@ impl Value {
 
     /// Create an OCaml `Nativeint` from `isize`
     pub fn nativeint(i: isize) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             unsafe { x = sys::alloc::caml_copy_nativeint(i) };
             x
         }))
@@ -230,7 +230,7 @@ impl Value {
 
     /// Create an OCaml `Float` from `f64`
     pub fn f64(d: f64) -> Value {
-        Value(caml_frame!(|x| {
+        Value(caml_frame!((x) {
             unsafe { x = sys::alloc::caml_copy_double(d) }
             x
         }))
@@ -320,7 +320,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = caml_frame!(|res| {
+        let mut v = caml_frame!((res) {
             res = unsafe { sys::callback::caml_callback_exn(self.0, arg.to_value().0) };
             res
         });
@@ -339,7 +339,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = caml_frame!(|res| {
+        let mut v = caml_frame!((res) {
             res = unsafe {
                 sys::callback::caml_callback2_exn(self.0, arg1.to_value().0, arg2.to_value().0)
             };
@@ -365,7 +365,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = caml_frame!(|res| {
+        let mut v = caml_frame!((res) {
             res = unsafe {
                 sys::callback::caml_callback3_exn(
                     self.0,
@@ -394,7 +394,7 @@ impl Value {
         let n = args.as_ref().len();
         let x: Vec<sys::mlvalues::Value> = args.as_ref().iter().map(|x| x.0).collect();
 
-        let mut v = caml_frame!(|res| {
+        let mut v = caml_frame!((res) {
             res = unsafe {
                 sys::callback::caml_callbackN_exn(
                     self.0,

@@ -120,7 +120,7 @@ impl<'a> Array<'a, f64> {
 impl<'a, T: ToValue + FromValue> Array<'a, T> {
     /// Allocate a new Array
     pub fn alloc(n: usize) -> Array<'a, T> {
-        let x = caml_frame!(|x| {
+        let x = caml_frame!((x) {
             x = unsafe { alloc::caml_alloc(n, 0) };
             x
         });
@@ -215,7 +215,7 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
 
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: T) {
-        let tmp = caml_frame!(|x, tmp| {
+        let tmp = caml_frame!((x, tmp) {
             x = (self.0).0;
             unsafe {
                 tmp = crate::sys::alloc::caml_alloc_small(2, 0);
@@ -334,7 +334,7 @@ pub mod bigarray {
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
         pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
-            let x = caml_frame!(|x| {
+            let x = caml_frame!((x) {
                 x = unsafe {
                     bigarray::caml_ba_alloc_dims(
                         T::kind() | bigarray::Managed::EXTERNAL as i32,
@@ -356,7 +356,7 @@ pub mod bigarray {
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
         pub fn create(n: Size) -> Array1<'a, T> {
-            let x = caml_frame!(|x| {
+            let x = caml_frame!((x) {
                 let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
                 x = unsafe {
                     bigarray::caml_ba_alloc_dims(

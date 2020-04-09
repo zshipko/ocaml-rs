@@ -1,4 +1,4 @@
-/// `local!` is used to define local variables in OCaml functions
+/// `local!` can used to define local variables in OCaml functions
 #[macro_export]
 macro_rules! local {
     ($($local:ident),*) => {
@@ -9,7 +9,16 @@ macro_rules! local {
     }
 }
 
-/// `body!` is needed to help the OCaml runtime to manage garbage collection
+/// `frame!` can be used to create new local variables that play nicely with the garbage collector
+#[macro_export]
+macro_rules! frame {
+    (($($param:ident),*) $code:block) => {
+        $crate::sys::caml_frame!(($($param.0),*) $code);
+    }
+}
+
+/// `body!` is needed to help the OCaml runtime to manage garbage collection, it should
+/// be used to wrap the body of each function exported to OCaml
 ///
 /// ```rust
 /// #[no_mangle]

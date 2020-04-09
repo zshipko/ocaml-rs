@@ -53,12 +53,13 @@ macro_rules! caml_local {
 #[macro_export]
 /// Defines an OCaml frame
 macro_rules! caml_frame {
-    (|$($local:ident),*| $code:block) => {
+    (($($local:ident),*) $code:block) => {
         {
             #[allow(unused_unsafe)]
             let caml_frame = unsafe { $crate::state::local_roots() };
             $crate::caml_local!($($local),*);
-            let res = $code;
+            let mut res = || $code;
+            let res = res();
             #[allow(unused_unsafe)]
             unsafe { $crate::state::set_local_roots(caml_frame) };
             res
@@ -73,7 +74,7 @@ macro_rules! caml_body {
             #[allow(unused_unsafe)]
             let caml_frame = unsafe { $crate::state::local_roots() };
             $crate::caml_param!($($param),*);
-            let res = || $code;
+            let mut res = || $code;
             let res = res();
             #[allow(unused_unsafe)]
             unsafe { $crate::state::set_local_roots(caml_frame) };
