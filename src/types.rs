@@ -1,4 +1,4 @@
-use crate::sys::{alloc, caml_frame, mlvalues};
+use crate::sys::{alloc, mlvalues};
 use crate::Error;
 
 use std::marker::PhantomData;
@@ -120,11 +120,11 @@ impl<'a> Array<'a, f64> {
 impl<'a, T: ToValue + FromValue> Array<'a, T> {
     /// Allocate a new Array
     pub fn alloc(n: usize) -> Array<'a, T> {
-        let x = caml_frame!((x) {
-            x = unsafe { alloc::caml_alloc(n, 0) };
+        let x = crate::frame!((x) {
+            x = unsafe { Value(alloc::caml_alloc(n, 0)) };
             x
         });
-        Array(Value(x), PhantomData)
+        Array(x, PhantomData)
     }
 
     /// Check if Array contains only doubles, if so `get_double` and `set_double` should be used
@@ -215,17 +215,17 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
 
     /// Add an element to the front of the list
     pub fn push_hd(&mut self, v: T) {
-        let tmp = caml_frame!((x, tmp) {
-            x = (self.0).0;
+        let tmp = crate::frame!((x, tmp) {
+            x = self.0;
             unsafe {
-                tmp = crate::sys::alloc::caml_alloc_small(2, 0);
-                crate::sys::memory::store_field(tmp, 0, v.to_value().0);
-                crate::sys::memory::store_field(tmp, 1, x);
+                tmp = Value(crate::sys::alloc::caml_alloc_small(2, 0));
+                tmp.store_field(0, v.to_value());
+                tmp.store_field(1, x);
                 tmp
             }
         });
 
-        (self.0).0 = tmp;
+        self.0 = tmp;
     }
 
     /// List head
@@ -334,18 +334,18 @@ pub mod bigarray {
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
         pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
-            let x = caml_frame!((x) {
+            let x = crate::frame!((x) {
                 x = unsafe {
-                    bigarray::caml_ba_alloc_dims(
+                    Value(bigarray::caml_ba_alloc_dims(
                         T::kind() | bigarray::Managed::EXTERNAL as i32,
                         1,
                         data.as_mut_ptr() as bigarray::Data,
                         data.len() as i32,
-                    )
+                    ))
                 };
                 x
             });
-            Array1(Value(x), PhantomData)
+            Array1(x, PhantomData)
         }
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
@@ -356,19 +356,19 @@ pub mod bigarray {
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
         pub fn create(n: Size) -> Array1<'a, T> {
-            let x = caml_frame!((x) {
+            let x = crate::frame!((x) {
                 let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
                 x = unsafe {
-                    bigarray::caml_ba_alloc_dims(
+                    Value(bigarray::caml_ba_alloc_dims(
                         T::kind() | bigarray::Managed::MANAGED as i32,
                         1,
                         data,
                         n as mlvalues::Intnat,
-                    )
+                    ))
                 };
                 x
             });
-            Array1(Value(x), PhantomData)
+            Array1(x, PhantomData)
         }
 
         /// Returns the number of items in `self`

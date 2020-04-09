@@ -13,7 +13,17 @@ macro_rules! local {
 #[macro_export]
 macro_rules! frame {
     (($($param:ident),*) $code:block) => {
-        $crate::sys::caml_frame!(($($param.0),*) $code);
+       {
+            #[allow(unused_unsafe)]
+            let caml_frame = unsafe { $crate::sys::state::local_roots() };
+            $crate::local!($($param),*);
+            #[allow(unused_mut)]
+            let mut res = || $code;
+            let res = res();
+            #[allow(unused_unsafe)]
+            unsafe { $crate::sys::state::set_local_roots(caml_frame) };
+            res
+        }
     }
 }
 
