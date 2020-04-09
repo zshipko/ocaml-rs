@@ -97,7 +97,9 @@ impl Value {
     /// Allocate a new value with a custom finalizer
     /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
     /// responsible for managing the lifetime of the value on the Rust side
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    ///
+    /// # Safety
+    /// This function passes Rust data into OCaml, anything can happen
     pub unsafe fn alloc_custom<T>(value: *const T, finalizer: extern "C" fn(Value)) -> Value {
         if value.is_null() {
             return Value::int(0);

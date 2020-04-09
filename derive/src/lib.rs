@@ -6,22 +6,16 @@ mod derive;
 /// `func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
 /// automatically.
 ///
-/// - Wraps the body using `ocaml::body`
+/// - Wraps the function body using `ocaml::body`
 /// - Automatic type conversion for arguments/return value (including Result types)
-/// - Defines a bytecode function automatically (for `my_func` the bytecode function would be
-/// `my_func_bytecode)
+/// - Defines a bytecode function automatically for functions that take more than 5 arguments. The
+/// bytecode function for `my_func` would be `my_func_bytecode`
 #[proc_macro_attribute]
 pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
 
     let name = &item_fn.sig.ident;
     let unsafety = &item_fn.sig.unsafety;
-
-    let bytecode = {
-        let mut bc = item_fn.clone();
-        bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
-        ocaml_bytecode_func_impl(bc, Some(name))
-    };
 
     match item_fn.vis {
         syn::Visibility::Public(_) => (),
@@ -117,6 +111,15 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
                 .map(|x| format!("{}", x.ident))
                 .collect();
             let s = seg.join("::");
+            if s == "ocaml::bytecode_func"
+                || s == "ocaml::native_func"
+                || s == "ocaml_bytecode_func"
+                || s == "ocaml_native_func"
+                || s == "bytecode_func"
+                || s == "native_func"
+            {
+                panic!("Cannot mix OCaml function macros");
+            }
             s != "ocaml_func" && s != "ocaml::func" && s != "func"
         })
         .collect();
@@ -136,18 +139,28 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let r = quote! {
-        #gen
+    if ocaml_args.len() > 5 {
+        let bytecode = {
+            let mut bc = item_fn.clone();
+            bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
+            ocaml_bytecode_func_impl(bc, Some(name))
+        };
 
-        #bytecode
-    };
-    r.into()
+        let r = quote! {
+            #gen
+
+            #bytecode
+        };
+        return r.into();
+    }
+
+    gen.into()
 }
 
 /// `native_func` is used export Rust functions to OCaml, it has much lower overhead than `func`
 /// and expects all arguments to be OCaml values.
 ///
-/// - Wraps the body using `ocaml::body`
+/// - Wraps the function body using `ocaml::body`
 #[proc_macro_attribute]
 pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut item_fn: syn::ItemFn = syn::parse(item).unwrap();
@@ -166,6 +179,15 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
                 .map(|x| format!("{}", x.ident))
                 .collect();
             let s = seg.join("::");
+            if s == "ocaml::bytecode_func"
+                || s == "ocaml::func"
+                || s == "ocaml_bytecode_func"
+                || s == "ocaml_func"
+                || s == "bytecode_func"
+                || s == "func"
+            {
+                panic!("Cannot mix OCaml function macros");
+            }
             s != "ocaml_native_func" && s != "ocaml::native_func" && s != "native_func"
         })
         .collect();
@@ -242,7 +264,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
 /// Since this is automatically applied to `func` functions, this is primarily be used when working with
 /// unboxed functions, or `native_func`s directly.
 ///
-/// - Automatic type conversion for arguments/return value (including Result types)
+/// - Automatic type conversion for arguments/return value
 #[proc_macro_attribute]
 pub fn ocaml_bytecode_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
     let item_fn: syn::ItemFn = syn::parse(item).unwrap();
@@ -348,6 +370,15 @@ fn ocaml_bytecode_func_impl(
                 .map(|x| format!("{}", x.ident))
                 .collect();
             let s = seg.join("::");
+            if s == "ocaml::func"
+                || s == "ocaml::native_func"
+                || s == "ocaml_func"
+                || s == "ocaml_native_func"
+                || s == "func"
+                || s == "native_func"
+            {
+                panic!("Cannot mix OCaml function macros");
+            }
             s != "ocaml_bytecode_func"
                 && s != "ocaml::bytecode_func"
                 && s != "bytecode_func"

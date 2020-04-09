@@ -29,6 +29,9 @@ impl<'a, T> Opaque<'a, T> {
     /// Allocate a new value with an optional custom finalizer
     /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
     /// responsible for managing the lifetime of the value on the Rust side
+    ///
+    /// # Safety
+    /// This function passes Rust data into OCaml, anything can happen
     pub unsafe fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
         let p = match finalizer {
             Some(f) => Value::alloc_custom(ptr, f),
