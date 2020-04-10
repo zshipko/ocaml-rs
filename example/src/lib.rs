@@ -202,13 +202,13 @@ pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
 
 #[ocaml::func]
 pub fn ml_more_than_five_params(
-    a: ocaml::Int,
-    b: ocaml::Int,
-    c: ocaml::Int,
-    d: ocaml::Int,
-    e: ocaml::Int,
-    f: ocaml::Int,
-) -> ocaml::Int {
+    a: ocaml::Float,
+    b: ocaml::Float,
+    c: ocaml::Float,
+    d: ocaml::Float,
+    e: ocaml::Float,
+    f: ocaml::Float,
+) -> ocaml::Float {
     a + b + c + d + e + f
 }
 

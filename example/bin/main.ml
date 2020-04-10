@@ -128,7 +128,7 @@ let _ =
     (* Unboxed float *)
     assert (unboxed_float 1.0 3.0 = 2.0);
 
-    assert (more_than_five_params 1 1 1 1 1 1 = 6);
+    assert (more_than_five_params 1. 1. 1. 1. 1. 1. = 6.0);
 
     let () = match hash_variant () with
     | `Abc x -> assert (x = 123)

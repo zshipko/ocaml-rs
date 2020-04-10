@@ -314,6 +314,17 @@ unsafe impl<'a> FromValue for &'a [Value] {
     }
 }
 
+unsafe impl<'a> FromValue for &'a mut [Value] {
+    fn from_value(v: Value) -> &'a mut [Value] {
+        unsafe {
+            ::std::slice::from_raw_parts_mut(
+                (v.0 as *mut Value).offset(-1),
+                crate::sys::mlvalues::wosize_val(v.0) + 1,
+            )
+        }
+    }
+}
+
 unsafe impl<T: ToValue, E: std::fmt::Debug> ToValue for Result<T, E> {
     fn to_value(&self) -> Value {
         match self {

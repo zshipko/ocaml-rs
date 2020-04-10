@@ -27,7 +27,6 @@ ocaml = {git = "https://github.com/zshipko/ocaml-rs"}
 in your `Cargo.toml`.
 
 
-
 On macOS you will need also to add the following to your project's `.cargo/config` file:
 
 ```toml
@@ -132,28 +131,40 @@ For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/maste
 
 This chart contains the mapping between Rust and OCaml types used by `ocaml::func`
 
-| Rust type        | OCaml type        |
-| ---------------- | ----------------- |
-| `()`             | `unit`            |
-| `isize`          | `int`             |
-| `usize`          | `int`             |
-| `i8`             | `int`             |
-| `u8`             | `int`             |
-| `i16`            | `int`             |
-| `u16`            | `int`             |
-| `i32`            | `int32`           |
-| `u32`            | `int32`           |
-| `i64`            | `int64`           |
-| `u64`            | `int64`           |
-| `f32`            | `float`           |
-| `f64`            | `float`           |
-| `str`            | `string`          |
-| `String`         | `string`          |
-| `Option<A>`      | `'a option`       |
-| `Result<A, B>`   | `exception`       |
-| `(A, B, C)`      | `'a * 'b * 'c`    |
-| `Vec<A>`         | `'a array`        |
-| `BTreeMap<A, B>` | `('a, 'b) list`   |
-| `LinkedList<A>`  | `'a list`         |
+| Rust type        | OCaml type           |
+| ---------------- | -------------------- |
+| `()`             | `unit`               |
+| `isize`          | `int`                |
+| `usize`          | `int`                |
+| `i8`             | `int`                |
+| `u8`             | `int`                |
+| `i16`            | `int`                |
+| `u16`            | `int`                |
+| `i32`            | `int32`              |
+| `u32`            | `int32`              |
+| `i64`            | `int64`              |
+| `u64`            | `int64`              |
+| `f32`            | `float`              |
+| `f64`            | `float`              |
+| `str`            | `string`             |
+| `String`         | `string`             |
+| `Option<A>`      | `'a option`          |
+| `Result<A, B>`   | `exception`          |
+| `(A, B, C)`      | `'a * 'b * 'c`       |
+| `&[Value]`       | `'a array` (no copy) |
+| `Vec<A>`, `&[A]` | `'a array`           |
+| `BTreeMap<A, B>` | `('a, 'b) list`      |
+| `LinkedList<A>`  | `'a list`            |
 
+Even though `&[Value]` is specifically marked as no copy, a type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types.
+
+If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
+
+## Upgrading
+
+Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:
+
+- the `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
+- `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
+  * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
 
