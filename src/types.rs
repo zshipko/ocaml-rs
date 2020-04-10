@@ -31,12 +31,10 @@ impl<'a, T> Pointer<'a, T> {
         finalizer: Option<extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<'static, T> {
-        let p = match finalizer {
+        match finalizer {
             Some(f) => Value::alloc_final(f, used_max),
             None => Value::alloc_final(ignore, used_max),
-        };
-
-        p
+        }
     }
 
     /// Allocate a new value with an optional custom finalizer and used/max

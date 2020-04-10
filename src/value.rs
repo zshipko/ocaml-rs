@@ -120,7 +120,7 @@ impl Value {
         let (used, max) = cfg.unwrap_or_else(|| (0, 1));
         crate::frame!((x) {
             unsafe {
-                x = Value(sys::custom::caml_alloc_custom(std::mem::transmute(T::ops()), size, used, max));
+                x = Value(sys::custom::caml_alloc_custom(T::ops() as *const _ as *const sys::custom::custom_operations, size, used, max));
                 crate::Pointer::from_value(x)
             }
         })

@@ -1,5 +1,5 @@
 fn run() -> std::io::Result<()> {
-    let cmd = std::env::var("OCAML").unwrap_or("ocaml".to_string());
+    let cmd = std::env::var("OCAML").unwrap_or_else(|_| "ocaml".to_string());
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let output = std::process::Command::new(cmd)
         .arg("version.ml")

@@ -90,9 +90,7 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             variant.each(|field| quote!(#field.to_value()))
         } else {
             let mut idx = 0usize;
-            let ghost = (0..arity)
-                .into_iter()
-                .map(|idx| quote!(value.store_field(#idx, ocaml::Value::unit())));
+            let ghost = (0..arity).map(|idx| quote!(value.store_field(#idx, ocaml::Value::unit())));
             let init = quote!(
                 value = ocaml::Value::alloc(#arity, ocaml::Tag(#tag));
                 #(#ghost);*;

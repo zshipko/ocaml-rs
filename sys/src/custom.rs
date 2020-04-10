@@ -153,7 +153,7 @@ fn bindgen_test_layout_custom_operations() {
 }
 extern "C" {
     pub fn caml_alloc_custom(
-        ops: *mut custom_operations,
+        ops: *const custom_operations,
         size: Uintnat,
         mem: Size,
         max: Size,

@@ -4,14 +4,12 @@ use quote::quote;
 mod derive;
 
 fn check_func(item_fn: &mut syn::ItemFn) {
-    match &item_fn.sig.asyncness {
-        Some(_) => panic!("OCaml functions cannot be async"),
-        _ => (),
+    if item_fn.sig.asyncness.is_some() {
+        panic!("OCaml functions cannot be async");
     }
 
-    match &item_fn.sig.variadic {
-        Some(_) => panic!("OCaml functions cannot be variadic"),
-        _ => (),
+    if item_fn.sig.variadic.is_some() {
+        panic!("OCaml functions cannot be variadic");
     }
 
     match item_fn.vis {
@@ -19,7 +17,7 @@ fn check_func(item_fn: &mut syn::ItemFn) {
         _ => panic!("OCaml functions must be public"),
     }
 
-    if item_fn.sig.generics.params.len() > 0 {
+    if !item_fn.sig.generics.params.is_empty() {
         panic!("OCaml functions may not contain generics")
     }
 
@@ -95,7 +93,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         })
         .collect();
 
-    if ocaml_args.len() == 0 {
+    if ocaml_args.is_empty() {
         ocaml_args.push(quote! { _: ocaml::Value});
     }
 
@@ -244,7 +242,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
         })
         .collect();
 
-    if ocaml_args.len() == 0 {
+    if ocaml_args.is_empty() {
         ocaml_args.push(quote! { _: ocaml::Value});
     }
 
@@ -328,7 +326,7 @@ fn ocaml_bytecode_func_impl(
         })
         .collect();
 
-    if ocaml_args.len() == 0 {
+    if ocaml_args.is_empty() {
         ocaml_args.push(quote! { _unit: ocaml::Value});
         param_names.push(syn::Ident::new("__ocaml_unit", name.span()));
     }
@@ -394,7 +392,7 @@ fn ocaml_bytecode_func_impl(
 
     let len = rust_args.len();
 
-    let gen = if len > 5 {
+    if len > 5 {
         let convert_params: Vec<_> = args
             .iter()
             .filter_map(|arg| match arg {
@@ -447,8 +445,7 @@ fn ocaml_bytecode_func_impl(
                 ocaml::ToValue::to_value(&res)
             }
         }
-    };
-    gen
+    }
 }
 
 synstructure::decl_derive!([ToValue, attributes(ocaml)] => derive::tovalue_derive);

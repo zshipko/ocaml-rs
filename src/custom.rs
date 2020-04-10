@@ -93,9 +93,8 @@ pub trait Custom {
     /// Get a static reference the this type's `CustomOps` implementation
     fn ops() -> &'static CustomOps {
         Self::TYPE.ops.identifier = Self::TYPE.name.as_ptr() as *const std::os::raw::c_char;
-        match Self::TYPE.fixed_length {
-            Some(x) => Self::TYPE.ops.fixed_length = &x,
-            None => (),
+        if let Some(x) = Self::TYPE.fixed_length {
+            Self::TYPE.ops.fixed_length = &x;
         }
         &Self::TYPE.ops
     }
