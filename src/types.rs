@@ -39,6 +39,14 @@ impl<'a, T> Pointer<'a, T> {
         p
     }
 
+    /// Allocate a new value with an optional custom finalizer and used/max
+    pub fn alloc_custom(used_max: Option<(usize, usize)>) -> Pointer<'static, T>
+    where
+        T: crate::Custom,
+    {
+        Value::alloc_custom(used_max)
+    }
+
     /// Replace the underlying value with a copy of the provided argument
     pub fn copy_from(&mut self, x: &T) {
         unsafe {
