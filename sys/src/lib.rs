@@ -75,6 +75,7 @@ pub mod memory;
 pub mod alloc;
 pub mod bigarray;
 pub mod callback;
+pub mod custom;
 pub mod fail;
 pub mod state;
 pub mod tag;

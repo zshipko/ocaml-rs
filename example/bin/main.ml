@@ -73,9 +73,9 @@ let _ =
     print_endline "send_first_variant";
     assert (send_first_variant () = First (2.0));
 
-    (* custom_value *)
-    print_endline "custom_value";
-    let _ = custom_value () in
+    (* finalizer *)
+    print_endline "final_value";
+    let _ = final_value () in
 
     (* bigarray *)
     print_endline "bigarray create";
@@ -133,6 +133,12 @@ let _ =
     let () = match hash_variant () with
     | `Abc x -> assert (x = 123)
     | _ -> assert false in
+
+    let a = custom_value 123 in
+    let b = custom_value 456 in
+    assert (a = b);
+    assert (custom_value_int a = 123);
+    assert (custom_value_int b = 456);
 
     print_endline "cleanup";
     Gc.full_major ();

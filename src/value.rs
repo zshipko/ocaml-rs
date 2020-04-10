@@ -2,8 +2,6 @@ use crate::error::Error;
 use crate::sys;
 use crate::tag::Tag;
 
-use std::ptr;
-
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::mlvalues::Size;
 
@@ -15,7 +13,7 @@ pub struct Value(pub sys::mlvalues::Value);
 
 impl Clone for Value {
     fn clone(&self) -> Value {
-        Value::new(self.0)
+        Value(self.0)
     }
 }
 
@@ -94,37 +92,38 @@ impl Value {
         })
     }
 
-    /// Allocate a new value with a custom finalizer
+    /// Allocate a new value with a finalizer
     /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
     /// responsible for managing the lifetime of the value on the Rust side
-    ///
-    /// # Safety
-    /// This function passes Rust data into OCaml, anything can happen
-    pub unsafe fn alloc_custom<T>(value: *const T, finalizer: extern "C" fn(Value)) -> Value {
-        if value.is_null() {
-            return Value::int(0);
-        }
-
+    pub fn alloc_final<T>(
+        finalizer: extern "C" fn(Value),
+        cfg: Option<(usize, usize)>,
+    ) -> crate::Pointer<'static, T> {
+        let (used, max) = cfg.unwrap_or_else(|| (0, 1));
         crate::frame!((x) {
-            x = Value(sys::alloc::caml_alloc_final(
-                std::mem::size_of::<T>(),
-                std::mem::transmute(finalizer),
-                0,
-                1,
-            ));
-
-            let ptr = x.custom_ptr_val_mut::<T>();
-            if !ptr.is_null() {
-                std::ptr::copy(value, ptr, 1);
+            unsafe {
+                crate::Pointer::from_value(Value(sys::alloc::caml_alloc_final(
+                    std::mem::size_of::<T>(),
+                    std::mem::transmute(finalizer),
+                    used,
+                    max
+                )))
             }
-            x
         })
     }
 
-    /// Set custom pointer value
-    pub fn set_custom<T>(&mut self, value: T) -> T {
-        let ptr = self.custom_ptr_val_mut::<T>();
-        unsafe { ptr::replace(ptr, value) }
+    /// Allocate custom value
+    pub fn alloc_custom<T: crate::Custom>(
+        cfg: Option<(usize, usize)>,
+    ) -> crate::Pointer<'static, T> {
+        let size = std::mem::size_of::<T>();
+        let (used, max) = cfg.unwrap_or_else(|| (0, 1));
+        crate::frame!((x) {
+            unsafe {
+                x = Value(sys::custom::caml_alloc_custom(std::mem::transmute(T::ops()), size, used, max));
+                crate::Pointer::from_value(x)
+            }
+        })
     }
 
     /// Create a new Value from an existing OCaml `value`

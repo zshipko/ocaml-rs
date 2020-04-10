@@ -9,58 +9,68 @@ use crate::value::{FromValue, Size, ToValue, Value};
 /// An opaque handle to a Rust value
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Opaque<'a, T>(Value, PhantomData<&'a T>);
+pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
 
-unsafe impl<'a, T> ToValue for Opaque<'a, T> {
+unsafe impl<'a, T> ToValue for Pointer<'a, T> {
     fn to_value(&self) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T> FromValue for Opaque<'a, T> {
+unsafe impl<'a, T> FromValue for Pointer<'a, T> {
     fn from_value(value: Value) -> Self {
-        Opaque(value, PhantomData)
+        Pointer(value, PhantomData)
     }
 }
 
 extern "C" fn ignore(_: Value) {}
 
-impl<'a, T> Opaque<'a, T> {
-    /// Allocate a new value with an optional custom finalizer
-    /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
-    /// responsible for managing the lifetime of the value on the Rust side
-    ///
-    /// # Safety
-    /// This function passes Rust data into OCaml, anything can happen
-    pub unsafe fn new(ptr: *const T, finalizer: Option<extern "C" fn(Value)>) -> Opaque<'a, T> {
+impl<'a, T> Pointer<'a, T> {
+    /// Allocate a new value with an optional custom finalizer and used/max
+    pub fn alloc(
+        finalizer: Option<extern "C" fn(Value)>,
+        used_max: Option<(usize, usize)>,
+    ) -> Pointer<'static, T> {
         let p = match finalizer {
-            Some(f) => Value::alloc_custom(ptr, f),
-            None => Value::alloc_custom(ptr, ignore),
+            Some(f) => Value::alloc_final(f, used_max),
+            None => Value::alloc_final(ignore, used_max),
         };
 
-        Self::from_value(p)
+        p
+    }
+
+    /// Replace the underlying value with a copy of the provided argument
+    pub fn copy_from(&mut self, x: &T) {
+        unsafe {
+            std::ptr::copy(x, self.as_mut_ptr(), 1);
+        }
+    }
+
+    /// Replace the inner value with the provided argument
+    pub fn set(&mut self, x: T) {
+        *self.as_mut() = x;
     }
 
     /// Access the underlying pointer
-    pub fn ptr(&self) -> *const T {
+    pub fn as_ptr(&self) -> *const T {
         self.0.custom_ptr_val()
     }
 
     /// Access the underlying mutable pointer
-    pub fn ptr_mut(&mut self) -> *mut T {
+    pub fn as_mut_ptr(&mut self) -> *mut T {
         self.0.custom_ptr_val_mut()
     }
 }
 
-impl<'a, T> AsRef<T> for Opaque<'a, T> {
+impl<'a, T> AsRef<T> for Pointer<'a, T> {
     fn as_ref(&self) -> &T {
-        unsafe { &*self.ptr() }
+        unsafe { &*self.as_ptr() }
     }
 }
 
-impl<'a, T> AsMut<T> for Opaque<'a, T> {
+impl<'a, T> AsMut<T> for Pointer<'a, T> {
     fn as_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.ptr_mut() }
+        unsafe { &mut *self.as_mut_ptr() }
     }
 }
 

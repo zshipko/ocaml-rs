@@ -115,14 +115,18 @@ mod tag;
 mod types;
 mod value;
 
+/// Custom types
+pub mod custom;
+
 pub use crate::error::Error;
 pub use crate::runtime::*;
-pub use crate::types::{bigarray, Array, List, Opaque};
+pub use crate::types::{bigarray, Array, List, Pointer};
 pub use crate::value::{FromValue, ToValue, Value};
 pub use sys::mlvalues::{Intnat as Int, Uintnat as Uint};
 /// OCaml `float`
 pub type Float = f64;
-pub use tag::Tag;
+pub use crate::custom::Custom;
+pub use crate::tag::Tag;
 
 /// Initialize the OCaml runtime, this will all command-line arguments to be available using
 /// `Sys.argv`.

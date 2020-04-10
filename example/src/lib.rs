@@ -92,13 +92,14 @@ pub fn ml_send_first_variant() -> Testing {
 }
 
 extern "C" fn finalizer(value: Value) {
-    let ptr: ocaml::Opaque<&str> = ocaml::Opaque::from_value(value);
+    let ptr: ocaml::Pointer<&str> = ocaml::Pointer::from_value(value);
     println!("Finalizer: {}", ptr.as_ref());
 }
 
 #[ocaml::func]
-pub fn ml_custom_value() -> ocaml::Opaque<'static, &'static str> {
-    let x = unsafe { ocaml::Opaque::new(&mut "testing", Some(finalizer)) };
+pub fn ml_final_value() -> ocaml::Pointer<'static, &'static str> {
+    let mut x = ocaml::Pointer::alloc(Some(finalizer), None);
+    x.set("testing");
     assert!(x.as_ref() == &"testing");
     x
 }
@@ -214,4 +215,31 @@ pub fn ml_more_than_five_params(
 #[ocaml::func]
 pub fn ml_hash_variant() -> Value {
     Value::hash_variant("Abc", Some(Value::int(123)))
+}
+
+#[derive(Clone)]
+struct CustomExample(ocaml::Int);
+
+extern "C" fn testing_compare(_a: Value, _b: Value) -> std::os::raw::c_int {
+    println!("CUSTOM: compare");
+    0
+}
+
+extern "C" fn testing_finalize(_: Value) {
+    println!("CUSTOM: finalizer");
+}
+
+ocaml::custom!(CustomExample {
+    finalize: testing_finalize,
+    compare: testing_compare,
+});
+
+#[ocaml::func]
+pub unsafe fn ml_custom_value(n: ocaml::Int) -> CustomExample {
+    CustomExample(n)
+}
+
+#[ocaml::func]
+pub unsafe fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
+    n.as_ref().0
 }
