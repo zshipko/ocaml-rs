@@ -196,7 +196,7 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 /// ```
 #[macro_export]
 macro_rules! custom {
-    ($name:ident $(<$t:tt>)? $({$($k:ident : $v:expr,)* })?) => {
+    ($name:ident $(<$t:tt>)? $({$($k:ident : $v:expr),* })?) => {
         impl $(<$t>)? $crate::Custom for $name $(<$t>)? {
             $crate::custom! {
                 name: concat!("rust.", stringify!($name))
