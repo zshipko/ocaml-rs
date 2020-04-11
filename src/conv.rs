@@ -26,13 +26,13 @@ macro_rules! value_f {
     ($t:ty) => {
         unsafe impl ToValue for $t {
             fn to_value(self) -> $crate::Value {
-                $crate::Value::f64(self as crate::Float)
+                $crate::Value::float(self as crate::Float)
             }
         }
 
         unsafe impl FromValue for $t {
             fn from_value(v: $crate::Value) -> $t {
-                v.f64_val() as $t
+                v.float_val() as $t
             }
         }
     };

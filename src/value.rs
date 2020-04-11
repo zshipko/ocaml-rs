@@ -221,7 +221,7 @@ impl Value {
     }
 
     /// Create an OCaml `Float` from `f64`
-    pub fn f64(d: f64) -> Value {
+    pub fn float(d: f64) -> Value {
         frame!((x) {
             unsafe { x = Value(sys::alloc::caml_copy_double(d)) }
             x
@@ -256,7 +256,7 @@ impl Value {
     }
 
     /// Convert an OCaml `Float` to `f64`
-    pub fn f64_val(self) -> f64 {
+    pub fn float_val(self) -> f64 {
         unsafe { *self.ptr_val::<f64>() }
     }
 
