@@ -127,6 +127,18 @@ impl Error {
     }
 }
 
+unsafe impl<T: ToValue, E: std::error::Error> ToValue for Result<T, E> {
+    fn to_value(&self) -> Value {
+        match self {
+            Ok(x) => x.to_value(),
+            Err(y) => {
+                let e: Result<T, Error> = Err(Error::Message(format!("{:?}", y)));
+                e.to_value()
+            }
+        }
+    }
+}
+
 unsafe impl<T: ToValue> ToValue for Result<T, Error> {
     fn to_value(&self) -> Value {
         match self {
