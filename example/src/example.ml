@@ -48,3 +48,4 @@ external more_than_five_params: float -> float -> float -> float -> float -> flo
 external hash_variant: unit -> hash_variant = "ml_hash_variant"
 external custom_value: int -> custom_example = "ml_custom_value"
 external custom_value_int: custom_example -> int = "ml_custom_value_int"
+external list_hd_len: 'a list -> 'a option * int = "ml_list_hd_len"

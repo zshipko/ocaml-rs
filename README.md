@@ -156,9 +156,9 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 | `BTreeMap<A, B>` | `('a, 'b) list`      |
 | `LinkedList<A>`  | `'a list`            |
 
-Even though `&[Value]` is specifically marked as no copy, a type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types.
+Even though `&[Value]` is specifically marked as no copy, a type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` is zero-copy, however `ToValue` for `str` creates a new value - this is necessary to ensure the string lives long enough.
 
-If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
+If you're concerned with minimizing allocations/conversions you should prefer to use `Value` type directly.
 
 ## Upgrading
 
@@ -167,4 +167,7 @@ Since 0.10 and later have a much different API compared to earlier version, here
 - the `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
 - `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
   * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
+- `Array` and `List` now take generic types
+- Strings are converted to `str` or `String`, rather than using the `Str` type
+- Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
 

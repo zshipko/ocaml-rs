@@ -6,7 +6,7 @@ use std::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
-/// An handle to a Rust value/reference owned by the OCaml heap
+/// A handle to a Rust value/reference owned by the OCaml heap
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
@@ -133,7 +133,9 @@ impl<'a> Array<'a, f64> {
     }
 
     /// Get a value from a double array without checking if the array is actually a double array
-    #[allow(clippy::missing_safety_doc)]
+    ///
+    /// # Safety
+    /// This function does not perform bounds checking
     pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
         *self.0.ptr_val::<f64>().add(i)
     }
@@ -188,7 +190,17 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
         T::from_value(self.0.field(i))
     }
 
-    /// List as `Vec`
+    /// Array as slice
+    pub fn as_slice(&self) -> &[Value] {
+        FromValue::from_value(self.to_value())
+    }
+
+    /// Array as mutable slice
+    pub fn as_mut_slice(&self) -> &mut [Value] {
+        FromValue::from_value(self.to_value())
+    }
+
+    /// Array as `Vec`
     pub fn to_vec(&self) -> Vec<T> {
         FromValue::from_value(self.to_value())
     }
@@ -280,6 +292,11 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
         }
         vec
     }
+
+    /// List as `LinkedList`
+    pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
+        FromValue::from_value(self.to_value())
+    }
 }
 
 /// `bigarray` contains wrappers for OCaml `Bigarray` values. These types can be used to transfer arrays of numbers between Rust
@@ -290,7 +307,7 @@ pub mod bigarray {
 
     /// Bigarray kind
     pub trait Kind {
-        /// Array type
+        /// Array item type
         type T: Clone + Copy;
 
         /// OCaml bigarray type identifier
@@ -321,6 +338,8 @@ pub mod bigarray {
 
     /// OCaml Bigarray.Array1 type, , this introduces no
     /// additional overhead compared to a `Value` type
+    #[repr(transparent)]
+    #[derive(Clone, Copy, PartialEq)]
     pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
 
     unsafe impl<'a, T> crate::FromValue for Array1<'a, T> {

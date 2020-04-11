@@ -253,3 +253,8 @@ pub unsafe fn ml_custom_value(n: ocaml::Int) -> CustomExample {
 pub unsafe fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
     n.as_ref().0
 }
+
+#[ocaml::func]
+pub fn ml_list_hd_len(l: LinkedList<Value>) -> (Option<Value>, ocaml::Uint) {
+    (l.front().map(|x| x.clone()), l.len())
+}

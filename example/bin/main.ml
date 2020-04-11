@@ -149,6 +149,15 @@ let _ =
     assert (custom_value_int a = 123);
     assert (custom_value_int b = 456);
 
+    (* list_hd_len *)
+    let (a, b) = list_hd_len [1; 2; 3] in
+    assert (a = Some 1);
+    assert (b = 3);
+
+    let (a, b) = list_hd_len [] in
+    assert (a = None);
+    assert (b = 0);
+
     print_endline "cleanup";
     Gc.full_major ();
     Gc.minor()

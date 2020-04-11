@@ -361,7 +361,7 @@ unsafe impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
         let mut tmp = v;
         while tmp.0 != crate::sys::mlvalues::EMPTY_LIST {
             let t = tmp.field(0);
-            dest.push_front(t);
+            dest.push_back(t);
             tmp = tmp.field(1);
         }
 
