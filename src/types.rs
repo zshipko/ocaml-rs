@@ -50,9 +50,20 @@ impl<'a, T> Pointer<'a, T> {
         Pointer::from_value(Value::alloc_custom::<T>())
     }
 
+    /// Drop pointer in place
+    ///
+    /// # Safety
+    /// This should only be used when you're in control of the underlying value and want to drop
+    /// it. It should only be called once.
+    pub unsafe fn drop_in_place(mut self) {
+        std::ptr::drop_in_place(self.as_mut_ptr())
+    }
+
     /// Replace the inner value with the provided argument
     pub fn set(&mut self, x: T) {
-        *self.as_mut() = x;
+        unsafe {
+            std::ptr::write(self.as_mut_ptr(), x);
+        }
     }
 
     /// Access the underlying pointer

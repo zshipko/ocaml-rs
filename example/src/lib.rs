@@ -228,14 +228,16 @@ pub fn ml_hash_variant() -> Value {
 }
 
 #[derive(Clone)]
-struct CustomExample(ocaml::Int);
+struct CustomExample(Box<ocaml::Int>);
 
 extern "C" fn testing_compare(_a: Value, _b: Value) -> std::os::raw::c_int {
     println!("CUSTOM: compare");
     0
 }
 
-extern "C" fn testing_finalize(_: Value) {
+unsafe extern "C" fn testing_finalize(v: Value) {
+    let ptr = ocaml::Pointer::<CustomExample>::from_value(v);
+    ptr.drop_in_place();
     println!("CUSTOM: finalizer");
 }
 
@@ -246,12 +248,12 @@ ocaml::custom!(CustomExample {
 
 #[ocaml::func]
 pub unsafe fn ml_custom_value(n: ocaml::Int) -> CustomExample {
-    CustomExample(n)
+    CustomExample(Box::new(n))
 }
 
 #[ocaml::func]
 pub unsafe fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
-    n.as_ref().0
+    *n.as_ref().0
 }
 
 #[ocaml::func]
