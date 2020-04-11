@@ -1,5 +1,5 @@
 use ocaml::sys::state;
-use ocaml::{FromValue, ToValue, Value};
+use ocaml::{Error, FromValue, ToValue, Value};
 
 use std::collections::LinkedList;
 
@@ -71,8 +71,18 @@ pub fn ml_testing_callback(a: Value, b: Value) {
 }
 
 #[ocaml::func]
-pub fn ml_raise_not_found() {
-    ocaml::raise_not_found()
+pub fn ml_raise_not_found() -> Result<(), ocaml::Error> {
+    Error::not_found()
+}
+
+#[ocaml::func]
+pub fn ml_raise_failure() -> Result<(), ocaml::Error> {
+    Error::failwith("testing")
+}
+
+#[ocaml::func]
+pub fn ml_raise_exc(i: ocaml::Int) -> Result<(), ocaml::Error> {
+    Error::raise_with_arg("Exc", i)
 }
 
 #[ocaml::func]

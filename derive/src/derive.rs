@@ -163,7 +163,6 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     });
     if attrs.unboxed {
         s.gen_impl(quote! {
-            extern crate ocaml;
             gen unsafe impl ocaml::FromValue for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     #(#body),*
@@ -183,7 +182,6 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             })
         };
         s.gen_impl(quote! {
-            extern crate ocaml;
             gen unsafe impl ocaml::FromValue for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     let is_block = value.is_block();

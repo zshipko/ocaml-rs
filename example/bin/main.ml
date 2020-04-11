@@ -63,6 +63,15 @@ let _ =
     try raise_not_found ()
     with Not_found -> print_endline "Got Not_found";
 
+    try raise_failure ()
+    with Failure f -> begin
+      assert (f = "testing");
+      print_endline ("Got failure: " ^ f);
+    end;
+
+    try raise_exc 123
+    with Exc i -> assert (i = 123);
+
     (* send float *)
     let f = send_float 2.5 in
     Printf.printf "send_float: %f\n" f;

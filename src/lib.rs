@@ -118,7 +118,7 @@ mod value;
 /// Custom types
 pub mod custom;
 
-pub use crate::error::Error;
+pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
 pub use crate::types::{bigarray, Array, List, Pointer};
 pub use crate::value::{FromValue, ToValue, Value};

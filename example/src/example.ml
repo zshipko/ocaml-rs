@@ -18,6 +18,10 @@ type hash_variant = [
 
 type custom_example
 
+exception Exc of int
+
+let () = Callback.register_exception "Exc" (Exc 0)
+
 external send_int : int -> int = "ml_send_int"
 external send_two : int -> string -> unit = "ml_send_two"
 external send_tuple : (int * int) -> int = "ml_send_tuple"
@@ -27,6 +31,8 @@ external new_array : int -> int array = "ml_new_array"
 external new_list : int -> int list = "ml_new_list"
 external testing_callback : int -> int -> unit = "ml_testing_callback"
 external raise_not_found : unit -> unit = "ml_raise_not_found"
+external raise_failure : unit -> unit = "ml_raise_failure"
+external raise_exc: int -> unit = "ml_raise_exc"
 external send_float : float -> float = "ml_send_float"
 external send_first_variant : unit -> testing = "ml_send_first_variant"
 external final_value: unit -> something = "ml_final_value"

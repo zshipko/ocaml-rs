@@ -60,7 +60,6 @@ pub struct CustomType {
 /// avoid reallocating the same value
 ///
 /// ```rust
-///
 /// struct Example(ocaml::Int);
 /// ocaml::custom!(Example {
 ///
@@ -146,6 +145,29 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 ///     finalize: mytype_finalizer,
 ///     compare: mytype_compare,
 /// });
+///
+/// // This is equivalent to
+/// struct MyType2 {
+///     s: String,
+///     i: i32,
+/// }
+///
+/// impl ocaml::Custom for MyType2 {
+///     const TYPE: ocaml::custom::CustomType = ocaml::custom::CustomType {
+///         name: "rust.MyType",
+///         fixed_length: None,
+///         ops: ocaml::custom::CustomOps {
+///             identifier: std::ptr::null(), // This will be filled in when the struct is used
+///             fixed_length: std::ptr::null_mut(), // This will be filled in too
+///             finalize: Some(mytype_finalizer),
+///             compare: Some(mytype_compare),
+///             compare_ext: None,
+///             deserialize: None,
+///             hash: None,
+///             serialize: None
+///         }
+///     };
+/// }
 /// ```
 #[macro_export]
 macro_rules! custom {

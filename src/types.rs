@@ -1,5 +1,5 @@
 use crate::sys::{alloc, mlvalues};
-use crate::Error;
+use crate::{CamlError, Error};
 
 use std::marker::PhantomData;
 use std::{mem, slice};
@@ -102,7 +102,7 @@ impl<'a> Array<'a, f64> {
     /// Set value to double array
     pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {
-            return Err(Error::OutOfBounds);
+            return Err(CamlError::ArrayBoundError.into());
         }
 
         if !self.is_double_array() {
@@ -120,7 +120,7 @@ impl<'a> Array<'a, f64> {
     /// Get a value from a double array
     pub fn get_double(self, i: usize) -> Result<f64, Error> {
         if i >= self.len() {
-            return Err(Error::OutOfBounds);
+            return Err(CamlError::ArrayBoundError.into());
         }
         if !self.is_double_array() {
             return Err(Error::NotDoubleArray);
@@ -165,7 +165,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     /// Set array index
     pub fn set(&mut self, i: usize, v: T) -> Result<(), Error> {
         if i >= self.len() {
-            return Err(Error::OutOfBounds);
+            return Err(CamlError::ArrayBoundError.into());
         }
         self.0.store_field(i, v);
         Ok(())
@@ -174,7 +174,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     /// Get array index
     pub fn get(&self, i: usize) -> Result<T, Error> {
         if i >= self.len() {
-            return Err(Error::OutOfBounds);
+            return Err(CamlError::ArrayBoundError.into());
         }
         Ok(unsafe { self.get_unchecked(i) })
     }

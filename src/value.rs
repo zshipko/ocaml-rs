@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{CamlError, Error};
 use crate::sys;
 use crate::tag::Tag;
 
@@ -327,7 +327,7 @@ impl Value {
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
-            Err(Error::Exception(v))
+            Err(CamlError::Exception(v).into())
         } else {
             Ok(v)
         }
@@ -348,7 +348,7 @@ impl Value {
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
-            Err(Error::Exception(v))
+            Err(CamlError::Exception(v).into())
         } else {
             Ok(v)
         }
@@ -379,7 +379,7 @@ impl Value {
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
-            Err(Error::Exception(v))
+            Err(CamlError::Exception(v).into())
         } else {
             Ok(v)
         }
@@ -407,7 +407,7 @@ impl Value {
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
-            Err(Error::Exception(v))
+            Err(CamlError::Exception(v).into())
         } else {
             Ok(v)
         }
