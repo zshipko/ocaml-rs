@@ -166,6 +166,7 @@ Since 0.10 and later have a much different API compared to earlier version, here
 
 - `FromValue` and `ToValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
   * A possible solution to this would be a `cbindgen` like tool that generates the correct OCaml types from the Rust code
+- `ToValue` now takes ownership of the value being converted
 - The `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
   * `ocaml::native_func` and `ocaml::bytecode_func` were also added to create functions at a slightly lower level
   * `derive` feature required
