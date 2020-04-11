@@ -62,7 +62,7 @@ impl<'a, T> Pointer<'a, T> {
     /// Replace the inner value with the provided argument
     pub fn set(&mut self, x: T) {
         unsafe {
-            std::ptr::write(self.as_mut_ptr(), x);
+            std::ptr::write_unaligned(self.as_mut_ptr(), x);
         }
     }
 
