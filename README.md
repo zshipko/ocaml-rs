@@ -177,4 +177,5 @@ Since 0.10 and later have a much different API compared to earlier version, here
 - `Array` and `List` now take generic types
 - Strings are converted to `str` or `String`, rather than using the `Str` type
 - Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
+- The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate
 
