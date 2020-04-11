@@ -77,27 +77,38 @@ impl Error {
         Err(CamlError::Exception(exc).into())
     }
 
-    /// Raise an exceptions, specified by tag
+    /// Raise an exception that has been registered using `Callback.register_exception` with no
+    /// arguments
     pub fn raise<S: AsRef<str>>(name: S) -> Result<(), Error> {
-        let s = Self::named(name.as_ref()).expect(&format!(
-            "{} has not been registered as an exception with OCaml",
-            name.as_ref()
-        ));
+        let s = Self::named(name.as_ref()).unwrap_or_else(|| {
+            panic!(
+                "{} has not been registered as an exception with OCaml",
+                name.as_ref()
+            )
+        });
         Err(CamlError::Exception(s).into())
     }
 
-    /// Raise exception value created by from tag and argument
+    /// Raise an exception that has been registered using `Callback.register_exception` with an
+    /// argument
     pub fn raise_with_arg<S: AsRef<str>, T: ToValue>(name: S, arg: T) -> Result<(), Error> {
-        let s = Self::named(name.as_ref()).expect(&format!(
-            "{} has not been registered as an exception with OCaml",
-            name.as_ref()
-        ));
+        let s = Self::named(name.as_ref()).unwrap_or_else(|| {
+            panic!(
+                "{} has not been registered as an exception with OCaml",
+                name.as_ref()
+            )
+        });
         Err(CamlError::WithArg(s, arg.to_value()).into())
     }
 
     /// Raise `Not_found`
     pub fn not_found() -> Result<(), Error> {
         Err(CamlError::NotFound.into())
+    }
+
+    /// Raise `Out_of_memory`
+    pub fn out_of_memory() -> Result<(), Error> {
+        Err(CamlError::OutOfMemory.into())
     }
 
     /// Raise `Failure`

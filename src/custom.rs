@@ -101,7 +101,7 @@ pub trait Custom {
 
 unsafe impl<T: 'static + Custom> ToValue for T {
     fn to_value(&self) -> Value {
-        let mut val: crate::Pointer<T> = Value::alloc_custom(Some((T::USED, T::MAX)));
+        let mut val: crate::Pointer<T> = Value::alloc_custom();
         val.copy_from(self);
         val.to_value()
     }

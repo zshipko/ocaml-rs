@@ -93,8 +93,9 @@ impl Value {
     }
 
     /// Allocate a new value with a finalizer
-    /// NOTE: `value` will be copied into memory allocated by the OCaml runtime, you are
-    /// responsible for managing the lifetime of the value on the Rust side
+    ///
+    /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
+    /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final<T>(
         finalizer: extern "C" fn(Value),
         cfg: Option<(usize, usize)>,
@@ -113,14 +114,11 @@ impl Value {
     }
 
     /// Allocate custom value
-    pub fn alloc_custom<T: crate::Custom>(
-        cfg: Option<(usize, usize)>,
-    ) -> crate::Pointer<'static, T> {
+    pub fn alloc_custom<T: crate::Custom>() -> crate::Pointer<'static, T> {
         let size = std::mem::size_of::<T>();
-        let (used, max) = cfg.unwrap_or_else(|| (0, 1));
         crate::frame!((x) {
             unsafe {
-                x = Value(sys::custom::caml_alloc_custom(T::ops() as *const _ as *const sys::custom::custom_operations, size, used, max));
+                x = Value(sys::custom::caml_alloc_custom(T::ops() as *const _ as *const sys::custom::custom_operations, size, T::USED, T::MAX));
                 crate::Pointer::from_value(x)
             }
         })

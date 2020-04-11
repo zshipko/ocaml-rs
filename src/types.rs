@@ -27,7 +27,10 @@ extern "C" fn ignore(_: Value) {}
 
 impl<'a, T> Pointer<'a, T> {
     /// Allocate a new value with an optional custom finalizer and used/max
-    pub fn alloc(
+    ///
+    /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
+    /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
+    pub fn alloc_final(
         finalizer: Option<extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<'static, T> {
@@ -37,12 +40,12 @@ impl<'a, T> Pointer<'a, T> {
         }
     }
 
-    /// Allocate a new value with an optional custom finalizer and used/max
-    pub fn alloc_custom(used_max: Option<(usize, usize)>) -> Pointer<'static, T>
+    /// Allocate a `Custom` value
+    pub fn alloc_custom() -> Pointer<'static, T>
     where
         T: crate::Custom,
     {
-        Value::alloc_custom(used_max)
+        Value::alloc_custom()
     }
 
     /// Replace the underlying value with a copy of the provided argument

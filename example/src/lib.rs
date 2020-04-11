@@ -108,7 +108,7 @@ extern "C" fn finalizer(value: Value) {
 
 #[ocaml::func]
 pub fn ml_final_value() -> ocaml::Pointer<'static, &'static str> {
-    let mut x = ocaml::Pointer::alloc(Some(finalizer), None);
+    let mut x = ocaml::Pointer::alloc_final(Some(finalizer), None);
     x.set("testing");
     assert!(x.as_ref() == &"testing");
     x
