@@ -287,7 +287,7 @@ impl Value {
     }
 
     /// Get mutable pointer to data stored in an OCaml custom value
-    pub fn custom_ptr_val_mut<T>(self) -> *mut T {
+    pub fn custom_mut_ptr_val<T>(self) -> *mut T {
         unsafe { sys::mlvalues::field(self.0, 1) as *mut T }
     }
 

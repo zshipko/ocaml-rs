@@ -69,7 +69,7 @@ impl<'a, T> Pointer<'a, T> {
 
     /// Access the underlying mutable pointer
     pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.0.custom_ptr_val_mut()
+        self.0.custom_mut_ptr_val()
     }
 }
 
