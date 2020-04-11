@@ -6,7 +6,8 @@ use std::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
-/// A handle to a Rust value/reference owned by the OCaml heap
+/// A handle to a Rust value/reference owned by the OCaml heap, this introduces no
+/// additional overhead compared to a `Value` type
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);

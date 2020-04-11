@@ -114,18 +114,24 @@ mod tag;
 mod types;
 mod value;
 
-/// Functions for initializing and interacting with the OCaml runtime
+/// Functions for interacting with the OCaml runtime
 pub mod runtime;
 
 /// Custom types, used for allocating Rust values owned by the OCaml garbage collector
 pub mod custom;
 
+pub use crate::custom::Custom;
 pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
+pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
 pub use crate::value::{FromValue, ToValue, Value};
-pub use sys::mlvalues::{Intnat as Int, Uintnat as Uint};
+
 /// OCaml `float`
 pub type Float = f64;
-pub use crate::custom::Custom;
-pub use crate::tag::Tag;
+
+/// Integer type that converts to OCaml `int`
+pub type Int = sys::mlvalues::Intnat;
+
+/// Unsigned integer type that converts to OCaml `int`
+pub type Uint = sys::mlvalues::Uintnat;
