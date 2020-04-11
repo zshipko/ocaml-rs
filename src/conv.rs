@@ -6,8 +6,8 @@ use crate::{
 macro_rules! value_i {
     ($t:ty) => {
         unsafe impl ToValue for $t {
-            fn to_value(&self) -> $crate::Value {
-                $crate::Value::int(self.clone() as isize)
+            fn to_value(self) -> $crate::Value {
+                $crate::Value::int(self as crate::Int)
             }
         }
 
@@ -25,8 +25,8 @@ macro_rules! value_i {
 macro_rules! value_f {
     ($t:ty) => {
         unsafe impl ToValue for $t {
-            fn to_value(&self) -> $crate::Value {
-                $crate::Value::f64(self.clone().into())
+            fn to_value(self) -> $crate::Value {
+                $crate::Value::f64(self as crate::Float)
             }
         }
 
@@ -45,8 +45,8 @@ value_i!(i8, u8, i16, u16, crate::Int, crate::Uint);
 value_f!(f32, f64);
 
 unsafe impl ToValue for i64 {
-    fn to_value(&self) -> crate::Value {
-        Value::int64(*self)
+    fn to_value(self) -> crate::Value {
+        Value::int64(self)
     }
 }
 
@@ -57,8 +57,8 @@ unsafe impl FromValue for i64 {
 }
 
 unsafe impl ToValue for u64 {
-    fn to_value(&self) -> crate::Value {
-        Value::int64(*self as i64)
+    fn to_value(self) -> crate::Value {
+        Value::int64(self as i64)
     }
 }
 
@@ -69,8 +69,8 @@ unsafe impl FromValue for u64 {
 }
 
 unsafe impl ToValue for i32 {
-    fn to_value(&self) -> crate::Value {
-        Value::int32(*self)
+    fn to_value(self) -> crate::Value {
+        Value::int32(self)
     }
 }
 
@@ -81,8 +81,8 @@ unsafe impl FromValue for i32 {
 }
 
 unsafe impl ToValue for u32 {
-    fn to_value(&self) -> crate::Value {
-        Value::int64(*self as i64)
+    fn to_value(self) -> crate::Value {
+        Value::int64(self as i64)
     }
 }
 
@@ -117,7 +117,7 @@ macro_rules! tuple_impl {
         }
 
         unsafe impl<$($t: ToValue),*> ToValue for ($($t,)*) {
-            fn to_value(&self) -> crate::Value {
+            fn to_value(self) -> crate::Value {
                 #[allow(unused)]
                 let mut len = 0;
                 $(
@@ -127,9 +127,12 @@ macro_rules! tuple_impl {
                     }
                 )*
 
-                let mut v = $crate::Value::alloc(len, Tag(0));
+                crate::local!(v);
+                v = $crate::Value::alloc(len, Tag(0));
                 $(
-                    v.store_field($n, $t::to_value(&self.$n));
+                    crate::local!(x);
+                    x = $t::to_value(self.$n);
+                    v.store_field($n, x);
                 )*
                 v
             }
@@ -160,8 +163,8 @@ tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L
 tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19, U: 20);
 
 unsafe impl ToValue for bool {
-    fn to_value(&self) -> Value {
-        Value::int(*self as isize)
+    fn to_value(self) -> Value {
+        Value::int(self as isize)
     }
 }
 
@@ -172,7 +175,7 @@ unsafe impl FromValue for bool {
 }
 
 unsafe impl ToValue for String {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         unsafe {
             let value = crate::sys::alloc::caml_alloc_string(self.len());
             let ptr = crate::sys::mlvalues::string_val(value);
@@ -194,7 +197,7 @@ unsafe impl FromValue for String {
 }
 
 unsafe impl ToValue for () {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         Value::unit()
     }
 }
@@ -210,7 +213,7 @@ unsafe impl<T: FromValue> FromValue for Option<T> {
 }
 
 unsafe impl<T: ToValue> ToValue for Option<T> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         match self {
             Some(x) => Value::some(x.to_value()),
             None => Value::none(),
@@ -230,7 +233,7 @@ unsafe impl FromValue for &str {
 }
 
 unsafe impl ToValue for &str {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         unsafe {
             let value = crate::sys::alloc::caml_alloc_string(self.len());
             let ptr = crate::sys::mlvalues::string_val(value);
@@ -252,7 +255,7 @@ unsafe impl FromValue for &mut str {
 }
 
 unsafe impl ToValue for &mut str {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         unsafe {
             let value = crate::sys::alloc::caml_alloc_string(self.len());
             let ptr = crate::sys::mlvalues::string_val(value);
@@ -263,13 +266,12 @@ unsafe impl ToValue for &mut str {
 }
 
 unsafe impl<V: ToValue> ToValue for Vec<V> {
-    fn to_value(&self) -> Value {
-        let tmp: Vec<Value> = self.iter().map(|x| x.to_value()).collect();
-        let len = tmp.len();
+    fn to_value(self) -> Value {
+        let len = self.len();
         let mut arr = Value::alloc(len, Tag(0));
 
-        for (i, v) in tmp.into_iter().enumerate() {
-            arr.store_field(i, v);
+        for (i, v) in self.into_iter().enumerate() {
+            arr.store_field(i, v.to_value());
         }
 
         arr
@@ -286,18 +288,6 @@ unsafe impl<V: FromValue> FromValue for Vec<V> {
             }
             dst
         }
-    }
-}
-
-unsafe impl<V: ToValue> ToValue for &[V] {
-    fn to_value(&self) -> Value {
-        let len = self.len();
-        let mut arr = Value::alloc(len, Tag(0));
-        for (i, v) in self.iter().enumerate() {
-            arr.store_field(i, v.to_value());
-        }
-
-        arr
     }
 }
 
@@ -341,10 +331,10 @@ unsafe impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BT
 }
 
 unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         let mut list = crate::List::empty();
 
-        self.iter().rev().for_each(|(k, v)| {
+        self.into_iter().rev().for_each(|(k, v)| {
             let k = k.to_value();
             let v = v.to_value();
             list.push_hd((k, v));
@@ -370,13 +360,19 @@ unsafe impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
 }
 
 unsafe impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         let mut list = crate::List::empty();
 
-        self.iter().rev().for_each(|t| {
+        self.into_iter().rev().for_each(|t| {
             let t = t.to_value();
             list.push_hd(t);
         });
         list.to_value()
+    }
+}
+
+unsafe impl ToValue for &Value {
+    fn to_value(self) -> Value {
+        self.clone().to_value()
     }
 }

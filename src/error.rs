@@ -128,7 +128,7 @@ impl Error {
 }
 
 unsafe impl<T: ToValue, E: std::error::Error> ToValue for Result<T, E> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         match self {
             Ok(x) => x.to_value(),
             Err(y) => {
@@ -140,7 +140,7 @@ unsafe impl<T: ToValue, E: std::error::Error> ToValue for Result<T, E> {
 }
 
 unsafe impl<T: ToValue> ToValue for Result<T, Error> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         match self {
             Ok(x) => return x.to_value(),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {

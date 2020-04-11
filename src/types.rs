@@ -14,7 +14,7 @@ use crate::value::{FromValue, Size, ToValue, Value};
 pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
 
 unsafe impl<'a, T> ToValue for Pointer<'a, T> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         self.0
     }
 }
@@ -25,7 +25,7 @@ unsafe impl<'a, T> FromValue for Pointer<'a, T> {
     }
 }
 
-extern "C" fn ignore(_: Value) {}
+unsafe extern "C" fn ignore(_: Value) {}
 
 impl<'a, T> Pointer<'a, T> {
     /// Allocate a new value with an optional custom finalizer and used/max
@@ -33,13 +33,13 @@ impl<'a, T> Pointer<'a, T> {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final(
-        finalizer: Option<extern "C" fn(Value)>,
+        finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<'static, T> {
-        match finalizer {
-            Some(f) => Value::alloc_final(f, used_max),
-            None => Value::alloc_final(ignore, used_max),
-        }
+        Pointer::from_value(match finalizer {
+            Some(f) => Value::alloc_final::<T>(f, used_max),
+            None => Value::alloc_final::<T>(ignore, used_max),
+        })
     }
 
     /// Allocate a `Custom` value
@@ -47,14 +47,7 @@ impl<'a, T> Pointer<'a, T> {
     where
         T: crate::Custom,
     {
-        Value::alloc_custom()
-    }
-
-    /// Replace the underlying value with a copy of the provided argument
-    pub fn copy_from(&mut self, x: &T) {
-        unsafe {
-            std::ptr::copy(x, self.as_mut_ptr(), 1);
-        }
+        Pointer::from_value(Value::alloc_custom::<T>())
     }
 
     /// Replace the inner value with the provided argument
@@ -91,7 +84,7 @@ impl<'a, T> AsMut<T> for Pointer<'a, T> {
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
 unsafe impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         self.0
     }
 }
@@ -196,17 +189,17 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
 
     /// Array as slice
     pub fn as_slice(&self) -> &[Value] {
-        FromValue::from_value(self.to_value())
+        FromValue::from_value(self.0)
     }
 
     /// Array as mutable slice
     pub fn as_mut_slice(&self) -> &mut [Value] {
-        FromValue::from_value(self.to_value())
+        FromValue::from_value(self.0)
     }
 
     /// Array as `Vec`
     pub fn to_vec(&self) -> Vec<T> {
-        FromValue::from_value(self.to_value())
+        FromValue::from_value(self.0)
     }
 }
 
@@ -217,7 +210,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
 pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
 
 unsafe impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         self.0
     }
 }
@@ -299,7 +292,7 @@ impl<'a, T: ToValue + FromValue> List<'a, T> {
 
     /// List as `LinkedList`
     pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
-        FromValue::from_value(self.to_value())
+        FromValue::from_value(self.0)
     }
 }
 
@@ -353,7 +346,7 @@ pub mod bigarray {
     }
 
     unsafe impl<'a, T> crate::ToValue for Array1<'a, T> {
-        fn to_value(&self) -> Value {
+        fn to_value(self) -> Value {
             self.0
         }
     }

@@ -104,10 +104,10 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     });
     s.gen_impl(quote! {
         gen unsafe impl ocaml::ToValue for @Self {
-            fn to_value(&self) -> ocaml::Value {
+            fn to_value(self) -> ocaml::Value {
                 unsafe {
                     ocaml::local!(value);
-                    match *self {
+                    match self {
                         #(#body),*
                     }
                     return value;

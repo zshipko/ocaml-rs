@@ -20,7 +20,7 @@ impl Clone for Value {
 /// `ToValue` is used to convert from Rust types to OCaml values
 pub unsafe trait ToValue {
     /// Convert to OCaml value
-    fn to_value(&self) -> Value;
+    fn to_value(self) -> Value;
 }
 
 /// `FromValue` is used to convert from OCaml values to Rust types
@@ -30,13 +30,7 @@ pub unsafe trait FromValue {
 }
 
 unsafe impl ToValue for Value {
-    fn to_value(&self) -> Value {
-        Value(self.0)
-    }
-}
-
-unsafe impl<'a> ToValue for &'a Value {
-    fn to_value(&self) -> Value {
+    fn to_value(self) -> Value {
         Value(self.0)
     }
 }
@@ -97,29 +91,29 @@ impl Value {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final<T>(
-        finalizer: extern "C" fn(Value),
+        finalizer: unsafe extern "C" fn(Value),
         cfg: Option<(usize, usize)>,
-    ) -> crate::Pointer<'static, T> {
+    ) -> Value {
         let (used, max) = cfg.unwrap_or_else(|| (0, 1));
         crate::frame!((x) {
             unsafe {
-                crate::Pointer::from_value(Value(sys::alloc::caml_alloc_final(
+                Value(sys::alloc::caml_alloc_final(
                     std::mem::size_of::<T>(),
                     std::mem::transmute(finalizer),
                     used,
                     max
-                )))
+                ))
             }
         })
     }
 
     /// Allocate custom value
-    pub fn alloc_custom<T: crate::Custom>() -> crate::Pointer<'static, T> {
+    pub fn alloc_custom<T: crate::Custom>() -> Value {
         let size = std::mem::size_of::<T>();
         crate::frame!((x) {
             unsafe {
                 x = Value(sys::custom::caml_alloc_custom(T::ops() as *const _ as *const sys::custom::custom_operations, size, T::USED, T::MAX));
-                crate::Pointer::from_value(x)
+                x
             }
         })
     }

@@ -150,7 +150,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
                 #inner
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(res)
             })
         }
     };
@@ -420,7 +420,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(res)
             }
         }
     } else {
@@ -444,7 +444,7 @@ fn ocaml_bytecode_func_impl(
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::ToValue::to_value(&res)
+                ocaml::ToValue::to_value(res)
             }
         }
     }
