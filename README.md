@@ -164,7 +164,13 @@ If you're concerned with minimizing allocations/conversions you should prefer to
 
 Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:
 
-- the `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
+- `FromValue` and `ToValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
+  * A possible solution to this would be a `cbindgen` like tool that generates the correct OCaml types from the Rust code
+- The `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
+  * `ocaml::native_func` and `ocaml::bytecode_func` were also added to create functions at a slightly lower level
+  * `derive` feature required
+- Added `derive` implementations for `ToValue` and `FromValue` for stucts and enums
+  * `derive` feature required
 - `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
   * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
 - `Array` and `List` now take generic types

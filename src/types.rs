@@ -1,3 +1,5 @@
+//! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
+
 use crate::sys::{alloc, mlvalues};
 use crate::{CamlError, Error};
 
@@ -6,8 +8,7 @@ use std::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
-/// A handle to a Rust value/reference owned by the OCaml heap, this introduces no
-/// additional overhead compared to a `Value` type
+/// A handle to a Rust value/reference owned by the OCaml heap
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
@@ -84,8 +85,7 @@ impl<'a, T> AsMut<T> for Pointer<'a, T> {
     }
 }
 
-/// `Array<A>` wraps an OCaml `'a array` without converting it to Rust, this introduces no
-/// additional overhead compared to a `Value` type
+/// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
@@ -186,7 +186,10 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     }
 
     /// Get array index (without bounds checking)
-    #[allow(clippy::missing_safety_doc)]
+    ///
+    /// # Safety
+    ///
+    /// This function does not perform bounds checking
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
         T::from_value(self.0.field(i))
     }

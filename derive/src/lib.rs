@@ -27,7 +27,7 @@ fn check_func(item_fn: &mut syn::ItemFn) {
     });
 }
 
-/// `func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
+/// `func` is used export Rust functions to OCaml, performing the necessary wrapping/unwrapping
 /// automatically.
 ///
 /// - Wraps the function body using `ocaml::body`
@@ -174,7 +174,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// `native_func` is used export Rust functions to OCaml, it has much lower overhead than `func`
-/// and expects all arguments to be OCaml values.
+/// and expects all arguments and return type to to be `Value`.
 ///
 /// - Wraps the function body using `ocaml::body`
 #[proc_macro_attribute]
@@ -267,11 +267,13 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
     gen.into()
 }
 
-/// `bytecode_func` is used export Rust functions to OCaml, performing the necesarry wrapping/unwrapping
+/// `bytecode_func` is used export Rust functions to OCaml, performing the necessary wrapping/unwrapping
 /// automatically.
 ///
 /// Since this is automatically applied to `func` functions, this is primarily be used when working with
-/// unboxed functions, or `native_func`s directly.
+/// unboxed functions, or `native_func`s directly. `ocaml::body` is not applied since this is
+/// typically used to call the native function, which is wrapped with `ocaml::body` or performs the
+/// equivalent work to register values with the garbage collector
 ///
 /// - Automatic type conversion for arguments/return value
 #[proc_macro_attribute]
