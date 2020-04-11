@@ -21,7 +21,7 @@ Take a look at [example/src/dune](https://github.com/zshipko/ocaml-rs/blob/maste
 Typically just include:
 
 ```toml
-ocaml = {git = "https://github.com/zshipko/ocaml-rs"}
+ocaml = ...
 ```
 
 in your `Cargo.toml`.
