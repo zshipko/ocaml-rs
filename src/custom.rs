@@ -61,9 +61,8 @@ pub struct CustomType {
 ///
 /// ```rust
 /// struct Example(ocaml::Int);
-/// ocaml::custom!(Example {
 ///
-/// });
+/// ocaml::custom! (Example);
 ///
 /// #[cfg(feature = "derive")]
 /// #[ocaml::func]
@@ -95,6 +94,7 @@ pub trait Custom {
         if let Some(x) = Self::TYPE.fixed_length {
             Self::TYPE.ops.fixed_length = &x;
         }
+
         &Self::TYPE.ops
     }
 }
@@ -154,7 +154,7 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 ///
 /// impl ocaml::Custom for MyType2 {
 ///     const TYPE: ocaml::custom::CustomType = ocaml::custom::CustomType {
-///         name: "rust.MyType",
+///         name: "rust.MyType\0",
 ///         fixed_length: None,
 ///         ops: ocaml::custom::CustomOps {
 ///             identifier: std::ptr::null(), // This will be filled in when the struct is used
@@ -169,27 +169,58 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 ///     };
 /// }
 /// ```
+///
+/// Additionally, `custom` can be used inside the `impl` block:
+///
+/// ```rust
+/// extern "C" fn implexample_finalizer(_: ocaml::Value) {
+///     println!("This runs when the value gets garbage collected");
+/// }
+///
+/// struct ImplExample<'a>(&'a str);
+///
+/// impl<'a> ocaml::Custom for ImplExample<'a> {
+///     ocaml::custom! {
+///         name: "rust.ImplExample",
+///         finalize: implexample_finalizer
+///     }
+/// }
+///
+/// // This is equivalent to:
+///
+/// struct ImplExample2<'a>(&'a str);
+///
+/// ocaml::custom!(ImplExample2<'a> {
+///     finalize: implexample_finalizer,
+/// });
+/// ```
 #[macro_export]
 macro_rules! custom {
-    ($name:ty { $($k:ident : $v:expr,)* }) => {
-        impl $crate::Custom for $name {
-            const TYPE: $crate::custom::CustomType = $crate::custom::CustomType {
-                name: concat!("rust.", concat!(stringify!(ident), "\0")),
-                fixed_length: None,
-                ops: $crate::custom::CustomOps {
-                    $($k: Some($v),)*
-                    .. $crate::custom::CustomOps {
-                        identifier: std::ptr::null(),
-                        fixed_length: std::ptr::null_mut(),
-                        compare: None,
-                        compare_ext: None,
-                        deserialize: None,
-                        finalize: None,
-                        hash: None,
-                        serialize: None,
-                    }
-                },
-            };
+    ($name:ident $(<$t:tt>)? $({$($k:ident : $v:expr,)* })?) => {
+        impl $(<$t>)? $crate::Custom for $name $(<$t>)? {
+            $crate::custom! {
+                name: concat!("rust.", stringify!($name))
+                $(, $($k: $v),*)?
+            }
         }
+    };
+    {name : $name:expr $(, $($k:ident : $v:expr),*)? } => {
+        const TYPE: $crate::custom::CustomType = $crate::custom::CustomType {
+            name: concat!($name, "\0"),
+            fixed_length: None,
+            ops: $crate::custom::CustomOps {
+                $($($k: Some($v),)*)?
+                .. $crate::custom::CustomOps {
+                    identifier: std::ptr::null(),
+                    fixed_length: std::ptr::null_mut(),
+                    compare: None,
+                    compare_ext: None,
+                    deserialize: None,
+                    finalize: None,
+                    hash: None,
+                    serialize: None,
+                }
+            },
+        };
     };
 }
