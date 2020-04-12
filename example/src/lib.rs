@@ -1,128 +1,167 @@
-#[macro_use]
-extern crate ocaml;
-use ocaml::core::state;
-use ocaml::{ToValue, Value};
+use ocaml::sys::state;
+use ocaml::{Error, FromValue, ToValue, Value};
 
-caml!(ml_send_int(v){
-    caml_local!(l);
-    let x = v.i32_val();
-    l = 0xbeef.to_value();
+use std::collections::LinkedList;
+
+#[ocaml::func]
+pub fn ml_send_int(x: isize) -> isize {
     println!("send_int  0x{:x}", x);
-    return l;
-});
-
-caml!(ml_send_two, |v, v2|, <a>, {
-    println!("local root addr: {:p} caml_local_roots: {:#?}, v: {:?}", &state::local_roots(), state::local_roots(), v.value());
-    let tag: u8 = v2.tag().into();
-    println!("string tag: {}", tag);
-    let x = v.i32_val();
-    let string = ocaml::Str::from(v2);
-    println!("got  0x{:x}, {}", x, string.as_str());
-});
-
-caml!(ml_send_tuple(t) {
-    caml_local!(dest);
-    let x = t.field(0).i32_val();
-    let y = t.field(1).i32_val();
-
-    dest = (x + y).to_value();
-    return dest;
-});
-
-caml!(ml_send_int64(x) {
-    let _x = x.int64_val();
-    return Value::int64(_x + 10i64);
-});
-
-caml!(ml_new_tuple(i) {
-    let i = i.i32_val();
-    return tuple!(i, i * 2, i * 3).into();
-});
-
-caml!(ml_new_array(i) {
-    let i = i.i32_val();
-    let x: Vec<i32> = (0..5).map(|x| x * i).collect();
-    return x.to_value();
-});
-
-caml!(ml_new_list(i){
-    let i = i.i32_val();
-    return list!(0i32 * i, 1i32 * i, 2i32 * i, 3i32 * i, 4i32 * i).into();
-});
-
-caml!(ml_testing_callback(a, b) {
-    let f = ocaml::named_value("print_testing")
-        .expect("print_testing not registered");
-
-    f.call_n(&[a, b]).unwrap();
-    return Value::unit();
-});
-
-caml!(ml_raise_not_found(_unit){
-    ocaml::raise_not_found();
-    return Value::unit();
-});
-
-caml!(ml_send_float(f){
-    return (f.f64_val() * 2.0).to_value();
-});
-
-caml!(ml_send_first_variant(_unit) {
-    return Value::variant(0, Some(2.0))
-});
-
-extern "C" fn finalizer(_value: ocaml::core::Value) {
-    println!("Finalizer");
+    0xbeef
 }
 
-caml!(ml_custom_value(_unit) {
-    return Value::alloc_custom(1, finalizer);
-});
+#[ocaml::native_func]
+pub unsafe fn ml_send_two(v: Value, v2: Value) -> Value {
+    println!(
+        "local root addr: {:p} local_roots: {:#?}, v: {:?}",
+        &state::local_roots(),
+        state::local_roots(),
+        v
+    );
+    let tag: u8 = v2.tag().into();
+    println!("string tag: {}", tag);
+    let x = v.int_val();
+    let string: &str = FromValue::from_value(v2);
+    println!("got  0x{:x}, {}", x, string);
+    Value::unit()
+}
 
-caml!(ml_array1(len) {
-    let mut ba = ocaml::Array1::<u8>::create(len.usize_val());
+/// Create tuple using extern "C" function without func macro
+///
+/// # Safety
+/// It's extremely important to make sure that your stubs match
+/// the actual function type, otherwise you may experience all
+/// sorts of unexpected behavior
+#[no_mangle]
+pub unsafe extern "C" fn ml_send_tuple(t: Value) -> Value {
+    ocaml::body!((t) {
+        let x: isize = t.field(0);
+        let y: isize = t.field(1);
+
+        (x + y).to_value()
+    })
+}
+
+#[ocaml::func]
+pub fn ml_send_int64(x: i64) -> i64 {
+    x + 10
+}
+
+#[ocaml::func]
+pub fn ml_new_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
+    (i, i * 2, i * 3)
+}
+
+#[ocaml::func]
+pub fn ml_new_array(i: ocaml::Int) -> Vec<ocaml::Int> {
+    (0..5).map(|x| x * i).collect()
+}
+
+#[ocaml::func]
+pub fn ml_new_list(i: ocaml::Int) -> LinkedList<ocaml::Int> {
+    let mut l = LinkedList::new();
+    l.push_back(0);
+    l.push_back(i);
+    l.push_back(2 * i);
+    l.push_back(3 * i);
+    l.push_back(4 * i);
+    l
+}
+
+#[ocaml::func]
+pub fn ml_testing_callback(a: Value, b: Value) {
+    let f: Value = Value::named("print_testing").expect("print_testing not registered");
+
+    f.call_n(&[a, b]).unwrap();
+}
+
+#[ocaml::func]
+pub fn ml_raise_not_found() -> Result<(), ocaml::Error> {
+    Error::not_found()
+}
+
+#[ocaml::func]
+pub fn ml_raise_failure() -> Result<(), ocaml::Error> {
+    Error::failwith("testing")
+}
+
+#[ocaml::func]
+pub fn ml_raise_exc(i: ocaml::Int) -> Result<(), ocaml::Error> {
+    Error::raise_with_arg("Exc", i)
+}
+
+#[ocaml::func]
+pub fn ml_send_float(f: f64) -> f64 {
+    f * 2.0
+}
+
+#[derive(ToValue, FromValue)]
+enum Testing {
+    Empty,
+    First(f64),
+    Second(ocaml::Int),
+}
+
+#[ocaml::func]
+pub fn ml_send_first_variant() -> Testing {
+    Testing::First(2.0)
+}
+
+extern "C" fn finalizer(value: Value) {
+    let ptr: ocaml::Pointer<&str> = ocaml::Pointer::from_value(value);
+    println!("Finalizer: {}", ptr.as_ref());
+}
+
+#[ocaml::func]
+pub fn ml_final_value() -> ocaml::Pointer<'static, &'static str> {
+    let mut x = ocaml::Pointer::alloc_final(Some(finalizer), None);
+    x.set("testing");
+    assert!(x.as_ref() == &"testing");
+    x
+}
+
+#[ocaml::func]
+pub fn ml_array1(len: ocaml::Int) -> ocaml::bigarray::Array1<'static, u8> {
+    let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
     }
-    return ba.into();
-});
+    ba
+}
 
-caml!(ml_array2(s) {
-    let mut a: ocaml::Str = s.into();
-    let b = a.data_mut();
-    let ba = ocaml::Array1::<u8>::of_slice(b); // Note: `b` is still owned by OCaml since it was passed as a parameter
-    return ba.into();
-});
+#[ocaml::func]
+pub unsafe fn ml_array2(s: &mut str) -> ocaml::bigarray::Array1<u8> {
+    ocaml::bigarray::Array1::of_slice(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
+}
 
-caml!(ml_string_test(s){
-    let st = ocaml::Str::from(s.clone());
+#[ocaml::func]
+pub fn ml_string_test(s: Value) -> &'static str {
+    let st: &str = FromValue::from_value(s);
     println!("{:?}", s.tag());
-    println!("{} {}", st.len(), st.as_str());
-    return ocaml::Str::from("testing").into();
-});
+    println!("{} {}", st.len(), st);
+    "testing"
+}
 
-caml!(ml_make_list(length) {
-    let length = length.i32_val();
-    let mut list = ocaml::List::new();
+#[ocaml::func]
+pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<'static, ocaml::Int> {
     let mut sum_list = 0;
+    let mut list = ocaml::List::empty();
     for v in 0..length {
         sum_list += v;
-        list.push_hd(Value::i32(v));
+        list.push_hd(length - v - 1);
     }
 
     // list to vec
-    let vec: Vec<Value> = list.to_vec();
+    let vec: Vec<ocaml::Int> = list.to_vec();
     println!("vec.len: {:?}", vec.len());
     assert_eq!(list.len(), vec.len());
     let mut sum_vec = 0;
-    for i in 0..vec.len() {
-        let v = vec[i].i32_val();
+    for v in &vec {
         sum_vec += v;
     }
 
     // check heads
-    let list_hd = list.hd().unwrap().i32_val();
-    let vec_hd = vec[0].i32_val();
+    let list_hd: ocaml::Int = list.hd().unwrap();
+    let vec_hd = vec[0];
     println!("list_hd: {:?} vs. vec_hd: {:?}", list_hd, vec_hd);
     assert_eq!(list_hd, vec_hd);
 
@@ -132,18 +171,93 @@ caml!(ml_make_list(length) {
     assert_ne!(0, sum_vec);
     assert_eq!(sum_list, sum_vec);
 
-    return list.into();
-});
+    list
+}
 
-caml!(ml_make_array(length) {
-    let length = length.usize_val();
-    let mut arr = ocaml::Array::new(length);
+#[ocaml::func]
+pub fn ml_make_array(
+    length: ocaml::Int,
+) -> Result<ocaml::Array<'static, ocaml::Int>, ocaml::Error> {
+    let mut value = ocaml::Array::alloc(length as usize);
     for v in 0..length {
-        arr.set(v, Value::i32(v as i32)).unwrap();
+        value.set(v as usize, v)?;
     }
-    arr.into()
+    Ok(value)
+}
+
+#[ocaml::func]
+pub fn ml_call(f: Value, a: Value) -> Result<Value, ocaml::Error> {
+    f.call(a)
+}
+
+#[derive(ToValue, FromValue, Debug)]
+struct MyRecord<'a> {
+    foo: &'a str,
+    bar: f64,
+}
+
+#[ocaml::func]
+pub fn ml_format_my_record(s: MyRecord) -> String {
+    format!("{:?}", s)
+}
+
+#[no_mangle]
+pub extern "C" fn ml_unboxed_float(a: f64, b: f64) -> f64 {
+    (a + b) / 2.0
+}
+
+#[ocaml::bytecode_func]
+pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
+    ml_unboxed_float(a, b)
+}
+
+#[ocaml::func]
+pub unsafe fn ml_more_than_five_params(
+    a: ocaml::Float,
+    b: ocaml::Float,
+    c: ocaml::Float,
+    d: ocaml::Float,
+    e: ocaml::Float,
+    f: ocaml::Float,
+) -> ocaml::Float {
+    a + b + c + d + e + f
+}
+
+#[ocaml::func]
+pub fn ml_hash_variant() -> Value {
+    Value::hash_variant("Abc", Some(Value::int(123)))
+}
+
+#[derive(Clone)]
+struct CustomExample(Box<ocaml::Int>);
+
+extern "C" fn testing_compare(_a: Value, _b: Value) -> std::os::raw::c_int {
+    println!("CUSTOM: compare");
+    0
+}
+
+unsafe extern "C" fn testing_finalize(v: Value) {
+    let ptr = ocaml::Pointer::<CustomExample>::from_value(v);
+    ptr.drop_in_place();
+    println!("CUSTOM: finalizer");
+}
+
+ocaml::custom!(CustomExample {
+    finalize: testing_finalize,
+    compare: testing_compare,
 });
 
-caml!(ml_call(f, a) {
-    f.call_exn(a).unwrap()
-});
+#[ocaml::func]
+pub fn ml_custom_value(n: ocaml::Int) -> CustomExample {
+    CustomExample(Box::new(n))
+}
+
+#[ocaml::func]
+pub fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
+    *n.as_ref().0
+}
+
+#[ocaml::func]
+pub fn ml_list_hd_len(l: LinkedList<Value>) -> (Option<Value>, ocaml::Uint) {
+    (l.front().copied(), l.len())
+}

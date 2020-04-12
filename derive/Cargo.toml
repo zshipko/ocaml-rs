@@ -1,0 +1,15 @@
+[package]
+name = "ocaml-derive"
+version = "0.10.0"
+authors = ["Zach Shipko <zachshipko@gmail.com>"]
+edition = "2018"
+license = "ISC"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version = "1", features = ["full"]}
+proc-macro2 = {version = "1"}
+synstructure = "0.12"
+quote = "1"

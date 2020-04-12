@@ -2,7 +2,7 @@
 //! This is also where you initialize the OCaml runtime system via `caml_startup` or `caml_main`
 //!
 
-use crate::core::mlvalues::Value;
+use crate::mlvalues::Value;
 
 extern "C" {
     pub fn caml_callback(closure: Value, arg: Value) -> Value;
@@ -15,22 +15,18 @@ extern "C" {
     pub fn caml_callback3_exn(closure: Value, arg1: Value, arg2: Value, arg3: Value) -> Value;
     pub fn caml_callbackN_exn(closure: Value, narg: usize, args: *mut Value) -> Value;
 
-    pub fn caml_main(argv: *mut *mut u8);
-    pub fn caml_startup(argv: *mut *mut u8);
+    pub fn caml_main(argv: *mut *mut i8);
+    pub fn caml_startup(argv: *mut *mut i8);
     pub fn caml_shutdown();
-    pub fn caml_named_value(name: *const u8) -> *mut Value;
+    pub fn caml_named_value(name: *const i8) -> *const Value;
 
     pub static mut caml_callback_depth: usize;
 }
 
-macro_rules! is_exception_result {
-    ($v:expr) => {
-        ($v as usize) & 3 == 2
-    };
+pub const fn is_exception_result(val: Value) -> bool {
+    (val as usize) & 3 == 2
 }
 
-macro_rules! extract_exception {
-    ($v:expr) => {
-        ($v as usize) & !3
-    };
+pub const fn extract_exception(val: Value) -> Value {
+    (val as usize) & !3
 }

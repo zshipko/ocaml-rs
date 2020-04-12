@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.9.3"
+version = "0.10.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -11,3 +11,17 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [dependencies]
+ocaml-sys = {path = "./sys"} # , version = "0.10"
+ocaml-derive = {path = "./derive", optional = true} # version = "0.10"
+
+[features]
+default = ["derive"]
+derive = ["ocaml-derive"]
+deep-clone = []
+
+[workspace]
+members = [
+  "derive",
+  "sys",
+  "example"
+]

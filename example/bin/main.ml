@@ -39,12 +39,14 @@ let _ =
       assert (a = i && b = 2 * i && c = 3 * i);
     done;
 
+
     for i = 1 to 10 do
       (* new_array *)
       let arr = new_array i in
       Array.iter (Printf.printf "%d\n") arr;
       assert (arr = [| 0; i; 2 * i; 3 * i; 4 * i |]);
     done;
+
 
     for i = 1 to 10 do
       (* new list *)
@@ -53,12 +55,22 @@ let _ =
       assert (lst = [0; i; 2 * i; 3 * i; 4 * i]);
     done;
 
+
     (* testing_callback *)
     testing_callback 5 10;
 
     (* raise Not_found *)
     try raise_not_found ()
     with Not_found -> print_endline "Got Not_found";
+
+    try raise_failure ()
+    with Failure f -> begin
+      assert (f = "testing");
+      print_endline ("Got failure: " ^ f);
+    end;
+
+    try raise_exc 123
+    with Exc i -> assert (i = 123);
 
     (* send float *)
     let f = send_float 2.5 in
@@ -70,9 +82,9 @@ let _ =
     print_endline "send_first_variant";
     assert (send_first_variant () = First (2.0));
 
-    (* custom_value *)
-    print_endline "custom_value";
-    let _ = custom_value () in
+    (* finalizer *)
+    print_endline "final_value";
+    let _ = final_value () in
 
     (* bigarray *)
     print_endline "bigarray create";
@@ -94,8 +106,13 @@ let _ =
     assert (string_test "wow" = "testing");
 
     let l = make_list 250000 in
+    let next = ref 0 in
     Printf.printf "make_list: %d\n" (List.length l);
     assert (List.length l = 250000);
+    assert (List.for_all (fun i ->
+      let r = i = !next in
+      next := i + 1;
+      r) l);
 
     for _ = 1 to 3 do
       let l = make_array 100000 in
@@ -106,6 +123,40 @@ let _ =
     done;
 
     assert (call int_of_string "123" = 123);
+
+    (* Records *)
+    let r = {
+      foo = "testing";
+      bar = 123.;
+    } in
+
+    let r = format_my_record r in
+    assert (r = "MyRecord { foo: \"testing\", bar: 123.0 }");
+    print_endline r;
+
+    (* Unboxed float *)
+    assert (unboxed_float 1.0 3.0 = 2.0);
+
+    assert (more_than_five_params 1. 1. 1. 1. 1. 1. = 6.0);
+
+    let () = match hash_variant () with
+    | `Abc x -> assert (x = 123)
+    | _ -> assert false in
+
+    let a = custom_value 123 in
+    let b = custom_value 456 in
+    assert (a = b);
+    assert (custom_value_int a = 123);
+    assert (custom_value_int b = 456);
+
+    (* list_hd_len *)
+    let (a, b) = list_hd_len [1; 2; 3] in
+    assert (a = Some 1);
+    assert (b = 3);
+
+    let (a, b) = list_hd_len [] in
+    assert (a = None);
+    assert (b = 0);
 
     print_endline "cleanup";
     Gc.full_major ();

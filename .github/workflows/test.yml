@@ -1,15 +1,20 @@
-name: ocaml-rs build
+name: Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
 jobs:
   run:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        ocaml-version: ["4.10.0", "4.09.0", "4.08.1", "4.07.0", "4.06.0"]
+        os: [macos-latest, ubuntu-latest]
+        ocaml-version: ["4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2.0.0
@@ -18,7 +23,8 @@ jobs:
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
       - run: opam install dune
+      - run: opam exec -- cargo clean
       - name: Build
-        run: cargo build --test
+        run: opam exec -- cargo build --tests
       - name: Run tests
-        run: make test
+        run: opam exec -- make test

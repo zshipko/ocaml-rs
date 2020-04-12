@@ -1,6 +1,10 @@
 test:
 	@cargo test
-	@cd example && dune clean && dune exec bin/main.exe
+	@cd example && dune clean && dune runtest
+
+utop:
+	@cargo test
+	@cd example && dune clean && dune utop
 
 clean:
 	cargo clean
