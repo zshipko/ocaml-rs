@@ -17,7 +17,9 @@
 
 (library
  (name example)
- (public_name example)
+ (modules enums)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test))
 
  ; Link the Rust library
  (foreign_archives example_stubs)

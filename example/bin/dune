@@ -1,9 +1,0 @@
-(executables
- (libraries example)
- (names main)
- (modules main))
-
-
-(rule
- (alias  runtest)
- (action (run ./main.exe)))
