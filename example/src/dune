@@ -11,7 +11,7 @@
    (run cargo build --target-dir ../rust --release)
    ; This is needed to support Linux and macOS shared libraries
    (run sh -c
-     "mv ../rust/release/libexample_stubs.so ./dllexample_stubs.so || mv ../rust/release/libexample_stubs.dylib ./dllexample_stubs.so")
+     "mv ../rust/release/libexample_stubs.so ./dllexample_stubs.so || mv ../rust/release/libexample_stubs.dylib ./dllexample_stubs.so || mv ../rust/release/libexample_stubs.dll ./dllexample_stubs.so")
    ; Copy over the static library too
    (run mv ../rust/release/libexample_stubs.a libexample_stubs.a))))
 
