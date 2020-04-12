@@ -11,15 +11,15 @@ use crate::value::{FromValue, Size, ToValue, Value};
 /// A handle to a Rust value/reference owned by the OCaml heap
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
+pub struct Pointer<T>(pub Value, PhantomData<T>);
 
-unsafe impl<'a, T> ToValue for Pointer<'a, T> {
+unsafe impl<T> ToValue for Pointer<T> {
     fn to_value(self) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T> FromValue for Pointer<'a, T> {
+unsafe impl<T> FromValue for Pointer<T> {
     fn from_value(value: Value) -> Self {
         Pointer(value, PhantomData)
     }
@@ -27,7 +27,7 @@ unsafe impl<'a, T> FromValue for Pointer<'a, T> {
 
 unsafe extern "C" fn ignore(_: Value) {}
 
-impl<'a, T> Pointer<'a, T> {
+impl<T> Pointer<T> {
     /// Allocate a new value with an optional custom finalizer and used/max
     ///
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
@@ -35,7 +35,7 @@ impl<'a, T> Pointer<'a, T> {
     pub fn alloc_final(
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
-    ) -> Pointer<'static, T> {
+    ) -> Pointer<T> {
         Pointer::from_value(match finalizer {
             Some(f) => Value::alloc_final::<T>(f, used_max),
             None => Value::alloc_final::<T>(ignore, used_max),
@@ -43,7 +43,7 @@ impl<'a, T> Pointer<'a, T> {
     }
 
     /// Allocate a `Custom` value
-    pub fn alloc_custom() -> Pointer<'static, T>
+    pub fn alloc_custom() -> Pointer<T>
     where
         T: crate::Custom,
     {
@@ -77,13 +77,13 @@ impl<'a, T> Pointer<'a, T> {
     }
 }
 
-impl<'a, T> AsRef<T> for Pointer<'a, T> {
+impl<T> AsRef<T> for Pointer<T> {
     fn as_ref(&self) -> &T {
         unsafe { &*self.as_ptr() }
     }
 }
 
-impl<'a, T> AsMut<T> for Pointer<'a, T> {
+impl<T> AsMut<T> for Pointer<T> {
     fn as_mut(&mut self) -> &mut T {
         unsafe { &mut *self.as_mut_ptr() }
     }
@@ -92,21 +92,21 @@ impl<'a, T> AsMut<T> for Pointer<'a, T> {
 /// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Array<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
+pub struct Array<T: ToValue + FromValue>(Value, PhantomData<T>);
 
-unsafe impl<'a, T: ToValue + FromValue> ToValue for Array<'a, T> {
+unsafe impl<T: ToValue + FromValue> ToValue for Array<T> {
     fn to_value(self) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T: ToValue + FromValue> FromValue for Array<'a, T> {
+unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
     fn from_value(value: Value) -> Self {
         Array(value, PhantomData)
     }
 }
 
-impl<'a> Array<'a, f64> {
+impl<'a> Array<f64> {
     /// Set value to double array
     pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {
@@ -146,9 +146,9 @@ impl<'a> Array<'a, f64> {
     }
 }
 
-impl<'a, T: ToValue + FromValue> Array<'a, T> {
+impl<T: ToValue + FromValue> Array<T> {
     /// Allocate a new Array
-    pub fn alloc(n: usize) -> Array<'a, T> {
+    pub fn alloc(n: usize) -> Array<T> {
         let x = crate::frame!((x) {
             x = unsafe { Value(alloc::caml_alloc(n, 0)) };
             x
@@ -218,24 +218,24 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
 /// additional overhead compared to a `Value` type
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct List<'a, T: ToValue + FromValue>(Value, PhantomData<&'a T>);
+pub struct List<T: ToValue + FromValue>(Value, PhantomData<T>);
 
-unsafe impl<'a, T: ToValue + FromValue> ToValue for List<'a, T> {
+unsafe impl<T: ToValue + FromValue> ToValue for List<T> {
     fn to_value(self) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T: ToValue + FromValue> FromValue for List<'a, T> {
+unsafe impl<T: ToValue + FromValue> FromValue for List<T> {
     fn from_value(value: Value) -> Self {
         List(value, PhantomData)
     }
 }
 
-impl<'a, T: ToValue + FromValue> List<'a, T> {
+impl<T: ToValue + FromValue> List<T> {
     /// An empty list
     #[inline(always)]
-    pub fn empty() -> List<'a, T> {
+    pub fn empty() -> List<T> {
         List(Value::unit(), PhantomData)
     }
 
@@ -348,28 +348,28 @@ pub mod bigarray {
     /// additional overhead compared to a `Value` type
     #[repr(transparent)]
     #[derive(Clone, Copy, PartialEq)]
-    pub struct Array1<'a, T>(Value, PhantomData<&'a T>);
+    pub struct Array1<T>(Value, PhantomData<T>);
 
-    unsafe impl<'a, T> crate::FromValue for Array1<'a, T> {
-        fn from_value(value: Value) -> Array1<'a, T> {
+    unsafe impl<T> crate::FromValue for Array1<T> {
+        fn from_value(value: Value) -> Array1<T> {
             Array1(value, PhantomData)
         }
     }
 
-    unsafe impl<'a, T> crate::ToValue for Array1<'a, T> {
+    unsafe impl<T> crate::ToValue for Array1<T> {
         fn to_value(self) -> Value {
             self.0
         }
     }
 
-    impl<'a, T: 'a + Copy + Kind> From<&'a [T]> for Array1<'a, T> {
-        fn from(x: &'a [T]) -> Array1<'a, T> {
+    impl<T: Copy + Kind> From<&'static [T]> for Array1<T> {
+        fn from(x: &'static [T]) -> Array1<T> {
             Array1::from_slice(x)
         }
     }
 
-    impl<'a, T: 'a + Copy + Kind> From<Vec<T>> for Array1<'a, T> {
-        fn from(x: Vec<T>) -> Array1<'a, T> {
+    impl<T: Copy + Kind> From<Vec<T>> for Array1<T> {
+        fn from(x: Vec<T>) -> Array1<T> {
             let mut arr = Array1::<T>::create(x.len());
             let data = arr.data_mut();
             data.copy_from_slice(x.as_slice());
@@ -377,12 +377,12 @@ pub mod bigarray {
         }
     }
 
-    impl<'a, T: Copy + Kind> Array1<'a, T> {
+    impl<T: Copy + Kind> Array1<T> {
         /// Array1::of_slice is used to convert from a slice to OCaml Bigarray,
         /// the `data` parameter must outlive the resulting bigarray or there is
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
-        pub fn of_slice(data: &'a mut [T]) -> Array1<'a, T> {
+        pub fn of_slice<'a>(data: &'a mut [T]) -> Array1<T> {
             let x = crate::frame!((x) {
                 x = unsafe {
                     Value(bigarray::caml_ba_alloc_dims(
@@ -399,12 +399,12 @@ pub mod bigarray {
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
-        pub fn from_slice(data: &'a [T]) -> Array1<'a, T> {
+        pub fn from_slice<'a>(data: &'a [T]) -> Array1<T> {
             Array1::from(data.to_vec())
         }
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
-        pub fn create(n: Size) -> Array1<'a, T> {
+        pub fn create(n: Size) -> Array1<T> {
             let x = crate::frame!((x) {
                 let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
                 x = unsafe {

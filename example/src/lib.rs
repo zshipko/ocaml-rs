@@ -112,7 +112,7 @@ extern "C" fn finalizer(value: Value) {
 }
 
 #[ocaml::func]
-pub fn ml_final_value() -> ocaml::Pointer<'static, &'static str> {
+pub fn ml_final_value() -> ocaml::Pointer<&'static str> {
     let mut x = ocaml::Pointer::alloc_final(Some(finalizer), None);
     x.set("testing");
     assert!(x.as_ref() == &"testing");
@@ -120,7 +120,7 @@ pub fn ml_final_value() -> ocaml::Pointer<'static, &'static str> {
 }
 
 #[ocaml::func]
-pub fn ml_array1(len: ocaml::Int) -> ocaml::bigarray::Array1<'static, u8> {
+pub fn ml_array1(len: ocaml::Int) -> ocaml::bigarray::Array1<u8> {
     let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
@@ -142,7 +142,7 @@ pub fn ml_string_test(s: Value) -> &'static str {
 }
 
 #[ocaml::func]
-pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<'static, ocaml::Int> {
+pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<ocaml::Int> {
     let mut sum_list = 0;
     let mut list = ocaml::List::empty();
     for v in 0..length {
@@ -175,9 +175,7 @@ pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<'static, ocaml::Int> {
 }
 
 #[ocaml::func]
-pub fn ml_make_array(
-    length: ocaml::Int,
-) -> Result<ocaml::Array<'static, ocaml::Int>, ocaml::Error> {
+pub fn ml_make_array(length: ocaml::Int) -> Result<ocaml::Array<ocaml::Int>, ocaml::Error> {
     let mut value = ocaml::Array::alloc(length as usize);
     for v in 0..length {
         value.set(v as usize, v)?;
