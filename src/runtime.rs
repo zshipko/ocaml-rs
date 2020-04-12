@@ -22,8 +22,8 @@ pub fn startup() {
     // convert the strings to raw pointers
     let mut c_args = args
         .iter()
-        .map(|arg| arg.as_ptr() as *mut u8)
-        .collect::<Vec<*mut u8>>();
+        .map(|arg| arg.as_ptr() as *mut std::os::raw::c_char)
+        .collect::<Vec<*mut std::os::raw::c_char>>();
     unsafe { crate::sys::callback::caml_startup(c_args.as_mut_ptr()) }
 }
 
@@ -39,8 +39,8 @@ pub fn caml_main() {
     // convert the strings to raw pointers
     let mut c_args = args
         .iter()
-        .map(|arg| arg.as_ptr() as *mut u8)
-        .collect::<Vec<*mut u8>>();
+        .map(|arg| arg.as_ptr() as *mut std::os::raw::c_char)
+        .collect::<Vec<*mut std::os::raw::c_char>>();
     unsafe { crate::sys::callback::caml_main(c_args.as_mut_ptr()) }
 }
 

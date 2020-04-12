@@ -53,7 +53,7 @@ impl Value {
                 Ok(s) => s,
                 Err(_) => return None,
             };
-            let named = sys::callback::caml_named_value(s.as_ptr() as *const u8);
+            let named = sys::callback::caml_named_value(s.as_ptr());
             if named.is_null() {
                 return None;
             }

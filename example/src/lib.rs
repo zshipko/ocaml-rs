@@ -96,6 +96,7 @@ pub fn ml_send_float(f: f64) -> f64 {
 
 #[derive(ToValue, FromValue)]
 enum Testing {
+    Empty,
     First(f64),
     Second(ocaml::Int),
 }

@@ -60,13 +60,22 @@ impl Default for CamlRootsBlock {
     }
 }
 
-/// These receive their implementations when you successfully link against an OCaml binary
 extern "C" {
     pub fn caml_modify(addr: *mut Value, value: Value);
     pub fn caml_initialize(addr: *mut Value, value: Value);
 }
 
 /// Stores the `$val` at `$offset` in the `$block`.
+///
+/// # Original C code
+///
+/// ```c
+/// Store_field(block, offset, val) do{ \
+///   mlsize_t caml__temp_offset = (offset); \
+///   value caml__temp_val = (val); \
+///   caml_modify (&Field ((block), caml__temp_offset), caml__temp_val); \
+/// }while(0)
+/// ```
 ///
 /// # Example
 /// ```norun
@@ -84,20 +93,9 @@ macro_rules! store_field {
 
 /// Stores the `value` in the `block` at `offset`.
 ///
-/// # Original C code
-///
-/// ```c
-/// Store_field(block, offset, val) do{ \
-///   mlsize_t caml__temp_offset = (offset); \
-///   value caml__temp_val = (val); \
-///   caml_modify (&Field ((block), caml__temp_offset), caml__temp_val); \
-/// }while(0)
-/// ```
-///
 /// # Safety
 ///
 /// No bounds checking or validation of the OCaml values is done in this function
-///
 pub unsafe fn store_field(block: Value, offset: Size, value: Value) {
     store_field!(block, offset, value);
 }
