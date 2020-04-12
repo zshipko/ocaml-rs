@@ -32,8 +32,8 @@
 //! union tags, macros, etc.)
 //!
 
-use std::default::Default;
-use std::ptr;
+use core::default::Default;
+use core::ptr;
 
 use crate::mlvalues::{field, Size, Value};
 

@@ -53,7 +53,7 @@ pub const unsafe fn tag_val(val: Value) -> Tag {
 #[cfg(target_endian = "little")]
 #[inline]
 pub unsafe fn tag_val(val: Value) -> Tag {
-    *(val as *const u8).offset(-(std::mem::size_of::<Value>() as isize))
+    *(val as *const u8).offset(-(core::mem::size_of::<Value>() as isize))
 }
 
 #[inline]
@@ -97,7 +97,7 @@ pub unsafe fn field(block: Value, index: usize) -> *mut Value {
 
 #[doc(hidden)]
 pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
-    ::std::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val(value) + 1)
+    ::core::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val(value) + 1)
 }
 
 /// The OCaml `()` (`unit`) value

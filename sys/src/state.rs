@@ -22,15 +22,15 @@ pub struct longjmp_buffer {
     pub _address: u8,
 }
 
-pub type backtrace_slot = *mut ::std::os::raw::c_void;
+pub type backtrace_slot = *mut ::core::ffi::c_void;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct caml_domain_state {
     pub _young_ptr: *mut Value,
     pub _young_limit: *mut Value,
-    pub _exception_pointer: *mut ::std::os::raw::c_char,
-    pub _young_base: *mut ::std::os::raw::c_void,
+    pub _exception_pointer: *mut i8,
+    pub _young_base: *mut ::core::ffi::c_void,
     pub _young_start: *mut Value,
     pub _young_end: *mut Value,
     pub _young_alloc_start: *mut Value,
@@ -51,8 +51,8 @@ pub struct caml_domain_state {
     pub _trap_barrier: *mut Value,
     pub _external_raise: *mut longjmp_buffer,
     pub _exn_bucket: Value,
-    pub _top_of_stack: *mut ::std::os::raw::c_char,
-    pub _bottom_of_stack: *mut ::std::os::raw::c_char,
+    pub _top_of_stack: *mut i8,
+    pub _bottom_of_stack: *mut i8,
     pub _last_return_address: usize,
     pub _gc_regs: *mut Value,
     pub _backtrace_active: isize,
@@ -115,17 +115,17 @@ pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
 #[test]
 fn bindgen_test_layout_caml_domain_state() {
     assert_eq!(
-        ::std::mem::size_of::<caml_domain_state>(),
+        ::core::mem::size_of::<caml_domain_state>(),
         360usize,
         concat!("Size of: ", stringify!(caml_domain_state))
     );
     assert_eq!(
-        ::std::mem::align_of::<caml_domain_state>(),
+        ::core::mem::align_of::<caml_domain_state>(),
         8usize,
         concat!("Alignment of ", stringify!(caml_domain_state))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._young_ptr as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._young_ptr as *const _ as usize },
         0usize,
         concat!(
             "Offset of field: ",
@@ -135,7 +135,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._young_limit as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._young_limit as *const _ as usize },
         8usize,
         concat!(
             "Offset of field: ",
@@ -146,7 +146,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._exception_pointer as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._exception_pointer as *const _ as usize
         },
         16usize,
         concat!(
@@ -157,7 +157,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._young_base as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._young_base as *const _ as usize },
         24usize,
         concat!(
             "Offset of field: ",
@@ -167,7 +167,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._young_start as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._young_start as *const _ as usize },
         32usize,
         concat!(
             "Offset of field: ",
@@ -177,7 +177,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._young_end as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._young_end as *const _ as usize },
         40usize,
         concat!(
             "Offset of field: ",
@@ -188,7 +188,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._young_alloc_start as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._young_alloc_start as *const _ as usize
         },
         48usize,
         concat!(
@@ -200,7 +200,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._young_alloc_end as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._young_alloc_end as *const _ as usize
         },
         56usize,
         concat!(
@@ -212,7 +212,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._young_alloc_mid as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._young_alloc_mid as *const _ as usize
         },
         64usize,
         concat!(
@@ -224,7 +224,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._young_trigger as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._young_trigger as *const _ as usize
         },
         72usize,
         concat!(
@@ -236,7 +236,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._minor_heap_wsz as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._minor_heap_wsz as *const _ as usize
         },
         80usize,
         concat!(
@@ -248,7 +248,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._in_minor_collection as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._in_minor_collection as *const _ as usize
         },
         88usize,
         concat!(
@@ -260,7 +260,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._extra_heap_resources_minor as *const _
+            &(*(::core::ptr::null::<caml_domain_state>()))._extra_heap_resources_minor as *const _
                 as usize
         },
         96usize,
@@ -272,7 +272,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._ref_table as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._ref_table as *const _ as usize },
         104usize,
         concat!(
             "Offset of field: ",
@@ -283,7 +283,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._ephe_ref_table as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._ephe_ref_table as *const _ as usize
         },
         112usize,
         concat!(
@@ -294,7 +294,9 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._custom_table as *const _ as usize },
+        unsafe {
+            &(*(::core::ptr::null::<caml_domain_state>()))._custom_table as *const _ as usize
+        },
         120usize,
         concat!(
             "Offset of field: ",
@@ -304,7 +306,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._stack_low as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._stack_low as *const _ as usize },
         128usize,
         concat!(
             "Offset of field: ",
@@ -314,7 +316,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._stack_high as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._stack_high as *const _ as usize },
         136usize,
         concat!(
             "Offset of field: ",
@@ -325,7 +327,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stack_threshold as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stack_threshold as *const _ as usize
         },
         144usize,
         concat!(
@@ -336,7 +338,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._extern_sp as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._extern_sp as *const _ as usize },
         152usize,
         concat!(
             "Offset of field: ",
@@ -346,7 +348,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._trapsp as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._trapsp as *const _ as usize },
         160usize,
         concat!(
             "Offset of field: ",
@@ -356,7 +358,9 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._trap_barrier as *const _ as usize },
+        unsafe {
+            &(*(::core::ptr::null::<caml_domain_state>()))._trap_barrier as *const _ as usize
+        },
         168usize,
         concat!(
             "Offset of field: ",
@@ -367,7 +371,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._external_raise as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._external_raise as *const _ as usize
         },
         176usize,
         concat!(
@@ -378,7 +382,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._exn_bucket as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._exn_bucket as *const _ as usize },
         184usize,
         concat!(
             "Offset of field: ",
@@ -388,7 +392,9 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._top_of_stack as *const _ as usize },
+        unsafe {
+            &(*(::core::ptr::null::<caml_domain_state>()))._top_of_stack as *const _ as usize
+        },
         192usize,
         concat!(
             "Offset of field: ",
@@ -399,7 +405,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._bottom_of_stack as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._bottom_of_stack as *const _ as usize
         },
         200usize,
         concat!(
@@ -411,7 +417,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._last_return_address as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._last_return_address as *const _ as usize
         },
         208usize,
         concat!(
@@ -422,7 +428,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._gc_regs as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._gc_regs as *const _ as usize },
         216usize,
         concat!(
             "Offset of field: ",
@@ -433,7 +439,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._backtrace_active as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._backtrace_active as *const _ as usize
         },
         224usize,
         concat!(
@@ -445,7 +451,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._backtrace_pos as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._backtrace_pos as *const _ as usize
         },
         232usize,
         concat!(
@@ -457,7 +463,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._backtrace_buffer as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._backtrace_buffer as *const _ as usize
         },
         240usize,
         concat!(
@@ -469,7 +475,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._backtrace_last_exn as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._backtrace_last_exn as *const _ as usize
         },
         248usize,
         concat!(
@@ -481,7 +487,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._compare_unordered as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._compare_unordered as *const _ as usize
         },
         256usize,
         concat!(
@@ -493,7 +499,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._requested_major_slice as *const _
+            &(*(::core::ptr::null::<caml_domain_state>()))._requested_major_slice as *const _
                 as usize
         },
         264usize,
@@ -506,7 +512,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._requested_minor_gc as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._requested_minor_gc as *const _ as usize
         },
         272usize,
         concat!(
@@ -517,7 +523,7 @@ fn bindgen_test_layout_caml_domain_state() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<caml_domain_state>()))._local_roots as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<caml_domain_state>()))._local_roots as *const _ as usize },
         280usize,
         concat!(
             "Offset of field: ",
@@ -528,7 +534,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_minor_words as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_minor_words as *const _ as usize
         },
         288usize,
         concat!(
@@ -540,7 +546,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_promoted_words as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_promoted_words as *const _ as usize
         },
         296usize,
         concat!(
@@ -552,7 +558,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_major_words as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_major_words as *const _ as usize
         },
         304usize,
         concat!(
@@ -564,7 +570,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_minor_collections as *const _
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_minor_collections as *const _
                 as usize
         },
         312usize,
@@ -577,7 +583,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_major_collections as *const _
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_major_collections as *const _
                 as usize
         },
         320usize,
@@ -590,7 +596,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_heap_wsz as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_heap_wsz as *const _ as usize
         },
         328usize,
         concat!(
@@ -602,7 +608,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_top_heap_wsz as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_top_heap_wsz as *const _ as usize
         },
         336usize,
         concat!(
@@ -614,7 +620,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_compactions as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_compactions as *const _ as usize
         },
         344usize,
         concat!(
@@ -626,7 +632,7 @@ fn bindgen_test_layout_caml_domain_state() {
     );
     assert_eq!(
         unsafe {
-            &(*(::std::ptr::null::<caml_domain_state>()))._stat_heap_chunks as *const _ as usize
+            &(*(::core::ptr::null::<caml_domain_state>()))._stat_heap_chunks as *const _ as usize
         },
         352usize,
         concat!(

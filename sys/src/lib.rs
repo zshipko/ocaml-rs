@@ -1,4 +1,5 @@
 #![allow(clippy::missing_safety_doc)]
+#![no_std]
 
 #[macro_export]
 /// Registers OCaml parameters with the GC
