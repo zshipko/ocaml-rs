@@ -1,0 +1,19 @@
+name: Clippy
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Nightly
+      run: rustup toolchain install nightly --profile=default
+
+    - name: Run tests
+      run: cargo +nightly clippy --all

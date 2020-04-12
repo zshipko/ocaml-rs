@@ -399,8 +399,9 @@ fn ocaml_bytecode_func_impl(
             .iter()
             .filter_map(|arg| match arg {
                 Some(ident) => Some(quote! {
+                    #[allow(clippy::not_unsafe_ptr_arg_deref)]
                     let mut #ident = ocaml::FromValue::from_value(unsafe {
-                        *__ocaml_argv.add(__ocaml_arg_index as usize)
+                        std::ptr::read(__ocaml_argv.add(__ocaml_arg_index as usize))
                     });
                     __ocaml_arg_index += 1 ;
                 }),

@@ -10,15 +10,13 @@ pub fn ml_send_int(x: isize) -> isize {
 }
 
 #[ocaml::native_func]
-pub fn ml_send_two(v: Value, v2: Value) -> Value {
-    unsafe {
-        println!(
-            "local root addr: {:p} local_roots: {:#?}, v: {:?}",
-            &state::local_roots(),
-            state::local_roots(),
-            v
-        )
-    };
+pub unsafe fn ml_send_two(v: Value, v2: Value) -> Value {
+    println!(
+        "local root addr: {:p} local_roots: {:#?}, v: {:?}",
+        &state::local_roots(),
+        state::local_roots(),
+        v
+    );
     let tag: u8 = v2.tag().into();
     println!("string tag: {}", tag);
     let x = v.int_val();
@@ -27,6 +25,12 @@ pub fn ml_send_two(v: Value, v2: Value) -> Value {
     Value::unit()
 }
 
+/// Create tuple using extern "C" function without func macro
+///
+/// # Safety
+/// It's extremely important to make sure that your stubs match
+/// the actual function type, otherwise you may experience all
+/// sorts of unexpected behavior
 #[no_mangle]
 pub unsafe extern "C" fn ml_send_tuple(t: Value) -> Value {
     ocaml::body!((t) {
@@ -55,8 +59,8 @@ pub fn ml_new_array(i: ocaml::Int) -> Vec<ocaml::Int> {
 #[ocaml::func]
 pub fn ml_new_list(i: ocaml::Int) -> LinkedList<ocaml::Int> {
     let mut l = LinkedList::new();
-    l.push_back(0 * i);
-    l.push_back(1 * i);
+    l.push_back(0);
+    l.push_back(i);
     l.push_back(2 * i);
     l.push_back(3 * i);
     l.push_back(4 * i);
@@ -120,15 +124,12 @@ pub fn ml_array1(len: ocaml::Int) -> ocaml::bigarray::Array1<'static, u8> {
     for i in 0..ba.len() {
         ba.data_mut()[i] = i as u8;
     }
-    return ba;
+    ba
 }
 
 #[ocaml::func]
-pub fn ml_array2(s: &mut str) -> ocaml::bigarray::Array1<u8> {
-    let ba = unsafe {
-        ocaml::bigarray::Array1::of_slice(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
-    };
-    return ba;
+pub unsafe fn ml_array2(s: &mut str) -> ocaml::bigarray::Array1<u8> {
+    ocaml::bigarray::Array1::of_slice(s.as_bytes_mut()) // Note: `b` is still owned by OCaml since it was passed as a parameter
 }
 
 #[ocaml::func]
@@ -153,8 +154,7 @@ pub fn ml_make_list(length: ocaml::Int) -> ocaml::List<'static, ocaml::Int> {
     println!("vec.len: {:?}", vec.len());
     assert_eq!(list.len(), vec.len());
     let mut sum_vec = 0;
-    for i in 0..vec.len() {
-        let v = vec[i];
+    for v in &vec {
         sum_vec += v;
     }
 
@@ -211,7 +211,7 @@ pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::func]
-pub fn ml_more_than_five_params(
+pub unsafe fn ml_more_than_five_params(
     a: ocaml::Float,
     b: ocaml::Float,
     c: ocaml::Float,
@@ -247,16 +247,16 @@ ocaml::custom!(CustomExample {
 });
 
 #[ocaml::func]
-pub unsafe fn ml_custom_value(n: ocaml::Int) -> CustomExample {
+pub fn ml_custom_value(n: ocaml::Int) -> CustomExample {
     CustomExample(Box::new(n))
 }
 
 #[ocaml::func]
-pub unsafe fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
+pub fn ml_custom_value_int(n: ocaml::Pointer<CustomExample>) -> ocaml::Int {
     *n.as_ref().0
 }
 
 #[ocaml::func]
 pub fn ml_list_hd_len(l: LinkedList<Value>) -> (Option<Value>, ocaml::Uint) {
-    (l.front().map(|x| x.clone()), l.len())
+    (l.front().copied(), l.len())
 }

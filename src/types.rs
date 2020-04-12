@@ -204,7 +204,7 @@ impl<'a, T: ToValue + FromValue> Array<'a, T> {
     }
 
     /// Array as mutable slice
-    pub fn as_mut_slice(&self) -> &mut [Value] {
+    pub fn as_mut_slice(&mut self) -> &mut [Value] {
         FromValue::from_value(self.0)
     }
 
@@ -421,13 +421,13 @@ pub mod bigarray {
         }
 
         /// Returns the number of items in `self`
-        pub fn len(&self) -> Size {
+        pub fn len(self) -> Size {
             let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
             unsafe { (*ba).dim as usize }
         }
 
         /// Returns true when `self.len() == 0`
-        pub fn is_empty(&self) -> bool {
+        pub fn is_empty(self) -> bool {
             self.len() == 0
         }
 

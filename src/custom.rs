@@ -66,13 +66,13 @@ pub struct CustomType {
 ///
 /// #[cfg(feature = "derive")]
 /// #[ocaml::func]
-/// pub fn example() -> Example {
+/// pub unsafe fn example() -> Example {
 ///     Example(123)
 /// }
 ///
 /// #[cfg(feature = "derive")]
 /// #[ocaml::func]
-/// pub fn example_value(x: ocaml::Pointer<Example>) -> ocaml::Int {
+/// pub unsafe fn example_value(x: ocaml::Pointer<Example>) -> ocaml::Int {
 ///     x.as_ref().0
 /// }
 /// ```
