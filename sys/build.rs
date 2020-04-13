@@ -41,7 +41,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     let ts = ts.duration_since(std::time::UNIX_EPOCH).unwrap();
     std::io::Write::write_all(
         &mut f,
-        format!("(* generated: {} *)", ts.as_millis()).as_bytes(),
+        format!("let generated_at = {}L", ts.as_millis()).as_bytes(),
     )
     .unwrap();
 
