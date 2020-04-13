@@ -15,8 +15,8 @@ extern "C" {
     pub fn caml_callback3_exn(closure: Value, arg1: Value, arg2: Value, arg3: Value) -> Value;
     pub fn caml_callbackN_exn(closure: Value, narg: usize, args: *mut Value) -> Value;
 
-    pub fn caml_main(argv: *mut *mut i8);
-    pub fn caml_startup(argv: *mut *mut i8);
+    pub fn caml_main(argv: *const *const i8);
+    pub fn caml_startup(argv: *const *const i8);
     pub fn caml_shutdown();
     pub fn caml_named_value(name: *const i8) -> *const Value;
 

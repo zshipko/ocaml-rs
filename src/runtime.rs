@@ -23,13 +23,15 @@ pub fn init() {
         let args = std::env::args()
             .map(|arg| std::ffi::CString::new(arg).unwrap())
             .collect::<Vec<std::ffi::CString>>();
+        println!("{:?}", args);
 
         // convert the strings to raw pointers
         let mut c_args = args
             .iter()
-            .map(|arg| arg.as_ptr() as *mut std::os::raw::c_char)
-            .collect::<Vec<*mut std::os::raw::c_char>>();
-        unsafe { crate::sys::callback::caml_main(c_args.as_mut_ptr()) }
+            .map(|arg| arg.as_ptr() as *const std::os::raw::c_char)
+            .collect::<Vec<*const std::os::raw::c_char>>();
+        c_args.push(std::ptr::null());
+        unsafe { crate::sys::callback::caml_main(c_args.as_ptr()) }
     })
 }
 

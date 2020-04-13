@@ -9,8 +9,7 @@ pub fn make_tuple(a: Value, b: Value) -> (Value, Value) {
 
 #[test]
 fn basic_array() -> Result<(), Error> {
-    crate::runtime::init();
-
+    ocaml::runtime::init();
     let mut a: ocaml::Array<&str> = ocaml::Array::alloc(2);
     a.set(0, "testing")?;
     a.set(1, "123")?;
@@ -21,7 +20,7 @@ fn basic_array() -> Result<(), Error> {
 
 #[test]
 fn make_tuple_of_tuples() {
-    crate::runtime::init();
+    ocaml::runtime::init();
 
     let ((a, b, c, d, e, f, g, h, i), (j, k, l, m, n, o, p, q, r)): (
         (f64, f64, f64, f64, f64, f64, f64, f64, f64),
