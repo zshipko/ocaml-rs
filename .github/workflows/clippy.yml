@@ -15,8 +15,5 @@ jobs:
     - name: Nightly
       run: rustup toolchain install nightly --profile=default
 
-    - name: Run tests
-      run: cargo +nightly build --all
-
-    - name: Run tests
-      run: cargo +nightly clippy --all -- -D warnings
+    - name: Run clippy
+      run: cargo +nightly clippy -- -D warnings
