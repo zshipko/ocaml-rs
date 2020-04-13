@@ -142,4 +142,5 @@ pub fn ocamlopt() -> std::process::Command {
 }
 
 #[cfg(feature = "link")]
+#[cfg(test)]
 mod tests;
