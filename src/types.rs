@@ -382,7 +382,7 @@ pub mod bigarray {
         /// the `data` parameter must outlive the resulting bigarray or there is
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
-        pub fn of_slice<'a>(data: &'a mut [T]) -> Array1<T> {
+        pub fn of_slice(data: &mut [T]) -> Array1<T> {
             let x = crate::frame!((x) {
                 x = unsafe {
                     Value(bigarray::caml_ba_alloc_dims(
@@ -399,7 +399,7 @@ pub mod bigarray {
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
-        pub fn from_slice<'a>(data: &'a [T]) -> Array1<T> {
+        pub fn from_slice(data: &[T]) -> Array1<T> {
             Array1::from(data.to_vec())
         }
 
