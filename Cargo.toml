@@ -17,6 +17,8 @@ ocaml-derive = {path = "./derive", optional = true} # version = "0.10"
 [features]
 default = ["derive"]
 derive = ["ocaml-derive"]
+link-native = ["ocaml-sys/link-native"]
+link-bytecode = ["ocaml-sys/link-bytecode"]
 deep-clone = []
 
 [workspace]

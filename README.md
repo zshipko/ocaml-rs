@@ -42,6 +42,17 @@ rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 
 This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
 
+### Features
+
+- `derive`
+  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
+- `link-native`
+  * link the native OCaml runtime, this enables `ocaml::runtime::init`, which is equivalent to `caml_main`
+- `link-bytecode`
+  * link the bytecode OCaml runtime, this enables `ocaml::runtime::init`, which is equivalent to `caml_startup`
+- `deep-clone`
+  * enables `Value::deep_clone_to_ocaml` and `Value::deep_clone_to_rust`
+
 ### Documentation
 
 [https://docs.rs/ocaml](https://docs.rs/ocaml)

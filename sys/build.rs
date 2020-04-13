@@ -1,23 +1,86 @@
+#[allow(unused)]
+fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
+    #[cfg(feature = "link-bytecode")]
+    let ocamlopt = ocamlopt[..ocamlopt.len() - 3].to_string() + "c";
+
+    let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
+    std::io::Write::write_all(&mut f, b"").unwrap();
+
+    assert!(std::process::Command::new(&ocamlopt)
+        .args(&["-output-complete-obj", "-o"])
+        .arg(out_dir.join("rt.o"))
+        .arg(out_dir.join("runtime.ml"))
+        .status()?
+        .success());
+
+    let ar = std::env::var("AR").unwrap_or_else(|_| "ar".to_string());
+    assert!(std::process::Command::new(&ar)
+        .arg("rcs")
+        .arg(out_dir.join("libruntime.a"))
+        .arg(out_dir.join("rt.o"))
+        .status()?
+        .success());
+
+    println!("cargo:rustc-link-search={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static=runtime");
+
+    println!("cargo:rustc-link-search={}", ocaml_path);
+
+    #[cfg(feature = "link-native")]
+    println!("cargo:rustc-link-lib=static=asmrun");
+
+    #[cfg(feature = "link-bytecode")]
+    println!("cargo:rustc-link-lib=static=camlrun");
+
+    Ok(())
+}
+
 fn run() -> std::io::Result<()> {
-    let cmd = std::env::var("OCAML").unwrap_or_else(|_| "ocaml".to_string());
+    let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let output = std::process::Command::new(cmd)
-        .arg("version.ml")
-        .arg(&out_dir)
+
+    let version = std::process::Command::new(&ocamlopt)
+        .arg("-version")
         .output()?;
 
-    let mut f = std::fs::File::create(out_dir.join("version")).unwrap();
-    std::io::Write::write_all(&mut f, &output.stdout).unwrap();
+    let version = std::str::from_utf8(&version.stdout).unwrap().trim();
 
-    let output = String::from_utf8(output.stdout).unwrap();
-    let split: Vec<&str> = output.split('.').collect();
+    let ocaml_path = std::process::Command::new(&ocamlopt)
+        .arg("-where")
+        .output()?;
+
+    let ocaml_path = std::str::from_utf8(&ocaml_path.stdout).unwrap().trim();
+
+    // Write OCaml compiler path to file
+    #[cfg(feature = "link-bytecode")]
+    let bin_path = format!("{}/../../bin/ocamlc", ocaml_path);
+    #[cfg(not(feature = "link-bytecode"))]
+    let bin_path = format!("{}/../../bin/ocamlopt", ocaml_path);
+
+    let mut f = std::fs::File::create(out_dir.join("ocaml_compiler")).unwrap();
+    std::io::Write::write_all(&mut f, bin_path.as_bytes()).unwrap();
+
+    // Write OCaml version to file
+    let mut f = std::fs::File::create(out_dir.join("ocaml_version")).unwrap();
+    std::io::Write::write_all(&mut f, version.as_bytes()).unwrap();
+
+    // Write OCaml path to file
+    let mut f = std::fs::File::create(out_dir.join("ocaml_path")).unwrap();
+    std::io::Write::write_all(&mut f, ocaml_path.as_bytes()).unwrap();
+
+    let split: Vec<&str> = version.split('.').collect();
 
     let major = split[0].parse::<usize>().unwrap();
     let minor = split[1].parse::<usize>().unwrap();
 
     if major >= 4 && minor >= 10 {
+        // This feature determines whether or not caml_local_roots should
+        // use the caml_state struct or the caml_local_roots global
         println!("cargo:rustc-cfg=caml_state");
     }
+
+    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+    link(out_dir, ocamlopt, ocaml_path)?;
 
     Ok(())
 }

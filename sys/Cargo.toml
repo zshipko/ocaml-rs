@@ -6,3 +6,7 @@ edition = "2018"
 
 [dependencies]
 
+[features]
+link-native = []
+link-bytecode = []
+

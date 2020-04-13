@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        ocaml-version: ["4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.0.0
+      - name: Use OCaml ${{ matrix.ocaml-version }}
+        uses: avsm/setup-ocaml@v1.0
+        with:
+          ocaml-version: ${{ matrix.ocaml-version }}
+      - run: opam install dune
+      - run: opam exec -- cargo clean
+      - name: Build
+        run: opam exec -- cargo build --tests --features=link-bytecode
+      - name: Run Rust tests
+        run: opam exec -- cargo test --features=link-bytecode

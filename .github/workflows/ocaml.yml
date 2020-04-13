@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        ocaml-version: ["4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.0.0
+      - name: Use OCaml ${{ matrix.ocaml-version }}
+        uses: avsm/setup-ocaml@v1.0
+        with:
+          ocaml-version: ${{ matrix.ocaml-version }}
+      - run: opam install dune
+      - name: Run OCaml tests
+        run: dune runtest --root=./example

@@ -1,10 +1,21 @@
-test:
-	@cargo test
-	@cd example && dune clean && dune runtest
+test: test-native
+test-native: test_link_native
+	@dune clean --root=./example
+	@dune runtest --root=./example
+
+test-bytecode: test_link_bytecode
+	@dune clean --root=./example
+	@dune runtest --root=./example
+
+test_link_native:
+	@cargo test --features=link-native
+
+test_link_bytecode:
+	@cargo test --features=link-bytecode
 
 utop:
-	@cargo test
-	@cd example && dune clean && dune utop
+	@dune clean --root=./example
+	@dune utop --root=./example
 
 clean:
 	cargo clean

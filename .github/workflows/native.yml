@@ -25,6 +25,6 @@ jobs:
       - run: opam install dune
       - run: opam exec -- cargo clean
       - name: Build
-        run: opam exec -- cargo build --tests
-      - name: Run tests
-        run: opam exec -- make test
+        run: opam exec -- cargo build --tests --features=link-native
+      - name: Run Rust tests
+        run: opam exec -- cargo test --features=link-native
