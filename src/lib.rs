@@ -137,9 +137,9 @@ pub type Int = sys::mlvalues::Intnat;
 pub type Uint = sys::mlvalues::Uintnat;
 
 /// Wraps `sys::COMPILER` as `std::process::Command`
-pub fn compiler() -> std::process::Command {
+pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }
 
-#[cfg(feature = "link-native")]
+#[cfg(feature = "link")]
 mod tests;
