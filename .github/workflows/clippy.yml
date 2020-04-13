@@ -12,9 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Use OCaml
-        uses: avsm/setup-ocaml@v1.0
-        with:
-          ocaml-version: "4.10.0"
+      uses: avsm/setup-ocaml@v1.0
+      with:
+        ocaml-version: "4.10.0"
 
     - name: Nightly
       run: rustup toolchain install nightly --profile=default
