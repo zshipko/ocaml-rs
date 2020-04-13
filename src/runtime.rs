@@ -13,60 +13,20 @@ pub fn acquire_lock() {
     unsafe { sys::caml_leave_blocking_section() }
 }
 
-/// `Locked` obtains the global lock when created and releases it when dropped
-pub struct Locked<'a>(&'a ());
-
-impl<'a> Default for Locked<'a> {
-    fn default() -> Locked<'a> {
-        Locked::new()
-    }
+/// Execute a function with the OCaml global lock
+pub fn locked<T, F: FnOnce() -> T>(f: F) -> T {
+    acquire_lock();
+    let x = f();
+    release_lock();
+    x
 }
 
-impl<'a> Locked<'a> {
-    /// Acquire the global lock
-    pub fn new() -> Locked<'a> {
-        acquire_lock();
-        Locked(&())
-    }
-
-    /// Release the locked runtime
-    pub fn release(self) {
-        std::mem::drop(self)
-    }
-}
-
-impl<'a> Drop for Locked<'a> {
-    fn drop(&mut self) {
-        release_lock()
-    }
-}
-
-/// `Unlocked` releases the global lock when created and obtains it when dropped
-pub struct Unlocked<'a>(&'a ());
-
-impl<'a> Default for Unlocked<'a> {
-    fn default() -> Unlocked<'a> {
-        Unlocked::new()
-    }
-}
-
-impl<'a> Unlocked<'a> {
-    /// Release the global lock
-    pub fn new() -> Unlocked<'a> {
-        release_lock();
-        Unlocked(&())
-    }
-
-    /// Acquire the unlocked runtime
-    pub fn acquire(self) {
-        std::mem::drop(self)
-    }
-}
-
-impl<'a> Drop for Unlocked<'a> {
-    fn drop(&mut self) {
-        acquire_lock()
-    }
+/// Execute a function without the OCaml global lock
+pub fn unlocked<T, F: FnOnce() -> T>(f: F) -> T {
+    release_lock();
+    let x = f();
+    acquire_lock();
+    x
 }
 
 /// Initialize the OCaml runtime, this will all command-line arguments to be available using
