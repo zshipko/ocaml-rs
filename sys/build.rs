@@ -32,38 +32,30 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     Ok(vec![])
 }
 
-struct Lock;
-
-impl Drop for Lock {
-    fn drop(&mut self) {
-        let path = std::env::temp_dir().join("ocaml-rs.lock");
-        std::fs::remove_file(path).unwrap();
-    }
-}
-
-impl Lock {
-    fn new() -> Lock {
-        let path = std::env::temp_dir().join("ocaml-rs.lock");
-        while path.exists() {
-            std::thread::sleep(std::time::Duration::new(1, 0));
-        }
-        let mut f = std::fs::File::create(path).unwrap();
-        write!(f, "").unwrap();
-        Lock
-    }
-}
-
 #[allow(unused)]
 fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
     write!(f, "")?;
 
-    assert!(std::process::Command::new(&ocamlopt)
-        .args(&["-output-complete-obj", "-o"])
-        .arg(out_dir.join("rt.o"))
-        .arg(out_dir.join("runtime.ml"))
-        .status()?
-        .success());
+    let mut i = 0;
+    loop {
+        if std::process::Command::new(&ocamlopt)
+            .args(&["-output-complete-obj", "-o"])
+            .arg(out_dir.join("rt.o"))
+            .arg(out_dir.join("runtime.ml"))
+            .status()?
+            .success()
+        {
+            break;
+        }
+        i += 1;
+
+        if i >= 10 {
+            panic!("Unable to build runtime");
+        }
+
+        std::thread::sleep(std::time::Duration::new(1, 0));
+    }
 
     let ar = std::env::var("AR").unwrap_or_else(|_| "ar".to_string());
     assert!(std::process::Command::new(&ar)
@@ -143,7 +135,5 @@ fn run() -> std::io::Result<()> {
 }
 
 fn main() {
-    let lock = Lock::new();
     let _ = run();
-    std::mem::drop(lock);
 }
