@@ -16,6 +16,12 @@ pub fn acquire_lock() {
 /// `Locked` obtains the global lock when created and releases it when dropped
 pub struct Locked<'a>(&'a ());
 
+impl<'a> Default for Locked<'a> {
+    fn default() -> Locked<'a> {
+        Locked::new()
+    }
+}
+
 impl<'a> Locked<'a> {
     /// Acquire the global lock
     pub fn new() -> Locked<'a> {
@@ -33,11 +39,17 @@ impl<'a> Drop for Locked<'a> {
 /// `Unlocked` releases the global lock when created and obtains it when dropped
 pub struct Unlocked<'a>(&'a ());
 
+impl<'a> Default for Unlocked<'a> {
+    fn default() -> Unlocked<'a> {
+        Unlocked::new()
+    }
+}
+
 impl<'a> Unlocked<'a> {
     /// Release the global locak
-    pub fn new() -> Locked<'a> {
+    pub fn new() -> Unlocked<'a> {
         release_lock();
-        Locked(&())
+        Unlocked(&())
     }
 }
 
