@@ -22,7 +22,6 @@ jobs:
         uses: avsm/setup-ocaml@v1.0
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
-      - run: opam install dune
       - run: opam exec -- cargo clean
       - name: Build
         run: opam exec -- cargo build --tests --features=link-bytecode

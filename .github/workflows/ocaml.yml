@@ -22,6 +22,7 @@ jobs:
         uses: avsm/setup-ocaml@v1.0
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
-      - run: opam install dune
+      - run: opam install dune ppx_inline_test
       - name: Run OCaml tests
-        run: dune runtest --root=./example
+        run: opam exec -- dune runtest --root=./example
+
