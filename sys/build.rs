@@ -93,8 +93,6 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
 }
 
 fn run() -> std::io::Result<()> {
-    let _lock = Lock::new();
-
     let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
@@ -145,5 +143,7 @@ fn run() -> std::io::Result<()> {
 }
 
 fn main() {
+    let lock = Lock::new();
     let _ = run();
+    std::mem::drop(lock);
 }
