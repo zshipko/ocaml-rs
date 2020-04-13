@@ -24,7 +24,7 @@ pub struct CustomOps {
     pub deserialize:
         ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void) -> Uint>,
     pub compare_ext: ::std::option::Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
-    pub fixed_length: *const sys::custom::custom_fixed_length,
+    pub fixed_length: *const sys::custom_fixed_length,
 }
 
 impl Default for CustomOps {
@@ -47,7 +47,7 @@ pub struct CustomType {
     /// Type name
     pub name: &'static str,
     /// Owned `fixed_length` value
-    pub fixed_length: Option<sys::custom::custom_fixed_length>,
+    pub fixed_length: Option<sys::custom_fixed_length>,
     /// Callbacks
     pub ops: CustomOps,
 }

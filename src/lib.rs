@@ -131,10 +131,10 @@ pub use crate::value::{FromValue, ToValue, Value};
 pub type Float = f64;
 
 /// Integer type that converts to OCaml `int`
-pub type Int = sys::mlvalues::Intnat;
+pub type Int = sys::Intnat;
 
 /// Unsigned integer type that converts to OCaml `int`
-pub type Uint = sys::mlvalues::Uintnat;
+pub type Uint = sys::Uintnat;
 
 /// Wraps `sys::COMPILER` as `std::process::Command`
 pub fn ocamlopt() -> std::process::Command {

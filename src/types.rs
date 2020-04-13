@@ -1,7 +1,6 @@
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
-use crate::sys::{alloc, mlvalues};
-use crate::{CamlError, Error};
+use crate::{sys, CamlError, Error};
 
 use std::marker::PhantomData;
 use std::{mem, slice};
@@ -150,7 +149,7 @@ impl<T: ToValue + FromValue> Array<T> {
     /// Allocate a new Array
     pub fn alloc(n: usize) -> Array<T> {
         let x = crate::frame!((x) {
-            x = unsafe { Value(alloc::caml_alloc(n, 0)) };
+            x = unsafe { Value(sys::caml_alloc(n, 0)) };
             x
         });
         Array(x, PhantomData)
@@ -159,12 +158,12 @@ impl<T: ToValue + FromValue> Array<T> {
     /// Check if Array contains only doubles, if so `get_double` and `set_double` should be used
     /// to access values
     pub fn is_double_array(&self) -> bool {
-        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
+        unsafe { sys::caml_is_double_array((self.0).0) == 1 }
     }
 
     /// Array length
     pub fn len(&self) -> usize {
-        unsafe { mlvalues::caml_array_length((self.0).0) }
+        unsafe { sys::caml_array_length((self.0).0) }
     }
 
     /// Returns true when the array is empty
@@ -243,7 +242,7 @@ impl<T: ToValue + FromValue> List<T> {
     pub fn len(&self) -> usize {
         let mut length = 0;
         let mut tmp = self.0;
-        while tmp.0 != mlvalues::EMPTY_LIST {
+        while tmp.0 != sys::EMPTY_LIST {
             tmp = tmp.field(1);
             length += 1;
         }
@@ -260,7 +259,7 @@ impl<T: ToValue + FromValue> List<T> {
         let tmp = crate::frame!((x, tmp) {
             x = self.0;
             unsafe {
-                tmp = Value(crate::sys::alloc::caml_alloc_small(2, 0));
+                tmp = Value(sys::caml_alloc_small(2, 0));
                 tmp.store_field(0, v.to_value());
                 tmp.store_field(1, x);
                 tmp
@@ -412,7 +411,7 @@ pub mod bigarray {
                         T::kind() | bigarray::Managed::MANAGED as i32,
                         1,
                         data,
-                        n as mlvalues::Intnat,
+                        n as sys::Intnat,
                     ))
                 };
                 x

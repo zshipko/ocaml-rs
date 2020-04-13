@@ -5,12 +5,46 @@ static RUNTIME: std::sync::Once = std::sync::Once::new();
 
 /// Release global lock
 pub fn release_lock() {
-    unsafe { sys::memory::caml_enter_blocking_section() }
+    unsafe { sys::caml_enter_blocking_section() }
 }
 
 /// Obtain global lock
 pub fn acquire_lock() {
-    unsafe { sys::memory::caml_leave_blocking_section() }
+    unsafe { sys::caml_leave_blocking_section() }
+}
+
+/// `Locked` obtains the global lock when created and releases it when dropped
+pub struct Locked<'a>(&'a ());
+
+impl<'a> Locked<'a> {
+    /// Acquire the global lock
+    pub fn new() -> Locked<'a> {
+        acquire_lock();
+        Locked(&())
+    }
+}
+
+impl<'a> Drop for Locked<'a> {
+    fn drop(&mut self) {
+        release_lock()
+    }
+}
+
+/// `Unlocked` releases the global lock when created and obtains it when dropped
+pub struct Unlocked<'a>(&'a ());
+
+impl<'a> Unlocked<'a> {
+    /// Release the global locak
+    pub fn new() -> Locked<'a> {
+        release_lock();
+        Locked(&())
+    }
+}
+
+impl<'a> Drop for Unlocked<'a> {
+    fn drop(&mut self) {
+        acquire_lock()
+    }
 }
 
 /// Initialize the OCaml runtime, this will all command-line arguments to be available using
@@ -31,11 +65,11 @@ pub fn init() {
             .map(|arg| arg.as_ptr() as *const std::os::raw::c_char)
             .collect::<Vec<*const std::os::raw::c_char>>();
         c_args.push(std::ptr::null());
-        unsafe { crate::sys::callback::caml_main(c_args.as_ptr()) }
+        unsafe { crate::sys::caml_main(c_args.as_ptr()) }
     })
 }
 
 /// Shutdown and cleanup OCaml runtime
 pub fn shutdown() {
-    unsafe { crate::sys::callback::caml_shutdown() }
+    unsafe { crate::sys::caml_shutdown() }
 }
