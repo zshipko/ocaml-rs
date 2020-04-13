@@ -80,6 +80,7 @@ pub mod bigarray;
 mod callback;
 mod custom;
 mod fail;
+mod runtime;
 mod state;
 mod tag;
 
@@ -91,5 +92,6 @@ pub use custom::*;
 pub use fail::*;
 pub use memory::*;
 pub use mlvalues::*;
+pub use runtime::*;
 pub use state::*;
 pub use tag::*;
