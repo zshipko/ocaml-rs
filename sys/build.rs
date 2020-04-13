@@ -35,7 +35,15 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
 #[allow(unused)]
 fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
-    std::io::Write::write_all(&mut f, b"").unwrap();
+
+    // Make "runtime.ml" unique
+    let ts = std::time::SystemTime::now();
+    let ts = ts.duration_since(std::time::UNIX_EPOCH).unwrap();
+    std::io::Write::write_all(
+        &mut f,
+        format!("(* generated: {} *)", ts.as_millis()).as_bytes(),
+    )
+    .unwrap();
 
     assert!(std::process::Command::new(&ocamlopt)
         .args(&["-output-complete-obj", "-o"])
