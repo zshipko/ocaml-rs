@@ -45,20 +45,18 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     )
     .unwrap();
 
-    assert!(std::process::Command::new(&ocamlopt)
+    std::process::Command::new(&ocamlopt)
         .args(&["-output-complete-obj", "-o"])
         .arg(out_dir.join("rt.o"))
         .arg(out_dir.join("runtime.ml"))
-        .status()?
-        .success());
+        .status()?;
 
     let ar = std::env::var("AR").unwrap_or_else(|_| "ar".to_string());
-    assert!(std::process::Command::new(&ar)
+    std::process::Command::new(&ar)
         .arg("rcs")
         .arg(out_dir.join("libruntime.a"))
         .arg(out_dir.join("rt.o"))
-        .status()?
-        .success());
+        .status()?;
 
     println!("cargo:rustc-link-search={}", out_dir.display());
     println!("cargo:rustc-link-lib=static=runtime");
