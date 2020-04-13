@@ -1,8 +1,39 @@
 #[allow(unused)]
-fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
-    #[cfg(feature = "link-bytecode")]
-    let ocamlopt = ocamlopt[..ocamlopt.len() - 3].to_string() + "c";
+use std::io::BufRead;
 
+#[cfg(feature = "link-native")]
+const CC_LIB_PREFIX: &str = "NATIVECCLIBS=";
+
+#[cfg(feature = "link-bytecode")]
+const CC_LIB_PREFIX: &str = "BYTECCLIBS=";
+
+#[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
+    let path = format!("{}/Makefile.config", ocaml_path);
+    let f = std::io::BufReader::new(std::fs::File::open(path)?);
+
+    for line in f.lines() {
+        if let Ok(line) = line {
+            if line.starts_with(CC_LIB_PREFIX) {
+                let line: Vec<_> = line.split("=").collect();
+                let line = line[1].split(" ");
+                return Ok(line
+                    .filter_map(|x| {
+                        if x == "" {
+                            None
+                        } else {
+                            Some(x.replace("-l", ""))
+                        }
+                    })
+                    .collect());
+            }
+        }
+    }
+    Ok(vec![])
+}
+
+#[allow(unused)]
+fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
     std::io::Write::write_all(&mut f, b"").unwrap();
 
@@ -31,6 +62,11 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
 
     #[cfg(feature = "link-bytecode")]
     println!("cargo:rustc-link-lib=static=camlrun");
+
+    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+    for lib in cc_libs(ocaml_path)? {
+        println!("cargo:rustc-link-lib={}", lib);
+    }
 
     Ok(())
 }
@@ -80,7 +116,7 @@ fn run() -> std::io::Result<()> {
     }
 
     #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
-    link(out_dir, ocamlopt, ocaml_path)?;
+    link(out_dir, bin_path, ocaml_path)?;
 
     Ok(())
 }
