@@ -1,13 +1,10 @@
 #[allow(unused)]
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 
-#[cfg(feature = "link-native")]
+#[cfg(feature = "link")]
 const CC_LIB_PREFIX: &str = "NATIVECCLIBS=";
 
-#[cfg(feature = "link-bytecode")]
-const CC_LIB_PREFIX: &str = "BYTECCLIBS=";
-
-#[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+#[cfg(feature = "link")]
 fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     let path = format!("{}/Makefile.config", ocaml_path);
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
@@ -35,7 +32,7 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
 #[allow(unused)]
 fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
-    std::io::Write::write_all(&mut f, b"").unwrap();
+    write!(f, "")?;
 
     assert!(std::process::Command::new(&ocamlopt)
         .args(&["-output-complete-obj", "-o"])
@@ -52,21 +49,17 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
         .status()?
         .success());
 
+    #[cfg(feature = "link")]
+    for lib in cc_libs(ocaml_path)? {
+        println!("cargo:rustc-link-lib={}", lib);
+    }
+
     println!("cargo:rustc-link-search={}", out_dir.display());
     println!("cargo:rustc-link-lib=static=runtime");
 
     println!("cargo:rustc-link-search={}", ocaml_path);
 
-    #[cfg(feature = "link-native")]
     println!("cargo:rustc-link-lib=static=asmrun");
-
-    #[cfg(feature = "link-bytecode")]
-    println!("cargo:rustc-link-lib=static=camlrun");
-
-    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
-    for lib in cc_libs(ocaml_path)? {
-        println!("cargo:rustc-link-lib={}", lib);
-    }
 
     Ok(())
 }
@@ -87,10 +80,6 @@ fn run() -> std::io::Result<()> {
 
     let ocaml_path = std::str::from_utf8(&ocaml_path.stdout).unwrap().trim();
 
-    // Write OCaml compiler path to file
-    #[cfg(feature = "link-bytecode")]
-    let bin_path = format!("{}/../../bin/ocamlc", ocaml_path);
-    #[cfg(not(feature = "link-bytecode"))]
     let bin_path = format!("{}/../../bin/ocamlopt", ocaml_path);
 
     let mut f = std::fs::File::create(out_dir.join("ocaml_compiler")).unwrap();
@@ -115,7 +104,7 @@ fn run() -> std::io::Result<()> {
         println!("cargo:rustc-cfg=caml_state");
     }
 
-    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+    #[cfg(feature = "link")]
     link(out_dir, bin_path, ocaml_path)?;
 
     Ok(())
