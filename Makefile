@@ -1,10 +1,11 @@
 test:
-	@cargo test
-	@cd example && dune clean && dune runtest
+	@cargo test --features=link
+	@dune clean --root=./example
+	@dune runtest --root=./example
 
 utop:
-	@cargo test
-	@cd example && dune clean && dune utop
+	@dune clean --root=./example
+	@dune utop --root=./example
 
 clean:
 	cargo clean

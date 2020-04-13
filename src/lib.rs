@@ -135,3 +135,12 @@ pub type Int = sys::mlvalues::Intnat;
 
 /// Unsigned integer type that converts to OCaml `int`
 pub type Uint = sys::mlvalues::Uintnat;
+
+/// Wraps `sys::COMPILER` as `std::process::Command`
+pub fn compiler() -> std::process::Command {
+    std::process::Command::new(sys::COMPILER)
+}
+
+#[cfg(test)]
+#[cfg(feature = "link-native")]
+mod tests;

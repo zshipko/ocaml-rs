@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 
+[features]
+link = []
+

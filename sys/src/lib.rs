@@ -68,7 +68,9 @@ macro_rules! caml_body {
     }
 }
 
-pub const VERSION: &str = stringify!(include!(concat!(env!("OUT_DIR"), "version")));
+pub const VERSION: &str = stringify!(include!(concat!(env!("OUT_DIR"), "ocaml_version")));
+pub const PATH: &str = stringify!(include!(concat!(env!("OUT_DIR"), "ocaml_path")));
+pub const COMPILER: &str = stringify!(include!(concat!(env!("OUT_DIR"), "ocaml_compiler")));
 
 pub mod mlvalues;
 #[macro_use]
