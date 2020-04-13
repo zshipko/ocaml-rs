@@ -142,5 +142,5 @@ pub fn compiler() -> std::process::Command {
 }
 
 #[cfg(test)]
-#[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+#[cfg(feature = "link-native")]
 mod tests;

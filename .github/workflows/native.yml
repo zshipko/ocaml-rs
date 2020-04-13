@@ -23,6 +23,6 @@ jobs:
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
       - name: Build
-        run: cargo build --tests --features=link-native
+        run: cargo build --tests --features=link
       - name: Run Rust tests
-        run: cargo test --features=link-native
+        run: cargo test --features=link
