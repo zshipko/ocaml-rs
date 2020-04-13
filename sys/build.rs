@@ -1,5 +1,5 @@
 #[allow(unused)]
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 
 #[cfg(feature = "link-native")]
 const CC_LIB_PREFIX: &str = "NATIVECCLIBS=";
@@ -32,31 +32,51 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     Ok(vec![])
 }
 
+struct Lock;
+
+impl Drop for Lock {
+    fn drop(&mut self) {
+        let path = std::env::temp_dir().join("ocaml-rs.lock");
+        std::fs::remove_file(path).unwrap();
+    }
+}
+
+impl Lock {
+    fn new() -> Lock {
+        let path = std::env::temp_dir().join("ocaml-rs.lock");
+        while path.exists() {
+            std::thread::sleep(std::time::Duration::new(1, 0));
+        }
+        let mut f = std::fs::File::create(path).unwrap();
+        write!(f, "").unwrap();
+        Lock
+    }
+}
+
 #[allow(unused)]
 fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
+    write!(f, "")?;
 
-    // Make "runtime.ml" unique
-    let ts = std::time::SystemTime::now();
-    let ts = ts.duration_since(std::time::UNIX_EPOCH).unwrap();
-    std::io::Write::write_all(
-        &mut f,
-        format!("let generated_at = {}L", ts.as_millis()).as_bytes(),
-    )
-    .unwrap();
-
-    std::process::Command::new(&ocamlopt)
+    assert!(std::process::Command::new(&ocamlopt)
         .args(&["-output-complete-obj", "-o"])
         .arg(out_dir.join("rt.o"))
         .arg(out_dir.join("runtime.ml"))
-        .status()?;
+        .status()?
+        .success());
 
     let ar = std::env::var("AR").unwrap_or_else(|_| "ar".to_string());
-    std::process::Command::new(&ar)
+    assert!(std::process::Command::new(&ar)
         .arg("rcs")
         .arg(out_dir.join("libruntime.a"))
         .arg(out_dir.join("rt.o"))
-        .status()?;
+        .status()?
+        .success());
+
+    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
+    for lib in cc_libs(ocaml_path)? {
+        println!("cargo:rustc-link-lib={}", lib);
+    }
 
     println!("cargo:rustc-link-search={}", out_dir.display());
     println!("cargo:rustc-link-lib=static=runtime");
@@ -69,15 +89,12 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     #[cfg(feature = "link-bytecode")]
     println!("cargo:rustc-link-lib=static=camlrun");
 
-    #[cfg(any(feature = "link-native", feature = "link-bytecode"))]
-    for lib in cc_libs(ocaml_path)? {
-        println!("cargo:rustc-link-lib={}", lib);
-    }
-
     Ok(())
 }
 
 fn run() -> std::io::Result<()> {
+    let _lock = Lock::new();
+
     let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
