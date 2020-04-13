@@ -22,8 +22,7 @@ jobs:
         uses: avsm/setup-ocaml@v1.0
         with:
           ocaml-version: ${{ matrix.ocaml-version }}
-      - run: opam exec -- cargo clean
       - name: Build
-        run: opam exec -- cargo build --tests --features=link-native
+        run: cargo build --tests --features=link-native
       - name: Run Rust tests
-        run: opam exec -- cargo test --features=link-native
+        run: cargo test --features=link-native
