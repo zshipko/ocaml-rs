@@ -28,6 +28,11 @@ impl<'a> Locked<'a> {
         acquire_lock();
         Locked(&())
     }
+
+    /// Release the locked runtime
+    pub fn release(self) {
+        std::mem::drop(self)
+    }
 }
 
 impl<'a> Drop for Locked<'a> {
@@ -46,10 +51,15 @@ impl<'a> Default for Unlocked<'a> {
 }
 
 impl<'a> Unlocked<'a> {
-    /// Release the global locak
+    /// Release the global lock
     pub fn new() -> Unlocked<'a> {
         release_lock();
         Unlocked(&())
+    }
+
+    /// Acquire the unlocked runtime
+    pub fn acquire(self) {
+        std::mem::drop(self)
     }
 }
 
