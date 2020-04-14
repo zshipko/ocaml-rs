@@ -13,7 +13,7 @@ let%test "more than 5 params" = more_than_five_params 1.0 1.0 1.0 1.0 1.0 1.0 1.
 
 exception Exc of float
 
-let () = Stdlib.Callback.register_exception "Exc" (Exc 0.0)
+let () = Callback.register_exception "Exc" (Exc 0.0)
 
 external raise_exc: float -> bool = "raise_exc"
 

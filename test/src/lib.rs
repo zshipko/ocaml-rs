@@ -1,4 +1,4 @@
-pub mod callback;
+pub mod callbacks;
 pub mod conv;
 pub mod custom;
 pub mod runtime;
