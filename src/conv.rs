@@ -264,6 +264,44 @@ unsafe impl ToValue for &mut str {
     }
 }
 
+unsafe impl FromValue for &[u8] {
+    fn from_value(value: Value) -> Self {
+        let len = unsafe { crate::sys::caml_string_length(value.0) };
+        let ptr = unsafe { crate::sys::string_val(value.0) };
+        unsafe { ::std::slice::from_raw_parts(ptr, len) }
+    }
+}
+
+unsafe impl ToValue for &[u8] {
+    fn to_value(self) -> Value {
+        unsafe {
+            let value = crate::sys::caml_alloc_string(self.len());
+            let ptr = crate::sys::string_val(value);
+            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+            Value(value)
+        }
+    }
+}
+
+unsafe impl FromValue for &mut [u8] {
+    fn from_value(value: Value) -> Self {
+        let len = unsafe { crate::sys::caml_string_length(value.0) };
+        let ptr = unsafe { crate::sys::string_val(value.0) };
+        unsafe { ::std::slice::from_raw_parts_mut(ptr, len) }
+    }
+}
+
+unsafe impl ToValue for &mut [u8] {
+    fn to_value(self) -> Value {
+        unsafe {
+            let value = crate::sys::caml_alloc_string(self.len());
+            let ptr = crate::sys::string_val(value);
+            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+            Value(value)
+        }
+    }
+}
+
 unsafe impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(self) -> Value {
         let len = self.len();

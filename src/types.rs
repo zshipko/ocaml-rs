@@ -117,11 +117,20 @@ impl<'a> Array<f64> {
         }
 
         unsafe {
-            let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
-            *ptr = f;
+            self.set_double_unchecked(i, f);
         };
 
         Ok(())
+    }
+
+    /// Set value to double array without bounds checking
+    ///
+    /// # Safety
+    /// This function performs no bounds checking
+    #[inline]
+    pub unsafe fn set_double_unchecked(&mut self, i: usize, f: f64) {
+        let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
+        *ptr = f;
     }
 
     /// Get a value from a double array
@@ -139,7 +148,9 @@ impl<'a> Array<f64> {
     /// Get a value from a double array without checking if the array is actually a double array
     ///
     /// # Safety
+    ///
     /// This function does not perform bounds checking
+    #[inline]
     pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
         *self.0.ptr_val::<f64>().add(i)
     }
@@ -176,8 +187,18 @@ impl<T: ToValue + FromValue> Array<T> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
-        self.0.store_field(i, v);
+        unsafe { self.set_unchecked(i, v) }
         Ok(())
+    }
+
+    /// Set array index without bounds checking
+    ///
+    /// # Safety
+    ///
+    /// This function does not perform bounds checking
+    #[inline]
+    pub unsafe fn set_unchecked(&mut self, i: usize, v: T) {
+        self.0.store_field(i, v);
     }
 
     /// Get array index
@@ -188,11 +209,12 @@ impl<T: ToValue + FromValue> Array<T> {
         Ok(unsafe { self.get_unchecked(i) })
     }
 
-    /// Get array index (without bounds checking)
+    /// Get array index without bounds checking
     ///
     /// # Safety
     ///
     /// This function does not perform bounds checking
+    #[inline]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
         T::from_value(self.0.field(i))
     }
@@ -256,6 +278,7 @@ impl<T: ToValue + FromValue> List<T> {
 
     /// Add an element to the front of the list returning the new list
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn add(self, v: T) -> List<T> {
         local!(x, tmp);
         x = v.to_value();

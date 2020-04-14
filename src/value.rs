@@ -192,8 +192,13 @@ impl Value {
     }
 
     /// Create an OCaml `int`
-    pub const fn int(i: isize) -> Value {
+    pub const fn int(i: crate::Int) -> Value {
         Value(sys::val_int(i))
+    }
+
+    /// Create an OCaml `int`
+    pub const fn uint(i: crate::Uint) -> Value {
+        Value(sys::val_int(i as crate::Int))
     }
 
     /// Create an OCaml `Int64` from `i64`
