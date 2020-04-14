@@ -39,3 +39,31 @@ pub fn enum1_is_empty(e: Enum1) -> bool {
         _ => false,
     }
 }
+
+#[derive(ToValue, FromValue, Default)]
+struct Struct1 {
+    a: ocaml::Int,
+    b: ocaml::Float,
+    c: Option<String>,
+    d: Option<ocaml::Array<&'static str>>,
+}
+
+#[ocaml::func]
+pub fn struct1_empty() -> Struct1 {
+    Struct1::default()
+}
+
+#[ocaml::func]
+pub fn struct1_get_c(s: Struct1) -> Option<String> {
+    s.c
+}
+
+#[ocaml::func]
+pub fn struct1_get_d(s: Struct1) -> Option<ocaml::Array<&'static str>> {
+    s.d
+}
+
+#[ocaml::func]
+pub fn struct1_set_c(mut s: Struct1, v: String) {
+    s.c = Some(v);
+}
