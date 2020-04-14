@@ -14,7 +14,7 @@ Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 **OCaml**:
 
-Take a look at [example/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/example/src/dune) for an example `dune` file to get you started.
+Take a look at [test/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/test/src/dune) for an example `dune` file to get you started.
 
 **Rust**
 
@@ -140,7 +140,7 @@ external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
-For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
+For more examples see [./test](https://github.com/zshipko/ocaml-rs/blob/master/test) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
 
 ### Type conversion
 

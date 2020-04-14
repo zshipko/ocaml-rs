@@ -13,7 +13,8 @@ build: [
 
 depends: [
   "ocaml"   {>= "4.03.0"}
-  "dune"
+  "dune" {>= "2.0.0"}
+  "ppx_inline_test" {with-test}
   "conf-rust-2018"
 ]
 synopsis: """
