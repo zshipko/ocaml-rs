@@ -47,13 +47,13 @@ fn test_tuple_of_tuples() {
 fn test_basic_list() {
     ocaml::runtime::init();
     ocaml::body!(() {
-        let mut list = ocaml::List::nil();
+        let mut list = ocaml::List::empty();
         let a = 3i64.to_value();
         let b = 2i64.to_value();
         let c = 1i64.to_value();
-        list = list.cons(a);
-        list = list.cons(b);
-        list = list.cons(c);
+        list = list.add(a);
+        list = list.add(b);
+        list = list.add(c);
 
         assert!(list.len() == 3);
 

@@ -12,9 +12,9 @@ pub fn apply3(f: Value, x: Value) -> Result<Value, Error> {
 
 #[ocaml::func]
 pub fn apply_range(f: Value, start: ocaml::Int, stop: ocaml::Int) -> Result<Value, Error> {
-    let mut l = ocaml::List::nil();
+    let mut l = ocaml::List::empty();
     for i in start..stop {
-        l = l.cons(stop - 1 - i)
+        l = l.add(stop - 1 - i)
     }
 
     f.call(l)

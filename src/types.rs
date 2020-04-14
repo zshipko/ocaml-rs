@@ -234,7 +234,7 @@ unsafe impl<T: ToValue + FromValue> FromValue for List<T> {
 impl<T: ToValue + FromValue> List<T> {
     /// An empty list
     #[inline(always)]
-    pub fn nil() -> List<T> {
+    pub fn empty() -> List<T> {
         List(Value::unit(), PhantomData)
     }
 
@@ -251,12 +251,12 @@ impl<T: ToValue + FromValue> List<T> {
 
     /// Returns true when the list is empty
     pub fn is_empty(&self) -> bool {
-        self.0 == Self::nil().0
+        self.0 == Self::empty().0
     }
 
     /// Add an element to the front of the list returning the new list
     #[must_use]
-    pub fn cons(self, v: T) -> List<T> {
+    pub fn add(self, v: T) -> List<T> {
         local!(x, tmp);
         x = v.to_value();
         unsafe {
@@ -279,7 +279,7 @@ impl<T: ToValue + FromValue> List<T> {
     /// List tail
     pub fn tl(&self) -> List<T> {
         if self.is_empty() {
-            return Self::nil();
+            return Self::empty();
         }
 
         self.0.field(1)
@@ -289,7 +289,7 @@ impl<T: ToValue + FromValue> List<T> {
     pub fn to_vec(&self) -> Vec<T> {
         let mut vec: Vec<T> = Vec::new();
         let mut value = self.0;
-        let empty = Self::nil().0;
+        let empty = Self::empty().0;
         while value != empty {
             let val = value.field(0);
             vec.push(T::from_value(val));
