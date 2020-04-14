@@ -127,10 +127,9 @@ macro_rules! tuple_impl {
                     }
                 )*
 
-                crate::local!(v);
+                crate::local!(v, x);
                 v = $crate::Value::alloc(len, Tag(0));
                 $(
-                    crate::local!(x);
                     x = $t::to_value(self.$n);
                     v.store_field($n, x);
                 )*
@@ -332,12 +331,12 @@ unsafe impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BT
 
 unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V> {
     fn to_value(self) -> Value {
-        let mut list = crate::List::empty();
+        let mut list = crate::List::nil();
 
         self.into_iter().rev().for_each(|(k, v)| {
             let k = k.to_value();
             let v = v.to_value();
-            list.push_hd((k, v));
+            list = list.cons((k, v));
         });
 
         list.to_value()
@@ -361,11 +360,11 @@ unsafe impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
 
 unsafe impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
     fn to_value(self) -> Value {
-        let mut list = crate::List::empty();
+        let mut list = crate::List::nil();
 
         self.into_iter().rev().for_each(|t| {
             let t = t.to_value();
-            list.push_hd(t);
+            list = list.cons(t);
         });
         list.to_value()
     }

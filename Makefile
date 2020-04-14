@@ -1,5 +1,5 @@
 test:
-	@cargo test --features=link
+	@cargo test --features=link -- --test-threads=1
 	@dune clean --root=./example
 	@dune runtest --root=./example
 

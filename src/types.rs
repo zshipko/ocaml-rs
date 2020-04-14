@@ -234,7 +234,7 @@ unsafe impl<T: ToValue + FromValue> FromValue for List<T> {
 impl<T: ToValue + FromValue> List<T> {
     /// An empty list
     #[inline(always)]
-    pub fn empty() -> List<T> {
+    pub fn nil() -> List<T> {
         List(Value::unit(), PhantomData)
     }
 
@@ -251,22 +251,20 @@ impl<T: ToValue + FromValue> List<T> {
 
     /// Returns true when the list is empty
     pub fn is_empty(&self) -> bool {
-        self.0 == Self::empty().0
+        self.0 == Self::nil().0
     }
 
-    /// Add an element to the front of the list
-    pub fn push_hd(&mut self, v: T) {
-        let tmp = crate::frame!((x, tmp) {
-            x = self.0;
-            unsafe {
-                tmp = Value(sys::caml_alloc_small(2, 0));
-                tmp.store_field(0, v.to_value());
-                tmp.store_field(1, x);
-                tmp
-            }
-        });
-
-        self.0 = tmp;
+    /// Add an element to the front of the list returning the new list
+    #[must_use]
+    pub fn cons(self, v: T) -> List<T> {
+        local!(x, tmp);
+        x = v.to_value();
+        unsafe {
+            tmp = Value(sys::caml_alloc(2, 0));
+            tmp.store_field(0, x);
+            tmp.store_field(1, self.0);
+        }
+        List(tmp, PhantomData)
     }
 
     /// List head
@@ -281,7 +279,7 @@ impl<T: ToValue + FromValue> List<T> {
     /// List tail
     pub fn tl(&self) -> List<T> {
         if self.is_empty() {
-            return Self::empty();
+            return Self::nil();
         }
 
         self.0.field(1)
@@ -291,7 +289,7 @@ impl<T: ToValue + FromValue> List<T> {
     pub fn to_vec(&self) -> Vec<T> {
         let mut vec: Vec<T> = Vec::new();
         let mut value = self.0;
-        let empty = Self::empty().0;
+        let empty = Self::nil().0;
         while value != empty {
             let val = value.field(0);
             vec.push(T::from_value(val));
