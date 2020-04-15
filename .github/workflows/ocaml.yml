@@ -1,4 +1,4 @@
-name: Build
+name: OCaml tests
 
 on:
   push:
@@ -24,5 +24,5 @@ jobs:
           ocaml-version: ${{ matrix.ocaml-version }}
       - run: opam install dune ppx_inline_test
       - name: Run OCaml tests
-        run: opam exec -- dune runtest --root=./example
+        run: opam exec -- dune runtest --root=./test
 

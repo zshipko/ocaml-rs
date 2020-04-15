@@ -3,7 +3,7 @@
 macro_rules! local {
     ($($local:ident),*) => {
         #[allow(unused_mut)]
-        $(let mut $local = $crate::Value($crate::sys::mlvalues::UNIT);)*
+        $(let mut $local = $crate::Value($crate::sys::UNIT);)*
         #[allow(unused_unsafe)]
         $crate::sys::caml_param!($($local.0),*);
     }
@@ -15,13 +15,13 @@ macro_rules! frame {
     (($($param:ident),*) $code:block) => {
        {
             #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::sys::state::local_roots() };
+            let caml_frame = unsafe { $crate::sys::local_roots() };
             $crate::local!($($param),*);
             #[allow(unused_mut)]
             let mut res = || $code;
             let res = res();
             #[allow(unused_unsafe)]
-            unsafe { $crate::sys::state::set_local_roots(caml_frame) };
+            unsafe { $crate::sys::set_local_roots(caml_frame) };
             res
         }
     }

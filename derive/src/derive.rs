@@ -53,12 +53,15 @@ fn variant_attrs(attrs: &[syn::Attribute]) -> Attrs {
         })
 }
 
-pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
+pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream {
     let mut unit_tag = 0u8;
     let mut non_unit_tag = 0u8;
     let is_record_like = s.variants().len() == 1;
-    let body = s.variants().iter().map(|variant| {
+    let body = s.variants_mut().to_vec().into_iter().map(|mut variant| {
         let arity = variant.bindings().len();
+        for b in variant.bindings_mut() {
+            b.style = synstructure::BindStyle::Move;
+        }
         let tag_ref = if arity > 0 {
             &mut non_unit_tag
         } else {
@@ -102,6 +105,7 @@ pub fn tovalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             })
         }
     });
+
     s.gen_impl(quote! {
         gen unsafe impl ocaml::ToValue for @Self {
             fn to_value(self) -> ocaml::Value {

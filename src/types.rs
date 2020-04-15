@@ -1,7 +1,6 @@
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
-use crate::sys::{alloc, mlvalues};
-use crate::{CamlError, Error};
+use crate::{sys, CamlError, Error};
 
 use std::marker::PhantomData;
 use std::{mem, slice};
@@ -33,21 +32,26 @@ impl<T> Pointer<T> {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final(
+        x: T,
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<T> {
-        Pointer::from_value(match finalizer {
+        let mut ptr = Pointer::from_value(match finalizer {
             Some(f) => Value::alloc_final::<T>(f, used_max),
             None => Value::alloc_final::<T>(ignore, used_max),
-        })
+        });
+        ptr.set(x);
+        ptr
     }
 
     /// Allocate a `Custom` value
-    pub fn alloc_custom() -> Pointer<T>
+    pub fn alloc_custom(x: T) -> Pointer<T>
     where
         T: crate::Custom,
     {
-        Pointer::from_value(Value::alloc_custom::<T>())
+        let mut ptr = Pointer::from_value(Value::alloc_custom::<T>());
+        ptr.set(x);
+        ptr
     }
 
     /// Drop pointer in place
@@ -118,11 +122,20 @@ impl<'a> Array<f64> {
         }
 
         unsafe {
-            let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
-            *ptr = f;
+            self.set_double_unchecked(i, f);
         };
 
         Ok(())
+    }
+
+    /// Set value to double array without bounds checking
+    ///
+    /// # Safety
+    /// This function performs no bounds checking
+    #[inline]
+    pub unsafe fn set_double_unchecked(&mut self, i: usize, f: f64) {
+        let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
+        *ptr = f;
     }
 
     /// Get a value from a double array
@@ -140,7 +153,9 @@ impl<'a> Array<f64> {
     /// Get a value from a double array without checking if the array is actually a double array
     ///
     /// # Safety
+    ///
     /// This function does not perform bounds checking
+    #[inline]
     pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
         *self.0.ptr_val::<f64>().add(i)
     }
@@ -150,7 +165,7 @@ impl<T: ToValue + FromValue> Array<T> {
     /// Allocate a new Array
     pub fn alloc(n: usize) -> Array<T> {
         let x = crate::frame!((x) {
-            x = unsafe { Value(alloc::caml_alloc(n, 0)) };
+            x = unsafe { Value(sys::caml_alloc(n, 0)) };
             x
         });
         Array(x, PhantomData)
@@ -159,12 +174,12 @@ impl<T: ToValue + FromValue> Array<T> {
     /// Check if Array contains only doubles, if so `get_double` and `set_double` should be used
     /// to access values
     pub fn is_double_array(&self) -> bool {
-        unsafe { alloc::caml_is_double_array((self.0).0) == 1 }
+        unsafe { sys::caml_is_double_array((self.0).0) == 1 }
     }
 
     /// Array length
     pub fn len(&self) -> usize {
-        unsafe { mlvalues::caml_array_length((self.0).0) }
+        unsafe { sys::caml_array_length((self.0).0) }
     }
 
     /// Returns true when the array is empty
@@ -177,8 +192,18 @@ impl<T: ToValue + FromValue> Array<T> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
-        self.0.store_field(i, v);
+        unsafe { self.set_unchecked(i, v) }
         Ok(())
+    }
+
+    /// Set array index without bounds checking
+    ///
+    /// # Safety
+    ///
+    /// This function does not perform bounds checking
+    #[inline]
+    pub unsafe fn set_unchecked(&mut self, i: usize, v: T) {
+        self.0.store_field(i, v);
     }
 
     /// Get array index
@@ -189,11 +214,12 @@ impl<T: ToValue + FromValue> Array<T> {
         Ok(unsafe { self.get_unchecked(i) })
     }
 
-    /// Get array index (without bounds checking)
+    /// Get array index without bounds checking
     ///
     /// # Safety
     ///
     /// This function does not perform bounds checking
+    #[inline]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
         T::from_value(self.0.field(i))
     }
@@ -243,7 +269,7 @@ impl<T: ToValue + FromValue> List<T> {
     pub fn len(&self) -> usize {
         let mut length = 0;
         let mut tmp = self.0;
-        while tmp.0 != mlvalues::EMPTY_LIST {
+        while tmp.0 != sys::EMPTY_LIST {
             tmp = tmp.field(1);
             length += 1;
         }
@@ -255,19 +281,18 @@ impl<T: ToValue + FromValue> List<T> {
         self.0 == Self::empty().0
     }
 
-    /// Add an element to the front of the list
-    pub fn push_hd(&mut self, v: T) {
-        let tmp = crate::frame!((x, tmp) {
-            x = self.0;
-            unsafe {
-                tmp = Value(crate::sys::alloc::caml_alloc_small(2, 0));
-                tmp.store_field(0, v.to_value());
-                tmp.store_field(1, x);
-                tmp
-            }
-        });
-
-        self.0 = tmp;
+    /// Add an element to the front of the list returning the new list
+    #[must_use]
+    #[allow(clippy::should_implement_trait)]
+    pub fn add(self, v: T) -> List<T> {
+        local!(x, tmp);
+        x = v.to_value();
+        unsafe {
+            tmp = Value(sys::caml_alloc(2, 0));
+            tmp.store_field(0, x);
+            tmp.store_field(1, self.0);
+        }
+        List(tmp, PhantomData)
     }
 
     /// List head
@@ -382,7 +407,7 @@ pub mod bigarray {
         /// the `data` parameter must outlive the resulting bigarray or there is
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
-        pub fn of_slice<'a>(data: &'a mut [T]) -> Array1<T> {
+        pub fn of_slice(data: &mut [T]) -> Array1<T> {
             let x = crate::frame!((x) {
                 x = unsafe {
                     Value(bigarray::caml_ba_alloc_dims(
@@ -399,7 +424,7 @@ pub mod bigarray {
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
-        pub fn from_slice<'a>(data: &'a [T]) -> Array1<T> {
+        pub fn from_slice(data: &[T]) -> Array1<T> {
             Array1::from(data.to_vec())
         }
 
@@ -412,7 +437,7 @@ pub mod bigarray {
                         T::kind() | bigarray::Managed::MANAGED as i32,
                         1,
                         data,
-                        n as mlvalues::Intnat,
+                        n as sys::Intnat,
                     ))
                 };
                 x

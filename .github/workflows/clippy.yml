@@ -11,9 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Use OCaml
+      uses: avsm/setup-ocaml@v1.0
+      with:
+        ocaml-version: "4.10.0"
 
     - name: Nightly
       run: rustup toolchain install nightly --profile=default
 
-    - name: Run tests
-      run: cargo +nightly clippy --all
+    - name: Run clippy
+      run: cargo +nightly clippy --all -- -D warnings

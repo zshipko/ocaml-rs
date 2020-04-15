@@ -144,69 +144,61 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
         match self {
             Ok(x) => return x.to_value(),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
-                crate::sys::fail::caml_raise(e.0);
+                crate::sys::caml_raise(e.0);
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
-                crate::sys::fail::caml_raise_not_found();
+                crate::sys::caml_raise_not_found();
             },
             Err(Error::Caml(CamlError::ArrayBoundError)) => unsafe {
-                crate::sys::fail::caml_array_bound_error();
+                crate::sys::caml_array_bound_error();
             },
             Err(Error::Caml(CamlError::OutOfMemory)) => unsafe {
-                crate::sys::fail::caml_array_bound_error();
+                crate::sys::caml_array_bound_error();
             },
             Err(Error::Caml(CamlError::EndOfFile)) => unsafe {
-                crate::sys::fail::caml_raise_end_of_file()
+                crate::sys::caml_raise_end_of_file()
             },
             Err(Error::Caml(CamlError::StackOverflow)) => unsafe {
-                crate::sys::fail::caml_raise_stack_overflow()
+                crate::sys::caml_raise_stack_overflow()
             },
             Err(Error::Caml(CamlError::ZeroDivide)) => unsafe {
-                crate::sys::fail::caml_raise_zero_divide()
+                crate::sys::caml_raise_zero_divide()
             },
             Err(Error::Caml(CamlError::SysBlockedIo)) => unsafe {
-                crate::sys::fail::caml_raise_sys_blocked_io()
+                crate::sys::caml_raise_sys_blocked_io()
             },
             Err(Error::Caml(CamlError::InvalidArgument(s))) => {
                 unsafe {
                     let s = std::ffi::CString::new(s.as_bytes()).expect("Invalid C string");
-                    crate::sys::fail::caml_invalid_argument(
-                        s.as_ptr() as *const std::os::raw::c_char
-                    )
+                    crate::sys::caml_invalid_argument(s.as_ptr() as *const std::os::raw::c_char)
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
-                crate::sys::fail::caml_raise_with_arg(a.0, b.0)
+                crate::sys::caml_raise_with_arg(a.0, b.0)
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
                 unsafe {
                     let s = s.to_value();
-                    crate::sys::fail::caml_raise_sys_error(s.0)
+                    crate::sys::caml_raise_sys_error(s.0)
                 };
             }
             Err(Error::Message(s)) | Err(Error::Caml(CamlError::Failure(s))) => {
                 unsafe {
                     let s = std::ffi::CString::new(s.as_bytes()).expect("Invalid C string");
-                    crate::sys::fail::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
+                    crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
                 };
             }
             Err(Error::Error(e)) => {
                 let s = format!("{:?}\0", e);
-                unsafe {
-                    crate::sys::fail::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
-                };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
             }
             Err(Error::NotDoubleArray) => {
                 let s = "invalid double array\0";
-                unsafe {
-                    crate::sys::fail::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
-                };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
             }
             Err(Error::NotCallable) => {
                 let s = "value is not callable\0";
-                unsafe {
-                    crate::sys::fail::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
-                };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
             }
         };
 

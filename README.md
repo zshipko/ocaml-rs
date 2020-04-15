@@ -14,7 +14,7 @@ Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 **OCaml**:
 
-Take a look at [example/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/example/src/dune) for an example `dune` file to get you started.
+Take a look at [test/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/test/src/dune) for an example `dune` file to get you started.
 
 **Rust**
 
@@ -41,6 +41,8 @@ rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 ```
 
 This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
+
+Additionally, if you plan on releasing to OPAM, you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the OPAM sandbox.
 
 ### Features
 
@@ -140,7 +142,7 @@ external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
-For more examples see [./example](https://github.com/zshipko/ocaml-rs/blob/master/example) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
+For more examples see [./test](https://github.com/zshipko/ocaml-rs/blob/master/test) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
 
 ### Type conversion
 
@@ -192,5 +194,5 @@ Since 0.10 and later have a much different API compared to earlier version, here
 - `Array` and `List` now take generic types
 - Strings are converted to `str` or `String`, rather than using the `Str` type
 - Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
-- The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate
+- The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate and all sub-module have been removed
 

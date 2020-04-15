@@ -5,12 +5,28 @@ static RUNTIME: std::sync::Once = std::sync::Once::new();
 
 /// Release global lock
 pub fn release_lock() {
-    unsafe { sys::memory::caml_enter_blocking_section() }
+    unsafe { sys::caml_enter_blocking_section() }
 }
 
 /// Obtain global lock
 pub fn acquire_lock() {
-    unsafe { sys::memory::caml_leave_blocking_section() }
+    unsafe { sys::caml_leave_blocking_section() }
+}
+
+/// Execute a function with the OCaml global lock
+pub fn locked<T, F: FnOnce() -> T>(f: F) -> T {
+    acquire_lock();
+    let x = f();
+    release_lock();
+    x
+}
+
+/// Execute a function without the OCaml global lock
+pub fn unlocked<T, F: FnOnce() -> T>(f: F) -> T {
+    release_lock();
+    let x = f();
+    acquire_lock();
+    x
 }
 
 /// Initialize the OCaml runtime, this will all command-line arguments to be available using
@@ -27,13 +43,14 @@ pub fn init() {
         // convert the strings to raw pointers
         let mut c_args = args
             .iter()
-            .map(|arg| arg.as_ptr() as *mut std::os::raw::c_char)
-            .collect::<Vec<*mut std::os::raw::c_char>>();
-        unsafe { crate::sys::callback::caml_main(c_args.as_mut_ptr()) }
+            .map(|arg| arg.as_ptr() as *const std::os::raw::c_char)
+            .collect::<Vec<*const std::os::raw::c_char>>();
+        c_args.push(std::ptr::null());
+        unsafe { crate::sys::caml_main(c_args.as_ptr()) }
     })
 }
 
 /// Shutdown and cleanup OCaml runtime
 pub fn shutdown() {
-    unsafe { crate::sys::callback::caml_shutdown() }
+    unsafe { crate::sys::caml_shutdown() }
 }

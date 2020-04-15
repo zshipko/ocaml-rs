@@ -1,4 +1,4 @@
-name: Build
+name: Rust tests
 
 on:
   push:
@@ -25,4 +25,4 @@ jobs:
       - name: Build
         run: cargo build --tests --features=link
       - name: Run Rust tests
-        run: cargo test --features=link
+        run: cargo test --features=link -- --test-threads=1
