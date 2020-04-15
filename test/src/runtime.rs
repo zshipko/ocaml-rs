@@ -29,6 +29,11 @@ pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
 }
 
 #[ocaml::func]
+pub fn raise_failure() -> Result<(), ocaml::Error> {
+    ocaml::Error::failwith("An error")
+}
+
+#[ocaml::func]
 pub fn hash_variant_abc(i: ocaml::Int) -> Value {
     Value::hash_variant("Abc", Some(Value::int(i)))
 }

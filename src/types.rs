@@ -32,21 +32,26 @@ impl<T> Pointer<T> {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final(
+        x: T,
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<T> {
-        Pointer::from_value(match finalizer {
+        let mut ptr = Pointer::from_value(match finalizer {
             Some(f) => Value::alloc_final::<T>(f, used_max),
             None => Value::alloc_final::<T>(ignore, used_max),
-        })
+        });
+        ptr.set(x);
+        ptr
     }
 
     /// Allocate a `Custom` value
-    pub fn alloc_custom() -> Pointer<T>
+    pub fn alloc_custom(x: T) -> Pointer<T>
     where
         T: crate::Custom,
     {
-        Pointer::from_value(Value::alloc_custom::<T>())
+        let mut ptr = Pointer::from_value(Value::alloc_custom::<T>());
+        ptr.set(x);
+        ptr
     }
 
     /// Drop pointer in place

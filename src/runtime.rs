@@ -39,7 +39,6 @@ pub fn init() {
         let args = std::env::args()
             .map(|arg| std::ffi::CString::new(arg).unwrap())
             .collect::<Vec<std::ffi::CString>>();
-        println!("{:?}", args);
 
         // convert the strings to raw pointers
         let mut c_args = args

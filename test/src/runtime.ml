@@ -16,10 +16,15 @@ exception Exc of float
 let () = Callback.register_exception "Exc" (Exc 0.0)
 
 external raise_exc: float -> bool = "raise_exc"
+external raise_failure: unit -> bool = "raise_failure"
 
 let%test "raise exc" = try
   raise_exc 10.
 with Exc x -> x = 10.
+
+let%test "raise failure" = try
+  raise_failure ()
+with Failure e -> e = "An error"
 
 (* Hash variant *)
 type hash_variant = [
