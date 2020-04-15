@@ -9,12 +9,10 @@ struct Testing {
 extern "C" fn testing_compare(a: Value, b: Value) -> i32 {
     let t0 = ocaml::Pointer::<Testing>::from_value(a);
     let t1 = ocaml::Pointer::<Testing>::from_value(b);
-    if t0.as_ref().b == t1.as_ref().b {
-        0
-    } else if t0.as_ref().b < t1.as_ref().b {
-        -1
-    } else {
-        1
+    match (t0.as_ref().b, t1.as_ref().b) {
+        (x, y) if x == y => 0,
+        (x, y) if x < y => -1,
+        _ => 1,
     }
 }
 
