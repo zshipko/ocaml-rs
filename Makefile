@@ -11,4 +11,9 @@ clean:
 	cargo clean
 	dune clean --root=test
 
+publish:
+	cd sys && cargo package && cargo publish
+	cd derive && cargo package && cargo publish
+	cargo package && cargo publish
+
 .PHONY: test clean
