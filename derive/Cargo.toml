@@ -8,6 +8,7 @@ keywords = ["ocaml-rs", "proc-macro"]
 repository = "https://github.com/zshipko/ocaml-rs"
 description = "OCaml procedural macros"
 documentation = "https://docs.rs/ocaml-derive"
+readme = "./README.md"
 
 [lib]
 proc-macro = true
