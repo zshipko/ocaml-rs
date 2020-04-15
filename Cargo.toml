@@ -11,7 +11,7 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [package.metadata.docs.rs]
-features = [ "docs-rs" ]
+features = [ "docs-rs", "derive", "deep-clone", "link" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.10"}
