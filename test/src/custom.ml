@@ -14,3 +14,19 @@ let%test "testing set c" = (
   let (a, b, c) = testing_get_values t in
   a = 3.14 && b = 1L && c = "FOOBAR"
 )
+
+type testing_callback
+external testing_callback_alloc: (int -> float) -> testing_callback = "testing_callback_alloc"
+external testing_callback_call: testing_callback -> int -> float = "testing_callback_call"
+
+let%test "testing callback 1" = (
+  let c = testing_callback_alloc (fun x -> float_of_int x *. 2.) in
+  testing_callback_call c 1 = 2.0
+)
+
+let%test "testing callback 2" = (
+  let c = testing_callback_alloc (fun x ->
+    let () = Unix.sleep 2 in
+    sin (float_of_int x)) in
+  testing_callback_call c 5 = sin 5.0
+)

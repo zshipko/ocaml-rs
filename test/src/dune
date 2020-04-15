@@ -21,6 +21,7 @@
  (modules conv types callbacks runtime custom)
  (inline_tests)
  (preprocess (pps ppx_inline_test))
+ (libraries unix)
 
  ; Link the Rust library
  (foreign_archives ocamlrs_test_stubs)

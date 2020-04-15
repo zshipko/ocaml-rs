@@ -50,3 +50,31 @@ pub fn testing_get_values(testing: ocaml::Pointer<Testing>) -> (ocaml::Float, i6
     let t = testing.as_ref();
     (t.a, t.b, t.c.clone())
 }
+
+struct TestingCallback {
+    func: ocaml::Value,
+}
+
+unsafe extern "C" fn testing_callback_finalize(a: Value) {
+    let mut t0 = ocaml::Pointer::<TestingCallback>::from_value(a);
+    t0.as_mut().func.remove_global_root();
+    t0.drop_in_place();
+}
+
+ocaml::custom!(TestingCallback {
+    finalize: testing_callback_finalize,
+});
+
+#[ocaml::func]
+pub fn testing_callback_alloc(mut func: ocaml::Value) -> TestingCallback {
+    func.register_global_root();
+    TestingCallback { func }
+}
+
+#[ocaml::func]
+pub fn testing_callback_call(
+    t: ocaml::Pointer<TestingCallback>,
+    x: ocaml::Value,
+) -> Result<ocaml::Value, ocaml::Error> {
+    t.as_ref().func.call(x)
+}
