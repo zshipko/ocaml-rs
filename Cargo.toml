@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.10.0"
+version = "0.10.1"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -9,6 +9,9 @@ license = "ISC"
 description = "OCaml bindings for Rust"
 documentation = "https://docs.rs/ocaml"
 edition = "2018"
+
+[package.metadata.docs.rs]
+features = [ "docs-rs" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.10"}
@@ -19,6 +22,7 @@ default = ["derive"]
 derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 deep-clone = []
+docs-rs = ["ocaml-sys/docs-rs"]
 
 [workspace]
 members = [
