@@ -2,8 +2,8 @@
 
 use crate::{sys, CamlError, Error};
 
-use std::marker::PhantomData;
-use std::{mem, slice};
+use core::marker::PhantomData;
+use core::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
@@ -60,13 +60,13 @@ impl<T> Pointer<T> {
     /// This should only be used when you're in control of the underlying value and want to drop
     /// it. It should only be called once.
     pub unsafe fn drop_in_place(mut self) {
-        std::ptr::drop_in_place(self.as_mut_ptr())
+        core::ptr::drop_in_place(self.as_mut_ptr())
     }
 
     /// Replace the inner value with the provided argument
     pub fn set(&mut self, x: T) {
         unsafe {
-            std::ptr::write_unaligned(self.as_mut_ptr(), x);
+            core::ptr::write_unaligned(self.as_mut_ptr(), x);
         }
     }
 
@@ -235,6 +235,7 @@ impl<T: ToValue + FromValue> Array<T> {
     }
 
     /// Array as `Vec`
+    #[cfg(not(feature = "no-std"))]
     pub fn to_vec(&self) -> Vec<T> {
         FromValue::from_value(self.0)
     }
@@ -313,6 +314,7 @@ impl<T: ToValue + FromValue> List<T> {
         self.0.field(1)
     }
 
+    #[cfg(not(feature = "no-std"))]
     /// List as `Vec`
     pub fn to_vec(&self) -> Vec<T> {
         let mut vec: Vec<T> = Vec::new();
@@ -326,6 +328,7 @@ impl<T: ToValue + FromValue> List<T> {
         vec
     }
 
+    #[cfg(not(feature = "no-std"))]
     /// List as `LinkedList`
     pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
         FromValue::from_value(self.0)
@@ -387,12 +390,14 @@ pub mod bigarray {
         }
     }
 
+    #[cfg(not(feature = "no-std"))]
     impl<T: Copy + Kind> From<&'static [T]> for Array1<T> {
         fn from(x: &'static [T]) -> Array1<T> {
             Array1::from_slice(x)
         }
     }
 
+    #[cfg(not(feature = "no-std"))]
     impl<T: Copy + Kind> From<Vec<T>> for Array1<T> {
         fn from(x: Vec<T>) -> Array1<T> {
             let mut arr = Array1::<T>::create(x.len());
@@ -424,6 +429,7 @@ pub mod bigarray {
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
+        #[cfg(not(feature = "no-std"))]
         pub fn from_slice(data: &[T]) -> Array1<T> {
             Array1::from(data.to_vec())
         }

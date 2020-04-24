@@ -7,10 +7,10 @@ pub enum CamlError {
     NotFound,
 
     /// Failure
-    Failure(String),
+    Failure(&'static str),
 
     /// Invalid_argument
-    InvalidArgument(String),
+    InvalidArgument(&'static str),
 
     /// Out_of_memory
     OutOfMemory,
@@ -19,7 +19,7 @@ pub enum CamlError {
     StackOverflow,
 
     /// Sys_error
-    SysError(String),
+    SysError(&'static str),
 
     /// End_of_file
     EndOfFile,
@@ -50,15 +50,22 @@ pub enum Error {
     NotDoubleArray,
 
     /// Error message
+    #[cfg(feature = "no-std")]
+    Message(&'static str),
+
+    /// Error message
+    #[cfg(not(feature = "no-std"))]
     Message(String),
 
     /// General error
+    #[cfg(not(feature = "no-std"))]
     Error(Box<dyn std::error::Error>),
 
     /// OCaml exceptions
     Caml(CamlError),
 }
 
+#[cfg(not(feature = "no-std"))]
 impl<T: 'static + std::error::Error> From<T> for Error {
     fn from(x: T) -> Error {
         Error::Error(Box::new(x))
@@ -112,13 +119,13 @@ impl Error {
     }
 
     /// Raise `Failure`
-    pub fn failwith<S: AsRef<str>>(s: S) -> Result<(), Error> {
-        Err(CamlError::Failure(s.as_ref().into()).into())
+    pub fn failwith(s: &'static str) -> Result<(), Error> {
+        Err(CamlError::Failure(s).into())
     }
 
     /// Raise `Invalid_argument`
-    pub fn invalid_argument<S: AsRef<str>>(s: S) -> Result<(), Error> {
-        Err(CamlError::Failure(s.as_ref().into()).into())
+    pub fn invalid_argument(s: &'static str) -> Result<(), Error> {
+        Err(CamlError::Failure(s).into())
     }
 
     /// Get named error registered using `Callback.register_exception`
@@ -127,6 +134,7 @@ impl Error {
     }
 }
 
+#[cfg(not(feature = "no-std"))]
 unsafe impl<T: ToValue, E: std::error::Error> ToValue for Result<T, E> {
     fn to_value(self) -> Value {
         match self {
@@ -169,8 +177,8 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             },
             Err(Error::Caml(CamlError::InvalidArgument(s))) => {
                 unsafe {
-                    let s = std::ffi::CString::new(s.as_bytes()).expect("Invalid C string");
-                    crate::sys::caml_invalid_argument(s.as_ptr() as *const std::os::raw::c_char)
+                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    crate::sys::caml_invalid_argument(s.as_ptr() as *const i8)
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
@@ -182,23 +190,30 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
                     crate::sys::caml_raise_sys_error(s.0)
                 };
             }
-            Err(Error::Message(s)) | Err(Error::Caml(CamlError::Failure(s))) => {
+            Err(Error::Message(s)) => {
                 unsafe {
-                    let s = std::ffi::CString::new(s.as_bytes()).expect("Invalid C string");
-                    crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char)
+                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    crate::sys::caml_failwith(s.as_ptr() as *const i8)
                 };
             }
+            Err(Error::Caml(CamlError::Failure(s))) => {
+                unsafe {
+                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    crate::sys::caml_failwith(s.as_ptr() as *const i8)
+                };
+            }
+            #[cfg(not(feature = "no-std"))]
             Err(Error::Error(e)) => {
                 let s = format!("{:?}\0", e);
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
             }
             Err(Error::NotDoubleArray) => {
                 let s = "invalid double array\0";
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
             }
             Err(Error::NotCallable) => {
                 let s = "value is not callable\0";
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const std::os::raw::c_char) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
             }
         };
 

@@ -13,31 +13,28 @@ use crate::*;
 #[repr(C)]
 #[allow(missing_docs)]
 pub struct CustomOps {
-    pub identifier: *const ::std::os::raw::c_char,
-    pub finalize: ::std::option::Option<unsafe extern "C" fn(v: Value)>,
-    pub compare: ::std::option::Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
-    pub hash: ::std::option::Option<unsafe extern "C" fn(v: Value) -> Int>,
+    pub identifier: *const i8,
+    pub finalize: Option<unsafe extern "C" fn(v: Value)>,
+    pub compare: Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
+    pub hash: Option<unsafe extern "C" fn(v: Value) -> Int>,
 
-    pub serialize: ::std::option::Option<
-        unsafe extern "C" fn(v: Value, bsize_32: *mut Uint, bsize_64: *mut Uint),
-    >,
-    pub deserialize:
-        ::std::option::Option<unsafe extern "C" fn(dst: *mut ::std::os::raw::c_void) -> Uint>,
-    pub compare_ext: ::std::option::Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
+    pub serialize: Option<unsafe extern "C" fn(v: Value, bsize_32: *mut Uint, bsize_64: *mut Uint)>,
+    pub deserialize: Option<unsafe extern "C" fn(dst: *mut core::ffi::c_void) -> Uint>,
+    pub compare_ext: Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
     pub fixed_length: *const sys::custom_fixed_length,
 }
 
 impl Default for CustomOps {
     fn default() -> CustomOps {
         CustomOps {
-            identifier: std::ptr::null(),
+            identifier: core::ptr::null(),
             finalize: None,
             compare: None,
             hash: None,
             serialize: None,
             deserialize: None,
             compare_ext: None,
-            fixed_length: std::ptr::null_mut(),
+            fixed_length: core::ptr::null_mut(),
         }
     }
 }
@@ -90,7 +87,7 @@ pub trait Custom {
 
     /// Get a static reference the this type's `CustomOps` implementation
     fn ops() -> &'static CustomOps {
-        Self::TYPE.ops.identifier = Self::TYPE.name.as_ptr() as *const std::os::raw::c_char;
+        Self::TYPE.ops.identifier = Self::TYPE.name.as_ptr() as *const i8;
         if let Some(x) = Self::TYPE.fixed_length {
             Self::TYPE.ops.fixed_length = &x;
         }
@@ -156,8 +153,8 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 ///         name: "rust.MyType\0",
 ///         fixed_length: None,
 ///         ops: ocaml::custom::CustomOps {
-///             identifier: std::ptr::null(), // This will be filled in when the struct is used
-///             fixed_length: std::ptr::null_mut(), // This will be filled in too
+///             identifier: core::ptr::null(), // This will be filled in when the struct is used
+///             fixed_length: core::ptr::null_mut(), // This will be filled in too
 ///             finalize: Some(mytype_finalizer),
 ///             compare: Some(mytype_compare),
 ///             compare_ext: None,
