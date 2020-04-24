@@ -207,8 +207,8 @@ macro_rules! custom {
             ops: $crate::custom::CustomOps {
                 $($($k: Some($v),)*)?
                 .. $crate::custom::CustomOps {
-                    identifier: std::ptr::null(),
-                    fixed_length: std::ptr::null_mut(),
+                    identifier: core::ptr::null(),
+                    fixed_length: core::ptr::null_mut(),
                     compare: None,
                     compare_ext: None,
                     deserialize: None,
