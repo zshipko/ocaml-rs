@@ -16,6 +16,7 @@ features = [ "docs-rs", "derive", "deep-clone", "link" ]
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.10"}
 ocaml-derive = {path = "./derive", optional = true, version = "0.10"}
+cstr_core = {version = "0.2", optional = true}
 
 [features]
 default = ["derive"]
@@ -23,6 +24,7 @@ derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 deep-clone = []
 docs-rs = ["ocaml-sys/docs-rs"]
+no-std = ["cstr_core/alloc"]
 
 [workspace]
 members = [

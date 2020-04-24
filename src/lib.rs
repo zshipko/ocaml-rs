@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![cfg_attr(feature = "no-std", no_std)]
 
 //! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
@@ -112,6 +113,7 @@ mod conv;
 mod error;
 mod tag;
 mod types;
+mod util;
 mod value;
 
 /// Functions for interacting with the OCaml runtime
@@ -137,6 +139,7 @@ pub type Int = sys::Intnat;
 pub type Uint = sys::Uintnat;
 
 /// Wraps `sys::COMPILER` as `std::process::Command`
+#[cfg(not(feature = "no-std"))]
 pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }
