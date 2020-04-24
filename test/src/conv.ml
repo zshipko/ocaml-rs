@@ -55,3 +55,10 @@ let%test "struct1 d" = (
   let s = {a = 1; b = 2.0; c = None; d = Some [| "abc"; "123" |]} in
   struct1_get_d s = Some [| "abc"; "123" |] && struct1_get_d s = s.d
 )
+
+external string_non_copying: string -> string = "string_non_copying"
+
+let%test "string (non-copy)" = (
+  let a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" in
+  string_non_copying a = a
+)
