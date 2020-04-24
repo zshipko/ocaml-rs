@@ -67,3 +67,8 @@ pub fn struct1_get_d(s: Struct1) -> Option<ocaml::Array<&'static str>> {
 pub fn struct1_set_c(mut s: Struct1, v: String) {
     s.c = Some(v);
 }
+
+#[ocaml::func]
+pub unsafe fn string_non_copying(s: &str) -> ocaml::Value {
+    ocaml::Value::of_str(s)
+}

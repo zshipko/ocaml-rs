@@ -149,6 +149,22 @@ impl Value {
         Value::int(b as crate::Int)
     }
 
+    /// Allocate and copy a string value
+    pub fn string<S: AsRef<str>>(s: S) -> Value {
+        unsafe {
+            let len = s.as_ref().len();
+            let value = crate::sys::caml_alloc_string(len);
+            let ptr = crate::sys::string_val(value);
+            core::ptr::copy_nonoverlapping(s.as_ref().as_ptr(), ptr, len);
+            Value(value)
+        }
+    }
+
+    /// Convert from a pointer to an OCaml string back to an OCaml value
+    pub unsafe fn of_str(s: &str) -> Value {
+        Value(s.as_ptr() as crate::sys::Value)
+    }
+
     /// OCaml Some value
     pub fn some<V: ToValue>(v: V) -> Value {
         crate::frame!((x) {
