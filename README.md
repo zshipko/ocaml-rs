@@ -95,7 +95,7 @@ pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
 #[ocaml::native_func]
 pub fn incr(value: ocaml::Value) -> ocaml::Value {
     let i = value.int_val();
-    Value::int(i + 1)
+    ocaml::Value::int(i + 1)
 }
 
 // This is equivalent to:
@@ -195,4 +195,3 @@ Since 0.10 and later have a much different API compared to earlier version, here
 - Strings are converted to `str` or `String`, rather than using the `Str` type
 - Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
 - The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate and all sub-module have been removed
-
