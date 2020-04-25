@@ -42,8 +42,8 @@ macro_rules! frame {
 /// ```
 #[macro_export]
 macro_rules! body {
-    (($($param:expr),*) $code:block) => {
-        $crate::sys::caml_body!(($($param.0),*) $code);
+    ($(($($param:expr),*))? $code:block) => {
+        $crate::sys::caml_body!($(($($param.0),*))? $code);
     }
 }
 
