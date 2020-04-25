@@ -21,11 +21,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "ocaml"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "cstr_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ocaml-derive 0.10.0",
- "ocaml-sys 0.10.0",
+ "ocaml-sys 0.10.1",
 ]
 
 [[package]]
@@ -40,13 +40,13 @@ dependencies = [
 
 [[package]]
 name = "ocaml-sys"
-version = "0.10.0"
+version = "0.10.1"
 
 [[package]]
 name = "ocamlrs_test_stubs"
 version = "0.1.0"
 dependencies = [
- "ocaml 0.10.0",
+ "ocaml 0.10.1",
 ]
 
 [[package]]
