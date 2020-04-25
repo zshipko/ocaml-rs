@@ -161,6 +161,9 @@ impl Value {
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
+    ///
+    /// # Safety
+    /// This function assumes that the `str` argument has been allocated by OCaml
     pub unsafe fn of_str(s: &str) -> Value {
         Value(s.as_ptr() as crate::sys::Value)
     }
