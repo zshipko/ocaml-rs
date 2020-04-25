@@ -97,6 +97,11 @@
 //! external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 //! ```
 
+#[cfg(all(feature = "link", feature = "no-std"))]
+std::compile_error!("Cannot use link and no-std features");
+#[cfg(all(feature = "deep-copy", feature = "no-std"))]
+std::compile_error!("Cannot use deep-copy and no-std features");
+
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
 

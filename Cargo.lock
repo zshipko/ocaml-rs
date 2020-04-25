@@ -24,7 +24,7 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "ocaml"
-version = "0.10.1"
+version = "0.11.0"
 dependencies = [
  "cstr_core",
  "ocaml-derive",
