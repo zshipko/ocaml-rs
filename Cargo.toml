@@ -14,8 +14,8 @@ edition = "2018"
 features = [ "docs-rs", "derive", "deep-clone", "link" ]
 
 [dependencies]
-ocaml-sys = {path = "./sys", version = "0.10"}
-ocaml-derive = {path = "./derive", optional = true, version = "0.10"}
+ocaml-sys = {path = "./sys", version = "0.11"}
+ocaml-derive = {path = "./derive", optional = true, version = "0.11"}
 cstr_core = {version = "0.2", optional = true}
 
 [features]
