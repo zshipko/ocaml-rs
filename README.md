@@ -21,7 +21,7 @@ Take a look at [test/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/t
 Typically just include:
 
 ```toml
-ocaml = "0.10"
+ocaml = "0.11"
 ```
 
 or
