@@ -165,7 +165,15 @@ impl Value {
     /// # Safety
     /// This function assumes that the `str` argument has been allocated by OCaml
     pub unsafe fn of_str(s: &str) -> Value {
-        Value(s.as_ptr() as crate::sys::Value)
+        Value::ptr(s.as_ptr())
+    }
+
+    /// Convert from a pointer to an OCaml string back to an OCaml value
+    ///
+    /// # Safety
+    /// This function assumes that the `&[u8]` argument has been allocated by OCaml
+    pub unsafe fn of_bytes(s: &[u8]) -> Value {
+        Value::ptr(s.as_ptr())
     }
 
     /// OCaml Some value
