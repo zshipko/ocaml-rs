@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![cfg_attr(feature = "no-std", no_std)]
 
 //! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
@@ -96,6 +97,11 @@
 //! external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 //! ```
 
+#[cfg(all(feature = "link", feature = "no-std"))]
+std::compile_error!("Cannot use link and no-std features");
+#[cfg(all(feature = "deep-copy", feature = "no-std"))]
+std::compile_error!("Cannot use deep-copy and no-std features");
+
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
 
@@ -112,6 +118,7 @@ mod conv;
 mod error;
 mod tag;
 mod types;
+mod util;
 mod value;
 
 /// Functions for interacting with the OCaml runtime
@@ -137,6 +144,7 @@ pub type Int = sys::Intnat;
 pub type Uint = sys::Uintnat;
 
 /// Wraps `sys::COMPILER` as `std::process::Command`
+#[cfg(not(feature = "no-std"))]
 pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }

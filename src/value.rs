@@ -49,7 +49,7 @@ impl Value {
     /// Returns a named value registered by OCaml
     pub fn named<T: FromValue>(name: &str) -> Option<T> {
         unsafe {
-            let s = match std::ffi::CString::new(name) {
+            let s = match crate::util::CString::new(name) {
                 Ok(s) => s,
                 Err(_) => return None,
             };
@@ -98,8 +98,8 @@ impl Value {
         crate::frame!((x) {
             unsafe {
                 Value(sys::caml_alloc_final(
-                    std::mem::size_of::<T>(),
-                    std::mem::transmute(finalizer),
+                    core::mem::size_of::<T>(),
+                    core::mem::transmute(finalizer),
                     used,
                     max
                 ))
@@ -109,7 +109,7 @@ impl Value {
 
     /// Allocate custom value
     pub fn alloc_custom<T: crate::Custom>() -> Value {
-        let size = std::mem::size_of::<T>();
+        let size = core::mem::size_of::<T>();
         crate::frame!((x) {
             unsafe {
                 x = Value(sys::caml_alloc_custom(T::ops() as *const _ as *const sys::custom_operations, size, T::USED, T::MAX));
@@ -147,6 +147,33 @@ impl Value {
     /// Convert a boolean to OCaml value
     pub const fn bool(b: bool) -> Value {
         Value::int(b as crate::Int)
+    }
+
+    /// Allocate and copy a string value
+    pub fn string<S: AsRef<str>>(s: S) -> Value {
+        unsafe {
+            let len = s.as_ref().len();
+            let value = crate::sys::caml_alloc_string(len);
+            let ptr = crate::sys::string_val(value);
+            core::ptr::copy_nonoverlapping(s.as_ref().as_ptr(), ptr, len);
+            Value(value)
+        }
+    }
+
+    /// Convert from a pointer to an OCaml string back to an OCaml value
+    ///
+    /// # Safety
+    /// This function assumes that the `str` argument has been allocated by OCaml
+    pub unsafe fn of_str(s: &str) -> Value {
+        Value::ptr(s.as_ptr())
+    }
+
+    /// Convert from a pointer to an OCaml string back to an OCaml value
+    ///
+    /// # Safety
+    /// This function assumes that the `&[u8]` argument has been allocated by OCaml
+    pub unsafe fn of_bytes(s: &[u8]) -> Value {
+        Value::ptr(s.as_ptr())
     }
 
     /// OCaml Some value
@@ -387,7 +414,7 @@ impl Value {
         }
 
         let n = args.as_ref().len();
-        let x: Vec<sys::Value> = args.as_ref().iter().map(|x| x.0).collect();
+        let x = args.as_ref();
 
         let mut v = crate::frame!((res) {
             res = unsafe {
@@ -420,7 +447,7 @@ impl Value {
 
     /// Get hash variant as OCaml value
     pub fn hash_variant<S: AsRef<str>>(name: S, a: Option<Value>) -> Value {
-        let s = std::ffi::CString::new(name.as_ref()).expect("Invalid C string");
+        let s = crate::util::CString::new(name.as_ref()).expect("Invalid C string");
         let hash = unsafe { Value(sys::caml_hash_variant(s.as_ptr() as *const u8)) };
         match a {
             Some(x) => {
@@ -492,7 +519,7 @@ impl Value {
                 let slice0 = sys::as_slice(self.0);
                 let vec1 = slice0.to_vec();
                 let ptr1 = vec1.as_ptr();
-                std::mem::forget(vec1);
+                core::mem::forget(vec1);
                 return Value::ptr(ptr1.offset(1));
             }
             let slice0 = sys::as_slice(self.0);

@@ -22,7 +22,7 @@ pub fn make_tuple(a: Value, b: Value) -> (Value, Value) {
 fn test_tuple_of_tuples() {
     ocaml::runtime::init();
 
-    ocaml::body!(() {
+    ocaml::body!({
         let x = (1f64, 2f64, 3f64, 4f64, 5f64, 6f64, 7f64, 8f64, 9f64).to_value();
         let y = (9f64, 8f64, 7f64, 6f64, 5f64, 4f64, 3f64, 2f64, 1f64).to_value();
         let ((a, b, c, d, e, f, g, h, i), (j, k, l, m, n, o, p, q, r)): (
@@ -46,7 +46,7 @@ fn test_tuple_of_tuples() {
 #[test]
 fn test_basic_list() {
     ocaml::runtime::init();
-    ocaml::body!(() {
+    ocaml::body!({
         let mut list = ocaml::List::empty();
         let a = 3i64.to_value();
         let b = 2i64.to_value();

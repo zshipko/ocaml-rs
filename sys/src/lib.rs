@@ -53,11 +53,13 @@ macro_rules! caml_local {
 
 #[macro_export]
 macro_rules! caml_body {
-    (($($param:expr),*) $code:block) => {
+    ($(($($param:expr),*))? $code:block) => {
         {
             #[allow(unused_unsafe)]
             let caml_frame = unsafe { $crate::local_roots() };
-            $crate::caml_param!($($param),*);
+            $(
+                $crate::caml_param!($($param),*);
+            )?
             #[allow(unused_mut)]
             let mut res = || $code;
             let res = res();
