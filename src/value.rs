@@ -535,7 +535,7 @@ impl Value {
                 })
                 .collect();
             let ptr1 = vec1.as_ptr();
-            mem::forget(vec1);
+            core::mem::forget(vec1);
             Value::ptr(ptr1.offset(1))
         }
     }
