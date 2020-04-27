@@ -478,9 +478,6 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
-    ///
-    /// Requires the `deep-clone` feature
-    #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_ocaml(self) -> Self {
         if self.is_long() {
             return self;
@@ -507,9 +504,6 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
-    ///
-    /// Requires the `deep-clone` feature
-    #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
             return self;

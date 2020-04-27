@@ -45,8 +45,6 @@ Additionally, if you plan on releasing to OPAM, you will need to vendor your Rus
   * link the native OCaml runtime, this enables `ocaml::runtime::init`, which is equivalent to `caml_main`
 - `no-std`
   * Allows `ocaml` to be used in `#![no_std]` environments like MirageOS
-- `deep-clone`
-  * enables `Value::deep_clone_to_ocaml` and `Value::deep_clone_to_rust`
 
 ### Documentation
 

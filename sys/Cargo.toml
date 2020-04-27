@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-sys"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 keywords = ["ocaml", "rust", "ffi"]
 repository = "https://github.com/zshipko/ocaml-rs"
