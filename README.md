@@ -35,7 +35,13 @@ rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 
 This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
 
-Additionally, if you plan on releasing to OPAM, you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the OPAM sandbox.
+Additionally, if you plan on releasing to [opam](https://github.com/ocaml/opam), you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:
+
+```shell
+cargo vendor
+```
+
+then follow the instructions for editing `.cargo/config`
 
 ### Features
 
