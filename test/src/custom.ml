@@ -21,6 +21,8 @@ external testing_callback_call: testing_callback -> int -> float = "testing_call
 
 let%test "testing callback 1" = (
   let c = testing_callback_alloc (fun x -> float_of_int x *. 2.) in
+  Gc.minor ();
+  Gc.full_major ();
   testing_callback_call c 1 = 2.0
 )
 
@@ -28,5 +30,7 @@ let%test "testing callback 2" = (
   let c = testing_callback_alloc (fun x ->
     let () = Unix.sleep 2 in
     sin (float_of_int x)) in
+  Gc.minor ();
+  Gc.full_major ();
   testing_callback_call c 5 = sin 5.0
 )
