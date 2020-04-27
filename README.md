@@ -12,16 +12,12 @@ Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 ### Getting started
 
-**OCaml**:
+Take a look at the [ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) project for a basic example to help get started with `ocaml-rs`.
 
-Take a look at [test/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/test/src/dune) for an example `dune` file to get you started.
-
-**Rust**
-
-Typically just include:
+On the Rust side, you will need to add the following to your `Cargo.toml`:
 
 ```toml
-ocaml = "0.11"
+ocaml = "*"
 ```
 
 or
@@ -30,10 +26,7 @@ or
 ocaml = {git = "https://github.com/zshipko/ocaml-rs"}
 ```
 
-in your `Cargo.toml`.
-
-
-On macOS you will need also to add the following to your project's `.cargo/config` file:
+For macOS you will need also to add the following to your project's `.cargo/config` file:
 
 ```toml
 [build]
