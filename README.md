@@ -137,7 +137,7 @@ external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
-For more examples see [./test](https://github.com/zshipko/ocaml-rs/blob/master/test) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
+For more examples see [test/src](https://github.com/zshipko/ocaml-rs/blob/master/test/src) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 ### Type conversion
 
