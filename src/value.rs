@@ -131,12 +131,12 @@ impl Value {
 
     /// See caml_register_global_root
     pub fn register_global_root(&mut self) {
-        unsafe { sys::caml_register_global_root(&mut self.0) }
+        unsafe { sys::caml_register_global_root(self.0) }
     }
 
     /// Set caml_remove_global_root
     pub fn remove_global_root(&mut self) {
-        unsafe { sys::caml_remove_global_root(&mut self.0) }
+        unsafe { sys::caml_remove_global_root(self.0) }
     }
 
     /// Get the tag for the underlying OCaml `value`
