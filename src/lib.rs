@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 #![cfg_attr(feature = "no-std", no_std)]
 
-//! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
+//! [ocaml-rs](https://github.com/zsdhipko/ocaml-rs) is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
 //! The OCaml manual chapter [Interfacing C with OCaml](https://caml.inria.fr/pub/docs/manual-ocaml/intfc.html) does
 //! a great job of explaining low-level details about how to safely interact with the OCaml runtime. This crate aims to
