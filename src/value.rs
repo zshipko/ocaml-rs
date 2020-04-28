@@ -131,7 +131,10 @@ impl Value {
 
     /// See caml_register_global_root
     pub fn register_global_root(&mut self) {
-        unsafe { sys::caml_register_global_root(&mut self.0) }
+        crate::frame!((x) {
+            x = Value(self.0);
+            unsafe { sys::caml_register_global_root(&mut x.0) }
+        })
     }
 
     /// Set caml_remove_global_root
