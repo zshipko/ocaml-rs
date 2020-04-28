@@ -7,6 +7,10 @@
 //! a great job of explaining low-level details about how to safely interact with the OCaml runtime. This crate aims to
 //! be a slightly higher-level of abstraction, with minimal added overhead.
 //!
+//! ## Getting started
+//!
+//! Take a look at the [ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) project for a basic example to help get started with `ocaml-rs`.
+//!
 //! ## Examples
 //!
 //! ```rust,no_run
