@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 #![cfg_attr(feature = "no-std", no_std)]
 
-//! ocaml-rs is a library for directly interacting with the C OCaml runtime, in Rust.
+//! [ocaml-rs](https://github.com/zsdhipko/ocaml-rs) is a library for directly interacting with the C OCaml runtime, in Rust.
 //!
 //! The OCaml manual chapter [Interfacing C with OCaml](https://caml.inria.fr/pub/docs/manual-ocaml/intfc.html) does
 //! a great job of explaining low-level details about how to safely interact with the OCaml runtime. This crate aims to
@@ -99,8 +99,6 @@
 
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
-#[cfg(all(feature = "deep-copy", feature = "no-std"))]
-std::compile_error!("Cannot use deep-copy and no-std features");
 
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;

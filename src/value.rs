@@ -131,7 +131,10 @@ impl Value {
 
     /// See caml_register_global_root
     pub fn register_global_root(&mut self) {
-        unsafe { sys::caml_register_global_root(&mut self.0) }
+        crate::frame!((x) {
+            x = Value(self.0);
+            unsafe { sys::caml_register_global_root(&mut x.0) }
+        })
     }
 
     /// Set caml_remove_global_root
@@ -475,12 +478,14 @@ impl Value {
         Some(Value(v))
     }
 
+    /// Initialize OCaml value using `caml_initialize`
+    pub fn initialize(&mut self, value: Value) {
+        unsafe { sys::caml_initialize(&mut self.0, value.0) }
+    }
+
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
-    ///
-    /// Requires the `deep-clone` feature
-    #[cfg(feature = "deep-clone")]
     pub fn deep_clone_to_ocaml(self) -> Self {
         if self.is_long() {
             return self;
@@ -507,9 +512,7 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
-    ///
-    /// Requires the `deep-clone` feature
-    #[cfg(feature = "deep-clone")]
+    #[cfg(not(feature = "no-std"))]
     pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
             return self;
@@ -535,7 +538,7 @@ impl Value {
                 })
                 .collect();
             let ptr1 = vec1.as_ptr();
-            mem::forget(vec1);
+            core::mem::forget(vec1);
             Value::ptr(ptr1.offset(1))
         }
     }

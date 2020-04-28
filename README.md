@@ -12,16 +12,12 @@ Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
 ### Getting started
 
-**OCaml**:
+Take a look at the [ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) project for a basic example to help get started with `ocaml-rs`.
 
-Take a look at [test/src/dune](https://github.com/zshipko/ocaml-rs/blob/master/test/src/dune) for an example `dune` file to get you started.
-
-**Rust**
-
-Typically just include:
+On the Rust side, you will need to add the following to your `Cargo.toml`:
 
 ```toml
-ocaml = "0.11"
+ocaml = "*"
 ```
 
 or
@@ -30,10 +26,7 @@ or
 ocaml = {git = "https://github.com/zshipko/ocaml-rs"}
 ```
 
-in your `Cargo.toml`.
-
-
-On macOS you will need also to add the following to your project's `.cargo/config` file:
+For macOS you will need also to add the following to your project's `.cargo/config` file:
 
 ```toml
 [build]
@@ -42,7 +35,13 @@ rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 
 This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
 
-Additionally, if you plan on releasing to OPAM, you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the OPAM sandbox.
+Additionally, if you plan on releasing to [opam](https://github.com/ocaml/opam), you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:
+
+```shell
+cargo vendor
+```
+
+then follow the instructions for editing `.cargo/config`
 
 ### Features
 
@@ -52,8 +51,6 @@ Additionally, if you plan on releasing to OPAM, you will need to vendor your Rus
   * link the native OCaml runtime, this enables `ocaml::runtime::init`, which is equivalent to `caml_main`
 - `no-std`
   * Allows `ocaml` to be used in `#![no_std]` environments like MirageOS
-- `deep-clone`
-  * enables `Value::deep_clone_to_ocaml` and `Value::deep_clone_to_rust`
 
 ### Documentation
 
@@ -144,7 +141,7 @@ external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
-For more examples see [./test](https://github.com/zshipko/ocaml-rs/blob/master/test) or [ocaml-vec](https://github.com/zshipko/ocaml-vec) for an example project using `ocaml-rs`.
+For more examples see [test/src](https://github.com/zshipko/ocaml-rs/blob/master/test/src) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 ### Type conversion
 

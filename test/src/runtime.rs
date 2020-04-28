@@ -6,7 +6,7 @@ pub extern "C" fn unboxed_float_avg(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::bytecode_func]
-pub fn ml_unboxed_float_bytecode(a: f64, b: f64) -> f64 {
+pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -> f64 {
     unboxed_float_avg(a, b)
 }
 

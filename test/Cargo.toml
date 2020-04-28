@@ -7,4 +7,4 @@ edition = "2018"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies.ocaml]
-path = "../"
+path = ".."
