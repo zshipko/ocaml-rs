@@ -128,6 +128,15 @@ impl Error {
         Err(CamlError::Failure(s).into())
     }
 
+    #[doc(hidden)]
+    pub fn raise_failure(s: &str) -> ! {
+        let s = s.to_value();
+        unsafe {
+            crate::sys::caml_failwith_value(s.0);
+        }
+        loop {}
+    }
+
     /// Get named error registered using `Callback.register_exception`
     pub fn named<S: AsRef<str>>(s: S) -> Option<Value> {
         Value::named(s.as_ref())

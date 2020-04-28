@@ -37,3 +37,16 @@ external hash_variant_def: float -> hash_variant = "hash_variant_def"
 
 let%test "hash variant `Abc" = hash_variant_abc 123 = `Abc 123
 let%test "hash variant `Def" = hash_variant_def 9. = `Def 9.
+
+external test_panic: unit -> int = "test_panic"
+
+let%test "test panic" = try
+  let _ = test_panic () in
+  false
+with
+  | Failure s -> begin
+    Gc.minor ();
+    Gc.full_major ();
+    s = "XXX"
+  end
+  | _ -> false

@@ -42,3 +42,8 @@ pub fn hash_variant_abc(i: ocaml::Int) -> Value {
 pub fn hash_variant_def(i: ocaml::Float) -> Value {
     Value::hash_variant("Def", Some(Value::float(i)))
 }
+
+#[ocaml::func]
+pub fn test_panic() -> ocaml::Int {
+    panic!("XXX")
+}

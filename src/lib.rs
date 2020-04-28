@@ -136,6 +136,9 @@ pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
 pub use crate::value::{FromValue, ToValue, Value};
 
+#[cfg(not(feature = "no-std"))]
+pub use crate::macros::init_panic_handler;
+
 /// OCaml `float`
 pub type Float = f64;
 
