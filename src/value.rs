@@ -478,6 +478,11 @@ impl Value {
         Some(Value(v))
     }
 
+    /// Initialize OCaml value using `caml_initialize`
+    pub fn initialize(&mut self, value: Value) {
+        unsafe { sys::caml_initialize(&mut self.0, value.0) }
+    }
+
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
@@ -507,6 +512,7 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated outside of the OCaml heap, and should
     /// only be used for storage inside Rust structures.
+    #[cfg(not(feature = "no-std"))]
     pub fn deep_clone_to_rust(self) -> Self {
         if self.is_long() {
             return self;
