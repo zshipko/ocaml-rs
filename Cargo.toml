@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.11.0"
+version = "0.11.1"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -11,7 +11,7 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [package.metadata.docs.rs]
-features = [ "docs-rs", "derive", "deep-clone", "link" ]
+features = [ "docs-rs", "derive", "link" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.11"}
