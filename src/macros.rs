@@ -60,7 +60,18 @@ pub fn init_panic_handler() {
         return;
     }
 
-    ::std::panic::set_hook(Box::new(|_| {}))
+    ::std::panic::set_hook(Box::new(|info| {
+        let err = info.payload();
+        let msg = if err.is::<&str>() {
+            err.downcast_ref::<&str>().unwrap()
+        } else if err.is::<String>() {
+            err.downcast_ref::<String>().unwrap().as_ref()
+        } else {
+            "rust panic"
+        };
+
+        crate::Error::raise_failure(msg)
+    }))
 }
 
 /// `body!` is needed to help the OCaml runtime to manage garbage collection, it should
@@ -95,23 +106,8 @@ macro_rules! body {
 
         // Execute Rust function
         #[allow(unused_mut)]
-        let res = ::std::panic::catch_unwind(::std::panic::AssertUnwindSafe(|| $code));
-
-        // Check for panics
-        let res = match res {
-            Ok(x) => x,
-            Err(err) => {
-                let msg = if err.is::<&str>() {
-                    err.downcast_ref::<&str>().unwrap()
-                } else if err.is::<String>() {
-                    err.downcast_ref::<&str>().unwrap().as_ref()
-                } else {
-                    "rust panic"
-                };
-
-                $crate::Error::raise_failure(msg)
-            }
-        };
+        let mut res = || {$code };
+        let res = res();
 
         #[allow(unused_unsafe)]
         unsafe { $crate::sys::set_local_roots(caml_frame) };
