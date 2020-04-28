@@ -134,6 +134,7 @@ impl Error {
         unsafe {
             crate::sys::caml_failwith_value(s.0);
         }
+        #[allow(clippy::empty_loop)]
         loop {}
     }
 
