@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-derive"
-version = "0.12.0"
+version = "0.11.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 edition = "2018"
 license = "ISC"
