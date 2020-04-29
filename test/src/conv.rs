@@ -69,6 +69,16 @@ pub fn struct1_set_c(mut s: Struct1, v: String) {
 }
 
 #[ocaml::func]
+pub unsafe fn make_struct1(
+    a: ocaml::Int,
+    b: ocaml::Float,
+    c: Option<String>,
+    d: Option<ocaml::Array<&'static str>>,
+) -> Result<Struct1, ocaml::Error> {
+    Ok(Struct1 { a, b, c, d })
+}
+
+#[ocaml::func]
 pub unsafe fn string_non_copying(s: &str) -> ocaml::Value {
     ocaml::Value::of_str(s)
 }
