@@ -2,7 +2,7 @@
 use crate::tag::Tag;
 
 /// OCaml `value` type
-pub type Value = usize;
+pub type Value = isize;
 
 /// OCaml's integer type
 pub type Intnat = isize;
@@ -68,7 +68,7 @@ pub unsafe fn wosize_val(val: Value) -> Size {
 
 /// `(((intnat)(x) << 1) + 1)`
 pub const fn val_int(i: isize) -> Value {
-    ((i as usize) << 1) + 1
+    ((i as isize) << 1) + 1
 }
 
 pub const fn int_val(val: Value) -> isize {

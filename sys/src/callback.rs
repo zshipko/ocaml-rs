@@ -23,5 +23,5 @@ pub const fn is_exception_result(val: Value) -> bool {
 }
 
 pub const fn extract_exception(val: Value) -> Value {
-    (val as usize) & !3
+    (val as isize) & !3
 }
