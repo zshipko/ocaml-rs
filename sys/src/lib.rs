@@ -1,6 +1,8 @@
 #![allow(clippy::missing_safety_doc)]
 #![no_std]
 
+pub type Char = cty::c_char;
+
 #[macro_export]
 /// Registers OCaml parameters with the GC
 macro_rules! caml_param {

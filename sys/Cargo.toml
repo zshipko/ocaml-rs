@@ -10,6 +10,7 @@ documentation = "https://docs.rs/ocaml-sys"
 edition = "2018"
 
 [dependencies]
+cty = "0.2"
 
 [package.metadata.docs.rs]
 features = [ "docs-rs" ]

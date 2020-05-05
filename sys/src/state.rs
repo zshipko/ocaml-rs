@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-use crate::Value;
+use crate::{Char, Value};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -29,7 +29,7 @@ pub type backtrace_slot = *mut ::core::ffi::c_void;
 pub struct caml_domain_state {
     pub _young_ptr: *mut Value,
     pub _young_limit: *mut Value,
-    pub _exception_pointer: *mut i8,
+    pub _exception_pointer: *mut Char,
     pub _young_base: *mut ::core::ffi::c_void,
     pub _young_start: *mut Value,
     pub _young_end: *mut Value,
@@ -51,8 +51,8 @@ pub struct caml_domain_state {
     pub _trap_barrier: *mut Value,
     pub _external_raise: *mut longjmp_buffer,
     pub _exn_bucket: Value,
-    pub _top_of_stack: *mut i8,
-    pub _bottom_of_stack: *mut i8,
+    pub _top_of_stack: *mut Char,
+    pub _bottom_of_stack: *mut Char,
     pub _last_return_address: usize,
     pub _gc_regs: *mut Value,
     pub _backtrace_active: isize,

@@ -1,14 +1,14 @@
-use crate::mlvalues::Value;
+use crate::{Char, Value};
 
 extern "C" {
     pub fn caml_raise(bucket: Value);
     pub fn caml_raise_constant(tag: Value);
     pub fn caml_raise_with_arg(tag: Value, arg: Value);
     pub fn caml_raise_with_args(tag: Value, nargs: i32, arg: *mut Value);
-    pub fn caml_raise_with_string(tag: Value, msg: *const i8);
-    pub fn caml_failwith(msg: *const i8);
+    pub fn caml_raise_with_string(tag: Value, msg: *const Char);
+    pub fn caml_failwith(msg: *const Char);
     pub fn caml_failwith_value(msg: Value);
-    pub fn caml_invalid_argument(msg: *const i8);
+    pub fn caml_invalid_argument(msg: *const Char);
     pub fn caml_invalid_argument_value(msg: Value);
     pub fn caml_raise_out_of_memory();
     pub fn caml_raise_stack_overflow();

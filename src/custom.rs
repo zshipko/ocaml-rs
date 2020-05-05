@@ -13,7 +13,7 @@ use crate::*;
 #[repr(C)]
 #[allow(missing_docs)]
 pub struct CustomOps {
-    pub identifier: *const i8,
+    pub identifier: *const ocaml_sys::Char,
     pub finalize: Option<unsafe extern "C" fn(v: Value)>,
     pub compare: Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
     pub hash: Option<unsafe extern "C" fn(v: Value) -> Int>,
@@ -87,7 +87,7 @@ pub trait Custom {
 
     /// Get a static reference the this type's `CustomOps` implementation
     fn ops() -> &'static CustomOps {
-        Self::TYPE.ops.identifier = Self::TYPE.name.as_ptr() as *const i8;
+        Self::TYPE.ops.identifier = Self::TYPE.name.as_ptr() as *const ocaml_sys::Char;
         if let Some(x) = Self::TYPE.fixed_length {
             Self::TYPE.ops.fixed_length = &x;
         }

@@ -188,7 +188,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             Err(Error::Caml(CamlError::InvalidArgument(s))) => {
                 unsafe {
                     let s = crate::util::CString::new(s).expect("Invalid C string");
-                    crate::sys::caml_invalid_argument(s.as_ptr() as *const i8)
+                    crate::sys::caml_invalid_argument(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
@@ -203,27 +203,27 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             Err(Error::Message(s)) => {
                 unsafe {
                     let s = crate::util::CString::new(s).expect("Invalid C string");
-                    crate::sys::caml_failwith(s.as_ptr() as *const i8)
+                    crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
             Err(Error::Caml(CamlError::Failure(s))) => {
                 unsafe {
                     let s = crate::util::CString::new(s).expect("Invalid C string");
-                    crate::sys::caml_failwith(s.as_ptr() as *const i8)
+                    crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
             #[cfg(not(feature = "no-std"))]
             Err(Error::Error(e)) => {
                 let s = format!("{:?}\0", e);
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char) };
             }
             Err(Error::NotDoubleArray) => {
                 let s = "invalid double array\0";
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char) };
             }
             Err(Error::NotCallable) => {
                 let s = "value is not callable\0";
-                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const i8) };
+                unsafe { crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char) };
             }
         };
 

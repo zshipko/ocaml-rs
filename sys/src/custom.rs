@@ -44,7 +44,7 @@ fn bindgen_test_layout_custom_fixed_length() {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct custom_operations {
-    pub identifier: *const i8,
+    pub identifier: *const Char,
     pub finalize: ::core::option::Option<unsafe extern "C" fn(v: Value)>,
     pub compare: ::core::option::Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
     pub hash: ::core::option::Option<unsafe extern "C" fn(v: Value) -> Intnat>,
