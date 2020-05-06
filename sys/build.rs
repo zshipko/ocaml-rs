@@ -70,8 +70,6 @@ fn run() -> std::io::Result<()> {
 
     let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
 
-    println!("cargo:rerun-if-changed={}", ocamlopt);
-
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
     let version = std::process::Command::new(&ocamlopt)
