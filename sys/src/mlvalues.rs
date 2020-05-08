@@ -72,7 +72,7 @@ pub const fn val_int(i: isize) -> Value {
 }
 
 pub const fn int_val(val: Value) -> isize {
-    ((val as usize) >> 1) as isize
+    ((val as isize) >> 1) as isize
 }
 
 pub fn is_block(v: Value) -> bool {
