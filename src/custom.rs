@@ -212,6 +212,39 @@ macro_rules! custom {
     };
 }
 
+/// Derives `Custom` with the given finalizer for a type
+///
+/// ```rust,no_run
+/// use ocaml::FromValue;
+///
+/// struct MyType {
+///     name: String
+/// }
+///
+/// unsafe extern "C" fn mytype_finalizer(v: ocaml::Value) {
+///     let p: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(v);
+///     p.drop_in_place()
+/// }
+///
+/// ocaml::custom_finalize!(MyType, mytype_finalizer);
+///
+/// // Which is a shortcut for:
+///
+/// struct MyType2 {
+///     name: String
+/// }
+///
+/// ocaml::custom!(MyType2 {
+///     finalize: mytype_finalizer
+/// });
+/// ```
+#[macro_export]
+macro_rules! custom_finalize {
+    ($name:ident  $(<$t:tt>)?, $f:path) => {
+        $crate::custom!($name { finalize: $f });
+    };
+}
+
 /// Default CustomOps
 pub const DEFAULT_CUSTOM_OPS: CustomOps = CustomOps {
     identifier: core::ptr::null(),

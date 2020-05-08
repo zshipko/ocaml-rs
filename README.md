@@ -174,7 +174,7 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 
 Additionally, `Pointer<T>` can be used to create and access Rust types on the OCaml heap.
 
-For example, allocation a type that implements `Custom`
+For example, for a type that implements `Custom`:
 
 ```rust
 struct MyType;
