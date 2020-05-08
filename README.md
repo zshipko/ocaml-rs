@@ -172,31 +172,42 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 | `BTreeMap<A, B>` | `('a, 'b) list`      |
 | `LinkedList<A>`  | `'a list`            |
 
-Additionally, `Pointer<T>` can be used to create and access Rust types on the OCaml heap.
+NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
+
+If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
+
+#### Pointers to Rust values on the OCaml heap
+
+`Pointer<T>` can be used to create and access Rust types on the OCaml heap.
 
 For example, for a type that implements `Custom`:
 
 ```rust
+use ocaml::FromValue;
+
 struct MyType;
 
-custom!(MyType);
+unsafe extern "C" fn mytype_finalizer(v: ocaml::Value) {
+    let ptr: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(v);
+    ptr.drop_in_place()
+}
+
+ocaml::custom_finalize!(MyType, mytype_finalizer);
 
 #[ocaml::func]
-fn new_my_type() -> Pointer<MyType> {
-  ocaml::Pointer::alloc_custom(MyType)
+pub fn new_my_type() -> ocaml::Pointer<MyType> {
+    ocaml::Pointer::alloc_custom(MyType)
+    // ocaml::Pointer::alloc_final(MyType, finalizer) can also be used
+    // if you don't intend to implement `Custom`
 }
 
-#[ocaml::func]]
-fn my_type_example(t: Pointer<MyType>) {
-  let my_type = t.as_mut();
-  // MyType has no fields, but normally you
-  // would do something with MyType here
+#[ocaml::func]
+pub fn my_type_example(t: ocaml::Pointer<MyType>) {
+    let my_type = t.as_mut();
+    // MyType has no fields, but normally you
+    // would do something with MyType here
 }
 ```
-
-NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
-
-If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
 
 ## Upgrading
 
