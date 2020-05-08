@@ -89,7 +89,7 @@ impl Value {
     /// Allocate a new value with a finalizer
     ///
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
-    /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
+    /// behavior. In most cases you should prefer `Pointer::alloc_custom` when possible.
     pub fn alloc_final<T>(
         finalizer: unsafe extern "C" fn(Value),
         cfg: Option<(usize, usize)>,

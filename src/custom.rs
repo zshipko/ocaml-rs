@@ -206,17 +206,20 @@ macro_rules! custom {
             fixed_length: None,
             ops: $crate::custom::CustomOps {
                 $($($k: Some($v),)*)?
-                .. $crate::custom::CustomOps {
-                    identifier: core::ptr::null(),
-                    fixed_length: core::ptr::null_mut(),
-                    compare: None,
-                    compare_ext: None,
-                    deserialize: None,
-                    finalize: None,
-                    hash: None,
-                    serialize: None,
-                }
+                .. $crate::custom::DEFAULT_CUSTOM_OPS
             },
         };
     };
 }
+
+/// Default CustomOps
+pub const DEFAULT_CUSTOM_OPS: CustomOps = CustomOps {
+    identifier: core::ptr::null(),
+    fixed_length: core::ptr::null_mut(),
+    compare: None,
+    compare_ext: None,
+    deserialize: None,
+    finalize: None,
+    hash: None,
+    serialize: None,
+};
