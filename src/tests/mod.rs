@@ -64,3 +64,26 @@ fn test_basic_list() {
         }
     })
 }
+
+#[test]
+fn test_int() {
+    ocaml::runtime::init();
+    ocaml::body!({
+        let a = (-123isize).to_value();
+        let b = (-1isize).to_value();
+        let c = 123isize.to_value();
+        let d = 1isize.to_value();
+        let e = 0isize.to_value();
+
+        let a_: isize = FromValue::from_value(a);
+        let b_: isize = FromValue::from_value(b);
+        let c_: isize = FromValue::from_value(c);
+        let d_: isize = FromValue::from_value(d);
+        let e_: isize = FromValue::from_value(e);
+        assert_eq!(a_, -123);
+        assert_eq!(b_, -1);
+        assert_eq!(c_, 123);
+        assert_eq!(d_, 1);
+        assert_eq!(e_, 0);
+    })
+}
