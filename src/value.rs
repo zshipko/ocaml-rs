@@ -216,6 +216,16 @@ impl Value {
         })
     }
 
+    /// Result.Ok value
+    pub fn result_ok(value: impl Into<Value>) -> Value {
+        Self::variant(0, Some(value.into()))
+    }
+
+    /// Result.Error value
+    pub fn result_error(value: impl Into<Value>) -> Value {
+        Self::variant(1, Some(value.into()))
+    }
+
     /// Create a new opaque pointer Value
     pub fn ptr<T>(p: *const T) -> Value {
         Value(p as sys::Value)
