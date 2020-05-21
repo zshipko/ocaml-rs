@@ -50,12 +50,7 @@ pub enum Error {
     NotDoubleArray,
 
     /// Error message
-    #[cfg(feature = "no-std")]
     Message(&'static str),
-
-    /// Error message
-    #[cfg(not(feature = "no-std"))]
-    Message(String),
 
     /// General error
     #[cfg(not(feature = "no-std"))]
@@ -86,26 +81,31 @@ impl Error {
 
     /// Raise an exception that has been registered using `Callback.register_exception` with no
     /// arguments
-    pub fn raise<S: AsRef<str>>(name: S) -> Result<(), Error> {
-        let s = Self::named(name.as_ref()).unwrap_or_else(|| {
-            panic!(
-                "{} has not been registered as an exception with OCaml",
-                name.as_ref()
-            )
-        });
-        Err(CamlError::Exception(s).into())
+    pub fn raise<S: AsRef<str>>(exc: S) -> Result<(), Error> {
+        let value = match Value::named(exc.as_ref()) {
+            Some(v) => v,
+            None => {
+                return Err(Error::Message(
+                    "Value has not been registered with the OCaml runtime",
+                ))
+            }
+        };
+        Err(CamlError::Exception(value).into())
     }
 
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
-    pub fn raise_with_arg<S: AsRef<str>, T: ToValue>(name: S, arg: T) -> Result<(), Error> {
-        let s = Self::named(name.as_ref()).unwrap_or_else(|| {
-            panic!(
-                "{} has not been registered as an exception with OCaml",
-                name.as_ref()
-            )
-        });
-        Err(CamlError::WithArg(s, arg.to_value()).into())
+    pub fn raise_with_arg<S: AsRef<str>, T: ToValue>(exc: S, arg: T) -> Result<(), Error> {
+        let value = match Value::named(exc.as_ref()) {
+            Some(v) => v,
+            None => {
+                return Err(Error::Message(
+                    "Value has not been registered with the OCaml runtime",
+                ))
+            }
+        };
+
+        Err(CamlError::WithArg(value, arg.to_value()).into())
     }
 
     /// Raise `Not_found`
@@ -138,6 +138,16 @@ impl Error {
         loop {}
     }
 
+    #[doc(hidden)]
+    pub fn raise_value(v: Value, s: &str) -> ! {
+        let s = s.to_value();
+        unsafe {
+            crate::sys::caml_raise_with_arg(v.0, s.0);
+        }
+        #[allow(clippy::empty_loop)]
+        loop {}
+    }
+
     /// Get named error registered using `Callback.register_exception`
     pub fn named<S: AsRef<str>>(s: S) -> Option<Value> {
         Value::named(s.as_ref())
@@ -145,12 +155,12 @@ impl Error {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<T: ToValue, E: std::error::Error> ToValue for Result<T, E> {
+unsafe impl<T: ToValue, E: 'static + std::error::Error> ToValue for Result<T, E> {
     fn to_value(self) -> Value {
         match self {
             Ok(x) => x.to_value(),
             Err(y) => {
-                let e: Result<T, Error> = Err(Error::Message(format!("{:?}", y)));
+                let e: Result<T, Error> = Err(Error::Error(Box::new(y)));
                 e.to_value()
             }
         }

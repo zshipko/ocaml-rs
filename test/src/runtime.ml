@@ -13,6 +13,8 @@ let%test "more than 5 params" = more_than_five_params 1.0 1.0 1.0 1.0 1.0 1.0 1.
 
 exception Exc of float
 
+exception Rust of string
+
 let () = Callback.register_exception "Exc" (Exc 0.0)
 
 external raise_exc: float -> bool = "raise_exc"
@@ -49,4 +51,12 @@ with
     Gc.full_major ();
     s = "XXX"
   end
+  | _ -> false
+
+let %test "test custom panic exception" = try
+  let () = Callback.register_exception "Rust_exception" (Rust "") in
+  let _ = test_panic () in
+  false
+with
+  | Rust s -> s = "XXX"
   | _ -> false

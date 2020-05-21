@@ -209,6 +209,18 @@ pub fn my_type_example(t: ocaml::Pointer<MyType>) {
 }
 ```
 
+#### Custom exception type
+
+When a Rust `panic` or `Err` is encountered it will be raised as a `Failure` on the OCaml side, to configure a custom exception type you can register it with the OCaml runtime using the name `Rust_exception`:
+
+```ocaml
+exception Rust
+
+let () = Callback.register_exception "Rust_error" (Rust "")
+```
+
+It must take a single `string` argument.
+
 ## Upgrading
 
 Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:

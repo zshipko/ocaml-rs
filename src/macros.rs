@@ -70,6 +70,10 @@ pub fn init_panic_handler() {
             "rust panic"
         };
 
+        if let Some(err) = crate::Value::named("Rust_exception") {
+            crate::Error::raise_value(err, msg);
+        }
+
         crate::Error::raise_failure(msg)
     }))
 }
