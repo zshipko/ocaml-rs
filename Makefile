@@ -1,6 +1,6 @@
 test:
 	@cargo test --features=link -- --test-threads=1
-	@dune runtest --root=test --force
+	@dune runtest --root=test --force --no-buffer
 
 utop:
 	@dune utop --root=test

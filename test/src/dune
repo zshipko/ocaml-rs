@@ -1,20 +1,18 @@
 (include_subdirs unqualified)
 
 (rule
- (deps
-  (source_tree .))
- ; Library names go here
+ (deps (glob_files *.rs))
  (targets libocamlrs_test_stubs.a dllocamlrs_test_stubs.so)
  (action
   (progn
    ; Build the Rust code
-   (run cargo build --target-dir %{project_root}/target --release)
+   (run cargo build --target-dir %{project_root}/../../target --release)
    ; This is needed to support Linux and macOS shared libraries
    (run sh -c
-     "mv %{project_root}/target/release/libocamlrs_test_stubs.so ./dllocamlrs_test_stubs.so 2> /dev/null || \
-      mv %{project_root}/target/release/libocamlrs_test_stubs.dylib ./dllocamlrs_test_stubs.so")
+     "mv %{project_root}/../../target/release/libocamlrs_test_stubs.so ./dllocamlrs_test_stubs.so 2> /dev/null || \
+      mv %{project_root}/../../target/release/libocamlrs_test_stubs.dylib ./dllocamlrs_test_stubs.so")
    ; Copy over the static library too
-   (run mv %{project_root}/target/release/libocamlrs_test_stubs.a libocamlrs_test_stubs.a))))
+   (run mv %{project_root}/../../target/release/libocamlrs_test_stubs.a libocamlrs_test_stubs.a))))
 
 (library
  (name ocamlrs_test)
