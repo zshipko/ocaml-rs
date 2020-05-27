@@ -556,7 +556,7 @@ impl Value {
                 .collect();
             let ptr1 = vec1.as_ptr();
             core::mem::forget(vec1);
-            return Value(ptr1.offset(1) as isize);
+            Value(ptr1.offset(1) as isize)
         }
     }
 }
