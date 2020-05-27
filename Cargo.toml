@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]

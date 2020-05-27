@@ -67,10 +67,8 @@ struct Abstract {
 
 #[ocaml::func]
 pub fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
-    let mut a = Abstract { f };
-    let v = Value::alloc_abstract_ptr(&mut a);
-    std::mem::forget(a);
-    v
+    let mut a = Box::into_raw(Box::new(Abstract { f }));
+    Value::alloc_abstract_ptr(a)
 }
 
 #[ocaml::func]
@@ -82,5 +80,5 @@ pub fn abstract_pointer_value(f: Value) -> ocaml::Float {
 #[ocaml::func]
 pub unsafe fn abstract_pointer_free(f: Value) {
     let f = f.abstract_ptr_val_mut::<Abstract>();
-    std::ptr::drop_in_place(f)
+    Box::from_raw(f);
 }

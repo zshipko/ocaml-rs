@@ -118,7 +118,9 @@ impl Value {
         })
     }
 
-    /// Allocate custom value
+    /// Allocate an abstract pointer value, it is best to ensure the value is
+    /// on the heap using `Box::into_raw(Box::from(...))` to create the pointer
+    /// and `Box::from_raw` to free it
     pub fn alloc_abstract_ptr<T>(ptr: *mut T) -> Value {
         crate::frame!((x) {
             x = Self::alloc(1, Tag::ABSTRACT);
@@ -337,12 +339,12 @@ impl Value {
         unsafe { sys::field(self.0, 1) as *mut T }
     }
 
-    /// Get pointer to abstract value contained by Value
+    /// Get pointer to the pointer contained by Value
     pub fn abstract_ptr_val<T>(self) -> *const T {
         unsafe { *(self.0 as *const *const T) }
     }
 
-    /// Get mutable pointer to abstract value contained by Value
+    /// Get mutable pointer to the pointer contained by Value
     pub fn abstract_ptr_val_mut<T>(self) -> *mut T {
         unsafe { *(self.0 as *mut *mut T) }
     }
