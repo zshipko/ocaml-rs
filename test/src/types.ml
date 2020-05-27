@@ -53,3 +53,15 @@ let%test "array1 from rust vec" = (
   a.{3} = 4. &&
   a.{4} = 5.
 )
+
+type abstract_ptr
+
+external alloc_abstract_pointer : float -> abstract_ptr = "alloc_abstract_pointer"
+external abstract_pointer_value : abstract_ptr -> float = "abstract_pointer_value"
+external abstract_pointer_free: abstract_ptr -> unit = "abstract_pointer_free"
+
+let%test "abstract pointer" = (
+  let a = alloc_abstract_pointer 1.5 in
+  let f = abstract_pointer_value a in
+  abstract_pointer_free a; f = 1.5
+)

@@ -7,7 +7,10 @@ use core::{mem, slice};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
-/// A handle to a Rust value/reference owned by the OCaml heap
+/// A handle to a Rust value/reference owned by the OCaml heap.
+///
+/// This should only be used with values allocated with `alloc_final` or `alloc_custom`,
+/// for abstract pointers see `Value::alloc_abstract_ptr` and `Value::abstract_ptr_val`
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Pointer<T>(pub Value, PhantomData<T>);
@@ -77,7 +80,7 @@ impl<T> Pointer<T> {
 
     /// Access the underlying mutable pointer
     pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.0.custom_mut_ptr_val()
+        self.0.custom_ptr_val_mut()
     }
 }
 
@@ -134,7 +137,7 @@ impl<'a> Array<f64> {
     /// This function performs no bounds checking
     #[inline]
     pub unsafe fn set_double_unchecked(&mut self, i: usize, f: f64) {
-        let ptr = self.0.ptr_val::<f64>().add(i) as *mut f64;
+        let ptr = ((self.0).0 as *mut f64).add(i);
         *ptr = f;
     }
 
@@ -157,7 +160,7 @@ impl<'a> Array<f64> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
-        *self.0.ptr_val::<f64>().add(i)
+        *((self.0).0 as *mut f64).add(i)
     }
 }
 

@@ -59,3 +59,28 @@ pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
 pub fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
     vec![1f32, 2f32, 3f32, 4f32, 5f32].into()
 }
+
+#[derive(Debug)]
+struct Abstract {
+    f: f64,
+}
+
+#[ocaml::func]
+pub fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
+    let mut a = Abstract { f };
+    let v = Value::alloc_abstract_ptr(&mut a);
+    std::mem::forget(a);
+    v
+}
+
+#[ocaml::func]
+pub fn abstract_pointer_value(f: Value) -> ocaml::Float {
+    let f = f.abstract_ptr_val::<Abstract>();
+    unsafe { (*f).f }
+}
+
+#[ocaml::func]
+pub unsafe fn abstract_pointer_free(f: Value) {
+    let f = f.abstract_ptr_val_mut::<Abstract>();
+    std::ptr::drop_in_place(f)
+}

@@ -118,6 +118,18 @@ impl Value {
         })
     }
 
+    /// Allocate custom value
+    pub fn alloc_abstract_ptr<T>(ptr: *mut T) -> Value {
+        crate::frame!((x) {
+            x = Self::alloc(1, Tag::ABSTRACT);
+            let dest = x.0 as *mut *mut T;
+            unsafe {
+                *dest = ptr;
+            }
+            x
+        })
+    }
+
     /// Create a new Value from an existing OCaml `value`
     #[inline]
     pub const fn new(v: sys::Value) -> Value {
@@ -168,7 +180,7 @@ impl Value {
     /// # Safety
     /// This function assumes that the `str` argument has been allocated by OCaml
     pub unsafe fn of_str(s: &str) -> Value {
-        Value::ptr(s.as_ptr())
+        Value(s.as_ptr() as isize)
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
@@ -176,7 +188,7 @@ impl Value {
     /// # Safety
     /// This function assumes that the `&[u8]` argument has been allocated by OCaml
     pub unsafe fn of_bytes(s: &[u8]) -> Value {
-        Value::ptr(s.as_ptr())
+        Value(s.as_ptr() as isize)
     }
 
     /// OCaml Some value
@@ -224,11 +236,6 @@ impl Value {
     /// Result.Error value
     pub fn result_error(value: impl Into<Value>) -> Value {
         Self::variant(1, Some(value.into()))
-    }
-
-    /// Create a new opaque pointer Value
-    pub fn ptr<T>(p: *const T) -> Value {
-        Value(p as sys::Value)
     }
 
     /// Create an OCaml `int`
@@ -302,7 +309,7 @@ impl Value {
 
     /// Convert an OCaml `Float` to `f64`
     pub fn float_val(self) -> f64 {
-        unsafe { *self.ptr_val::<f64>() }
+        unsafe { *(self.0 as *const f64) }
     }
 
     /// Convert an OCaml `Int32` to `i32`
@@ -326,18 +333,18 @@ impl Value {
     }
 
     /// Get mutable pointer to data stored in an OCaml custom value
-    pub fn custom_mut_ptr_val<T>(self) -> *mut T {
+    pub fn custom_ptr_val_mut<T>(self) -> *mut T {
         unsafe { sys::field(self.0, 1) as *mut T }
     }
 
-    /// Get pointer to data stored in an opaque value
-    pub fn ptr_val<T>(self) -> *const T {
-        self.0 as *const T
+    /// Get pointer to abstract value contained by Value
+    pub fn abstract_ptr_val<T>(self) -> *const T {
+        unsafe { *(self.0 as *const *const T) }
     }
 
-    /// Get mutable pointer to data stored in an opaque value
-    pub fn mut_ptr_val<T>(self) -> *mut T {
-        self.0 as *mut T
+    /// Get mutable pointer to abstract value contained by Value
+    pub fn abstract_ptr_val_mut<T>(self) -> *mut T {
+        unsafe { *(self.0 as *mut *mut T) }
     }
 
     /// Extract OCaml exception
@@ -503,8 +510,8 @@ impl Value {
         unsafe {
             let wosize = sys::wosize_val(self.0);
             let val1 = Self::alloc(wosize, self.tag());
-            let ptr0 = self.ptr_val::<sys::Value>();
-            let ptr1 = val1.mut_ptr_val::<sys::Value>();
+            let ptr0 = self.0 as *const sys::Value;
+            let ptr1 = val1.0 as *mut sys::Value;
             if self.tag() >= Tag::NO_SCAN {
                 ptr0.copy_to_nonoverlapping(ptr1, wosize);
                 return val1;
@@ -533,7 +540,7 @@ impl Value {
                 let vec1 = slice0.to_vec();
                 let ptr1 = vec1.as_ptr();
                 core::mem::forget(vec1);
-                return Value::ptr(ptr1.offset(1));
+                return Value(ptr1.offset(1) as isize);
             }
             let slice0 = sys::as_slice(self.0);
             let vec1: Vec<sys::Value> = slice0
@@ -549,7 +556,7 @@ impl Value {
                 .collect();
             let ptr1 = vec1.as_ptr();
             core::mem::forget(vec1);
-            Value::ptr(ptr1.offset(1))
+            return Value(ptr1.offset(1) as isize);
         }
     }
 }
