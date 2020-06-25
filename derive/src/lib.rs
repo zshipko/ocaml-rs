@@ -70,7 +70,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .map(|t| match t {
             Some(ident) => {
                 let ident = &ident.ident;
-                quote! { mut #ident: ocaml::Value }
+                quote! { #ident: ocaml::Value }
             }
             None => quote! { _: ocaml::Value },
         })
@@ -231,7 +231,7 @@ pub fn ocaml_native_func(_attribute: TokenStream, item: TokenStream) -> TokenStr
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { mut #ident: ocaml::Value },
+            Some(ident) => quote! { #ident: ocaml::Value },
             None => quote! { _: ocaml::Value },
         })
         .collect();
