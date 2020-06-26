@@ -11,6 +11,7 @@ pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::func]
+#[allow(unused_mut)]
 pub unsafe fn more_than_five_params(
     a: ocaml::Float,
     b: ocaml::Float,
@@ -18,7 +19,7 @@ pub unsafe fn more_than_five_params(
     d: ocaml::Float,
     e: ocaml::Float,
     f: ocaml::Float,
-    g: ocaml::Float,
+    mut g: ocaml::Float,
 ) -> ocaml::Float {
     a + b + c + d + e + f + g
 }
