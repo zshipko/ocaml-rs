@@ -400,7 +400,7 @@ fn ocaml_bytecode_func_impl(
         })
         .collect();
 
-    let len = rust_args.len();
+    let len = ocaml_args.len();
 
     if len > 5 {
         let convert_params: Vec<_> = args
@@ -423,7 +423,6 @@ fn ocaml_bytecode_func_impl(
             )*
             pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
                 assert_eq!(#len, __ocaml_argc as usize);
-
 
                 #inner
 

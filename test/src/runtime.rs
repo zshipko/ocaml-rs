@@ -25,8 +25,6 @@ pub unsafe fn more_than_five_params(
     a + b + c + d + e + f + g
 }
 
-// This is testing the `func` macro, it is never called
-// on the OCaml side.
 // See: https://github.com/zshipko/ocaml-rs/issues/29
 #[ocaml::func]
 pub fn mutable_parameter_with_more_than_five_arguments(
@@ -35,16 +33,15 @@ pub fn mutable_parameter_with_more_than_five_arguments(
     batch_size: u64,
     epochs: u64,
     print_loss: Option<u64>,
-    metrics: i32,
+    _metrics: Option<i32>,
 ) {
     let _ = net;
     let _ = data;
     let _ = batch_size;
     let _ = epochs;
     let _ = print_loss;
-    let _ = metrics;
     net = false;
-    println!("{}", net);
+    let _ = net;
 }
 
 #[ocaml::func]
