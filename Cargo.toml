@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.13.3"
+version = "0.13.4"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -15,7 +15,7 @@ features = [ "docs-rs", "derive", "link" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.13"}
-ocaml-derive = {path = "./derive", optional = true, version = "0.13.2"}
+ocaml-derive = {path = "./derive", optional = true, version = "0.13.3"}
 cstr_core = {version = "0.2", optional = true}
 
 [features]
