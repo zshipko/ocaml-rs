@@ -125,6 +125,8 @@ pub fn incrf_bytecode(input: f64) -> f64 {
 }
 ```
 
+Note: By default the `func` macro will create a bytecode wrapper (using `bytecode_func`) for functions with more than 5 arguments.
+
 The OCaml stubs would look like this:
 
 ```ocaml
