@@ -89,7 +89,7 @@ pub fn ocaml_func(_attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let mut #ident = ocaml::FromValue::from_value(#ident); })
+                Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
             }
             None => None,
         })
@@ -304,11 +304,15 @@ fn ocaml_bytecode_func_impl(
     let args: Vec<_> = item_fn
         .sig
         .inputs
-        .iter()
+        .clone()
+        .into_iter()
         .map(|arg| match arg {
             syn::FnArg::Receiver(_) => panic!("OCaml functions cannot take a self argument"),
-            syn::FnArg::Typed(t) => match t.pat.as_ref() {
-                syn::Pat::Ident(ident) => Some(ident),
+            syn::FnArg::Typed(mut t) => match t.pat.as_mut() {
+                syn::Pat::Ident(ident) => {
+                    ident.mutability = None;
+                    Some(ident.clone())
+                }
                 _ => None,
             },
         })
@@ -317,7 +321,9 @@ fn ocaml_bytecode_func_impl(
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { #ident: ocaml::Value },
+            Some(ident) => {
+                quote! { #ident: ocaml::Value }
+            }
             None => quote! { _: ocaml::Value },
         })
         .collect();
@@ -416,7 +422,8 @@ fn ocaml_bytecode_func_impl(
                 #attr
             )*
             pub #constness #unsafety extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
-                assert!(#len == __ocaml_argc as usize);
+                assert_eq!(#len, __ocaml_argc as usize);
+
 
                 #inner
 
@@ -432,7 +439,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let mut #ident = ocaml::FromValue::from_value(#ident); })
+                    Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
                 }
                 None => None,
             })

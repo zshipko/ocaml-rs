@@ -11,17 +11,40 @@ pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::func]
-#[allow(unused_mut)]
 pub unsafe fn more_than_five_params(
-    a: ocaml::Float,
-    b: ocaml::Float,
+    mut a: ocaml::Float,
+    mut b: ocaml::Float,
     c: ocaml::Float,
     d: ocaml::Float,
     e: ocaml::Float,
     f: ocaml::Float,
-    mut g: ocaml::Float,
+    g: ocaml::Float,
 ) -> ocaml::Float {
+    a -= 1.0;
+    b += 1.0;
     a + b + c + d + e + f + g
+}
+
+// This is testing the `func` macro, it is never called
+// on the OCaml side.
+// See: https://github.com/zshipko/ocaml-rs/issues/29
+#[ocaml::func]
+pub fn mutable_parameter_with_more_than_five_arguments(
+    mut net: bool,
+    data: bool,
+    batch_size: u64,
+    epochs: u64,
+    print_loss: Option<u64>,
+    metrics: i32,
+) {
+    let _ = net;
+    let _ = data;
+    let _ = batch_size;
+    let _ = epochs;
+    let _ = print_loss;
+    let _ = metrics;
+    net = false;
+    println!("{}", net);
 }
 
 #[ocaml::func]
