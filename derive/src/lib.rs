@@ -421,7 +421,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #constness #unsafety extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
+            pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
                 assert_eq!(#len, __ocaml_argc as usize);
 
 
