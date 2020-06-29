@@ -338,25 +338,23 @@ unsafe impl<V: FromValue> FromValue for Vec<V> {
     }
 }
 
-unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
-    ::core::slice::from_raw_parts(
-        crate::sys::field(value.0, 0) as *mut Value,
-        crate::sys::wosize_val(value.0),
-    )
-}
-
 unsafe impl<'a> FromValue for &'a [Value] {
-    fn from_value(v: Value) -> &'a [Value] {
-        unsafe { as_slice(v) }
+    fn from_value(value: Value) -> &'a [Value] {
+        unsafe {
+            ::core::slice::from_raw_parts(
+                crate::sys::field(value.0, 0) as *mut Value,
+                crate::sys::wosize_val(value.0),
+            )
+        }
     }
 }
 
 unsafe impl<'a> FromValue for &'a mut [Value] {
-    fn from_value(v: Value) -> &'a mut [Value] {
+    fn from_value(value: Value) -> &'a mut [Value] {
         unsafe {
             ::core::slice::from_raw_parts_mut(
-                (v.0 as *mut Value).offset(-1),
-                crate::sys::wosize_val(v.0) + 1,
+                crate::sys::field(value.0, 0) as *mut Value,
+                crate::sys::wosize_val(value.0),
             )
         }
     }
