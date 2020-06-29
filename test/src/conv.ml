@@ -78,3 +78,17 @@ let%test "string (non-copy)" = (
   let a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" in
   string_non_copying a = a
 )
+
+
+external direct_slice: Int64.t array -> Int64.t = "direct_slice"
+external deep_clone : 'a -> 'a = "deep_clone"
+
+let%test "direct slice 1" = (
+  let arr = [| 1L; 2L; 3L |] in
+  direct_slice arr = 6L
+)
+
+let%test "deep clone 1" = (
+  let a = [1; 2; 3; 4; 5] in
+  deep_clone a = a
+)

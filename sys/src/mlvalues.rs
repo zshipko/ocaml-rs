@@ -95,11 +95,6 @@ pub unsafe fn field(block: Value, index: usize) -> *mut Value {
     (block as *mut Value).add(index)
 }
 
-#[doc(hidden)]
-pub unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
-    ::core::slice::from_raw_parts((value as *const Value).offset(-1), wosize_val(value) + 1)
-}
-
 /// The OCaml `()` (`unit`) value
 pub const UNIT: Value = val_int(0);
 

@@ -538,27 +538,29 @@ impl Value {
         }
         unsafe {
             if self.tag() >= Tag::NO_SCAN {
-                let slice0 = sys::as_slice(self.0);
+                let slice0 = slice(self);
                 let vec1 = slice0.to_vec();
                 let ptr1 = vec1.as_ptr();
                 core::mem::forget(vec1);
                 return Value(ptr1.offset(1) as isize);
             }
-            let slice0 = sys::as_slice(self.0);
-            let vec1: Vec<sys::Value> = slice0
+            let slice0 = slice(self);
+            let vec1: Vec<Value> = slice0
                 .iter()
                 .enumerate()
-                .map(|(i, v)| {
-                    if i == 0 {
-                        *v
-                    } else {
-                        Value(*v).deep_clone_to_rust().0
-                    }
-                })
+                .map(|(i, v)| if i == 0 { *v } else { v.deep_clone_to_rust() })
                 .collect();
             let ptr1 = vec1.as_ptr();
             core::mem::forget(vec1);
             Value(ptr1.offset(1) as isize)
         }
     }
+}
+
+#[cfg(not(feature = "no-std"))]
+unsafe fn slice<'a>(value: Value) -> &'a [Value] {
+    ::core::slice::from_raw_parts(
+        (value.0 as *const Value).offset(-1),
+        sys::wosize_val(value.0) + 1,
+    )
 }

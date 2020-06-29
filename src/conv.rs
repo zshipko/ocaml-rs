@@ -340,8 +340,8 @@ unsafe impl<V: FromValue> FromValue for Vec<V> {
 
 unsafe fn as_slice<'a>(value: Value) -> &'a [Value] {
     ::core::slice::from_raw_parts(
-        (value.0 as *const Value).offset(-1),
-        crate::sys::wosize_val(value.0) + 1,
+        crate::sys::field(value.0, 0) as *mut Value,
+        crate::sys::wosize_val(value.0),
     )
 }
 
