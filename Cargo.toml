@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.13.6"
+version = "0.14.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -14,8 +14,8 @@ edition = "2018"
 features = [ "docs-rs", "derive", "link" ]
 
 [dependencies]
-ocaml-sys = {path = "./sys", version = "0.13.1"}
-ocaml-derive = {path = "./derive", optional = true, version = "0.13.3"}
+ocaml-sys = {path = "./sys", version = "0.14"}
+ocaml-derive = {path = "./derive", optional = true, version = "0.14"}
 cstr_core = {version = "0.2", optional = true}
 
 [features]

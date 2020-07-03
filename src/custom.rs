@@ -26,25 +26,8 @@ pub struct CustomOps {
 
 impl Default for CustomOps {
     fn default() -> CustomOps {
-        CustomOps {
-            identifier: core::ptr::null(),
-            finalize: None,
-            compare: None,
-            hash: None,
-            serialize: None,
-            deserialize: None,
-            compare_ext: None,
-            fixed_length: core::ptr::null_mut(),
-        }
+        DEFAULT_CUSTOM_OPS
     }
-}
-
-/// CustomType wraps `CustomOps` to provide `name` and `fixed_length` in the safe manner
-pub struct CustomType {
-    /// Type name
-    pub name: &'static str,
-    /// Owned `fixed_length` value
-    pub fixed_length: Option<sys::custom_fixed_length>,
 }
 
 /// `Custom` is used to define OCaml types that wrap existing Rust types, but are owned by the
@@ -72,8 +55,11 @@ pub struct CustomType {
 /// }
 /// ```
 pub trait Custom {
-    /// Custom type implementation
-    const TYPE: CustomType;
+    /// Custom type name
+    const NAME: &'static str;
+
+    /// Custom type fixed length
+    const FIXED_LENGTH: Option<sys::custom_fixed_length> = None;
 
     /// Custom operations
     const OPS: CustomOps;
@@ -145,13 +131,10 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 /// }
 ///
 /// impl ocaml::Custom for MyType2 {
-///     const TYPE: ocaml::custom::CustomType = ocaml::custom::CustomType {
-///         name: "rust.MyType\0",
-///         fixed_length: None,
-///     };
+///     const NAME: &'static str = "rust.MyType\0";
 ///
 ///     const OPS: ocaml::custom::CustomOps = ocaml::custom::CustomOps {
-///         identifier: Self::TYPE.name.as_ptr() as *mut ocaml::sys::Char,
+///         identifier: Self::NAME.as_ptr() as *mut ocaml::sys::Char,
 ///         finalize: Some(mytype_finalizer),
 ///         compare: Some(mytype_compare),
 ///         .. ocaml::custom::DEFAULT_CUSTOM_OPS
@@ -193,13 +176,11 @@ macro_rules! custom {
             }
         }
     };
-    {name : $name:expr $(, $($k:ident : $v:expr),*)? $(,)? } => {
-        const TYPE: $crate::custom::CustomType = $crate::custom::CustomType {
-            name: concat!($name, "\0"),
-            fixed_length: None,
-        };
+    {name : $name:expr $(, fixed_length: $fl:expr)? $(, $($k:ident : $v:expr),*)? $(,)? } => {
+        const NAME: &'static str = concat!($name, "\0");
 
         const OPS: $crate::custom::CustomOps = $crate::custom::CustomOps {
+            identifier: Self::NAME.as_ptr() as *const $crate::sys::Char,
             $($($k: Some($v),)*)?
             .. $crate::custom::DEFAULT_CUSTOM_OPS
         };
