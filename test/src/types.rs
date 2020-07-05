@@ -30,6 +30,11 @@ pub fn array_make_range(
 }
 
 #[ocaml::func]
+pub fn array_make_range_f(start: isize, stop: isize) -> Vec<f64> {
+    (start..stop).map(|x| x as f64).collect()
+}
+
+#[ocaml::func]
 pub fn array_replace(
     mut arr: ocaml::Array<ocaml::Value>,
     index: ocaml::Uint,
