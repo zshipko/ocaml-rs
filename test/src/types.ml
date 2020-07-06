@@ -14,10 +14,12 @@ let%test "list cons 1" = (list_cons (list_nil ()) 12.5 = [12.5])
 let%test "list cons 2" = (list_cons (list_cons (list_nil ()) 12.5) 11.5 = [11.5; 12.5])
 
 external array_make_range: int -> int -> int array = "array_make_range"
+external array_make_range_f: int -> int -> float array = "array_make_range_f"
 external array_replace: 'a array -> int -> 'a -> 'a option = "array_replace"
 
 let%test "array make range 1" = (array_make_range 0 0 = [||])
-let%test "array make rnage 2" = (array_make_range 0 10 = [|0; 1; 2; 3; 4; 5; 6; 7; 8; 9|])
+let%test "array make range 2" = (array_make_range 0 10 = [|0; 1; 2; 3; 4; 5; 6; 7; 8; 9|])
+let%test "array make range f" = (array_make_range_f 0 50_000 |> Array.length = 50_000)
 let%test "array replace 1" = (
   let a = [| "A"; "B"; "C" |] in
   (array_replace a 1 "X" = (Some "B")) && (a.(1) = "X")
