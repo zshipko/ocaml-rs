@@ -289,14 +289,15 @@ impl<T: ToValue + FromValue> List<T> {
     #[must_use]
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, v: T) -> List<T> {
-        local!(x, tmp);
-        x = v.to_value();
-        unsafe {
-            tmp = Value(sys::caml_alloc(2, 0));
-            tmp.store_field(0, x);
-            tmp.store_field(1, self.0);
-        }
-        List(tmp, PhantomData)
+        frame!((x, tmp) {
+                x = v.to_value();
+            unsafe {
+                tmp = Value(sys::caml_alloc(2, 0));
+                tmp.store_field(0, x);
+                tmp.store_field(1, self.0);
+            }
+            List(tmp, PhantomData)
+        })
     }
 
     /// List head
