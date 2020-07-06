@@ -127,13 +127,14 @@ macro_rules! tuple_impl {
                     }
                 )*
 
-                crate::local!(v, x);
-                v = $crate::Value::alloc(len, Tag(0));
-                $(
-                    x = $t::to_value(self.$n);
-                    v.store_field($n, x);
-                )*
-                v
+                crate::frame!((v, x) {
+                    v = $crate::Value::alloc(len, Tag(0));
+                    $(
+                        x = $t::to_value(self.$n);
+                        v.store_field($n, x);
+                    )*
+                    v
+                })
             }
         }
     };
@@ -216,11 +217,10 @@ unsafe impl<T: FromValue> FromValue for Option<T> {
 unsafe impl<T: ToValue> ToValue for Option<T> {
     fn to_value(self) -> Value {
         match self {
-            Some(y) => {
-                crate::local!(x);
+            Some(y) => crate::frame!((x) {
                 x = y.to_value();
                 Value::some(x)
-            }
+            }),
             None => Value::none(),
         }
     }
@@ -312,15 +312,16 @@ unsafe impl ToValue for &mut [u8] {
 unsafe impl<V: ToValue> ToValue for Vec<V> {
     fn to_value(self) -> Value {
         let len = self.len();
-        let mut arr = Value::alloc(len, Tag(0));
+        crate::frame!((arr, x) {
+            arr = Value::alloc(len, Tag(0));
 
-        crate::local!(x);
-        for (i, v) in self.into_iter().enumerate() {
-            x = v.to_value();
-            arr.store_field(i, x);
-        }
+            for (i, v) in self.into_iter().enumerate() {
+                x = v.to_value();
+                arr.store_field(i, x);
+            }
 
         arr
+        })
     }
 }
 
@@ -381,14 +382,15 @@ unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V>
     fn to_value(self) -> Value {
         let mut list = crate::List::empty();
 
-        crate::local!(k_, v_);
-        self.into_iter().rev().for_each(|(k, v)| {
-            k_ = k.to_value();
-            v_ = v.to_value();
-            list = list.add((k_, v_));
-        });
+        crate::frame!((k_, v_) {
+            self.into_iter().rev().for_each(|(k, v)| {
+                k_ = k.to_value();
+                v_ = v.to_value();
+                list = list.add((k_, v_));
+            });
 
-        list.to_value()
+            list.to_value()
+        })
     }
 }
 
@@ -413,12 +415,13 @@ unsafe impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
     fn to_value(self) -> Value {
         let mut list = crate::List::empty();
 
-        local!(x);
-        self.into_iter().rev().for_each(|t| {
-            x = t.to_value();
-            list = list.add(x);
-        });
-        list.to_value()
+        frame!((x) {
+            self.into_iter().rev().for_each(|t| {
+                x = t.to_value();
+                list = list.add(x);
+            });
+            list.to_value()
+        })
     }
 }
 
