@@ -1,5 +1,5 @@
-/// `local!` can used to define local variables in OCaml functions
 #[macro_export]
+#[doc(hidden)]
 macro_rules! local {
     ($($local:ident),*) => {
         #[allow(unused_mut)]
