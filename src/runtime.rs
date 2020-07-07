@@ -1,6 +1,6 @@
 use crate::sys;
 
-#[cfg(feature = "link")]
+#[cfg(not(feature = "no-std"))]
 static RUNTIME: std::sync::Once = std::sync::Once::new();
 
 /// Release global lock
@@ -33,7 +33,7 @@ pub fn unlocked<T, F: FnOnce() -> T>(f: F) -> T {
 /// `Sys.argv`.
 ///
 /// This is equivalent to calling `caml_main`
-#[cfg(feature = "link")]
+#[cfg(not(feature = "no-std"))]
 pub fn init() {
     RUNTIME.call_once(|| {
         let args = std::env::args()
