@@ -68,3 +68,9 @@ pub fn hash_variant_def(i: ocaml::Float) -> Value {
 pub fn test_panic() -> ocaml::Int {
     panic!("XXX")
 }
+
+#[ocaml::func]
+pub fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
+    let f: Value = Value::named("call_named").unwrap();
+    f.call(g)
+}

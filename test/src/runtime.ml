@@ -64,3 +64,10 @@ let %test "test custom panic exception" = try
 with
   | Rust s -> s = "XXX"
   | _ -> false
+
+let () = Callback.register "call_named" (fun x -> x *. 2.)
+external test_call_named : float -> float = "test_call_named"
+
+let%test "test call named" = (
+  test_call_named 2.0 = 4.0
+)
