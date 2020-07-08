@@ -98,3 +98,8 @@ pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
     let b = a.deep_clone_to_rust();
     b.deep_clone_to_ocaml()
 }
+
+#[ocaml::func]
+pub fn pair_vec() -> ocaml::Value {
+    vec![("foo", 1), ("bar", 2isize)].to_value()
+}

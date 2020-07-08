@@ -92,3 +92,9 @@ let%test "deep clone 1" = (
   let a = [1; 2; 3; 4; 5] in
   deep_clone a = a
 )
+
+external get_pair_vec: unit -> (string * int) array = "pair_vec"
+
+let%test "get-pair-vec" = (
+  get_pair_vec () = [| "foo", 1; "bar", 2 |]
+)
