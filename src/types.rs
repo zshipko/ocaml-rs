@@ -423,7 +423,7 @@ pub mod bigarray {
                         T::kind() | bigarray::Managed::EXTERNAL as i32,
                         1,
                         data.as_mut_ptr() as bigarray::Data,
-                        data.len() as i32,
+                        data.len() as sys::Intnat,
                     ))
                 };
                 x
