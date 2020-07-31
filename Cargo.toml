@@ -17,6 +17,7 @@ features = [ "docs-rs", "derive", "link" ]
 ocaml-sys = {path = "./sys", version = "0.14"}
 ocaml-derive = {path = "./derive", optional = true, version = "0.14"}
 cstr_core = {version = "0.2", optional = true}
+ndarray = {version = "^0.13.1", optional = true}
 
 [features]
 default = ["derive"]
@@ -24,6 +25,7 @@ derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 docs-rs = ["ocaml-sys/docs-rs"]
 no-std = ["cstr_core/alloc"]
+bigarray = ["ndarray"]
 
 [workspace]
 members = [

@@ -478,4 +478,62 @@ pub mod bigarray {
             unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
         }
     }
+
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    use ndarray::Dimension;
+
+    /// OCaml Bigarray.Array2 type, , this introduces no
+    /// additional overhead compared to a `Value` type
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[repr(transparent)]
+    #[derive(Clone, Copy, PartialEq)]
+    pub struct Array2<T>(Value, PhantomData<T>);
+
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    unsafe impl<T> FromValue for Array2<T> {
+        fn from_value(value: Value) -> Array2<T> {
+            Array2(value, PhantomData)
+        }
+    }
+
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    unsafe impl<T> ToValue for Array2<T> {
+        fn to_value(self) -> Value {
+            self.0
+        }
+    }
+
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    impl<T: Copy + Kind> Array2<T> {
+        /// Create a new OCaml `Bigarray.Array2` with the given type and shape
+        pub fn create(dim: ndarray::Ix2) -> Array2<T> {
+            let x = crate::frame!((x) {
+                let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
+                x = unsafe {
+                    Value(bigarray::caml_ba_alloc_dims(
+                        T::kind() | bigarray::Managed::MANAGED as i32,
+                        2,
+                        data,
+                        dim[0] as sys::Intnat,
+                        dim[1] as sys::Intnat,
+                    ))
+                };
+                x
+            });
+            Array2(x, PhantomData)
+        }
+    }
+
+    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    impl<T: Copy + Kind> From<ndarray::Array2<T>> for Array2<T> {
+        fn from(data: ndarray::Array2<T>) -> Array2<T> {
+            let dim = data.raw_dim();
+            let array = Array2::create(dim);
+            let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe {
+                std::ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+            }
+            array
+        }
+    }
 }
