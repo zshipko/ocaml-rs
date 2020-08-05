@@ -321,21 +321,54 @@ impl<T: ToValue + FromValue> List<T> {
     #[cfg(not(feature = "no-std"))]
     /// List as `Vec`
     pub fn to_vec(&self) -> Vec<T> {
-        let mut vec: Vec<T> = Vec::new();
-        let mut value = self.0;
-        let empty = Self::empty().0;
-        while value != empty {
-            let val = value.field(0);
-            vec.push(T::from_value(val));
-            value = value.field(1);
-        }
-        vec
+        self.iter().collect()
     }
 
     #[cfg(not(feature = "no-std"))]
     /// List as `LinkedList`
     pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
         FromValue::from_value(self.0)
+    }
+
+    #[cfg(not(feature = "no-std"))]
+    /// List iterator
+    pub fn iter(&self) -> ListIterator<T> {
+        ListIterator {
+            inner: self.0,
+            _marker: PhantomData,
+        }
+    }
+}
+
+#[cfg(not(feature = "no-std"))]
+impl<T: ToValue + FromValue> IntoIterator for List<T> {
+    type Item = T;
+    type IntoIter = ListIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+/// List iterator.
+#[cfg(not(feature = "no-std"))]
+pub struct ListIterator<T: ToValue + FromValue> {
+    inner: Value,
+    _marker: PhantomData<T>,
+}
+
+#[cfg(not(feature = "no-std"))]
+impl<T: ToValue + FromValue> Iterator for ListIterator<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.inner != Value::unit() {
+            let val = self.inner.field(0);
+            self.inner = self.inner.field(1);
+            Some(val)
+        } else {
+            None
+        }
     }
 }
 
