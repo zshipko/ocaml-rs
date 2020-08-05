@@ -479,31 +479,31 @@ pub mod bigarray {
         }
     }
 
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     use ndarray::Dimension;
 
     /// OCaml Bigarray.Array2 type, , this introduces no
     /// additional overhead compared to a `Value` type
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     #[repr(transparent)]
     #[derive(Clone, Copy, PartialEq)]
     pub struct Array2<T>(Value, PhantomData<T>);
 
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     unsafe impl<T> FromValue for Array2<T> {
         fn from_value(value: Value) -> Array2<T> {
             Array2(value, PhantomData)
         }
     }
 
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     unsafe impl<T> ToValue for Array2<T> {
         fn to_value(self) -> Value {
             self.0
         }
     }
 
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
         pub fn create(dim: ndarray::Ix2) -> Array2<T> {
@@ -524,7 +524,7 @@ pub mod bigarray {
         }
     }
 
-    #[cfg(all(feature = "bigarray", not(feature = "no-std")))]
+    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     impl<T: Copy + Kind> From<ndarray::Array2<T>> for Array2<T> {
         fn from(data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();

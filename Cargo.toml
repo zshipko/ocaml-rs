@@ -25,7 +25,7 @@ derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 docs-rs = ["ocaml-sys/docs-rs"]
 no-std = ["cstr_core/alloc"]
-bigarray = ["ndarray"]
+bigarray-ext = ["ndarray"]
 
 [workspace]
 members = [
