@@ -18,7 +18,7 @@ pub struct Bigarray {
     pub num_dims: Intnat,
     pub flags: Intnat,
     pub proxy: *const BigarrayProxy,
-    pub dim: *const Intnat,
+    pub dim: [Intnat; 0],
 }
 
 #[allow(non_camel_case_types)]

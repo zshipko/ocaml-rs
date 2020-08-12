@@ -409,7 +409,7 @@ pub mod bigarray {
     make_kind!(i32, INT32);
     make_kind!(char, CHAR);
 
-    /// OCaml Bigarray.Array1 type, , this introduces no
+    /// OCaml Bigarray.Array1 type, this introduces no
     /// additional overhead compared to a `Value` type
     #[repr(transparent)]
     #[derive(Clone, Copy, PartialEq)]
@@ -491,7 +491,7 @@ pub mod bigarray {
         /// Returns the number of items in `self`
         pub fn len(self) -> Size {
             let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-            unsafe { (*ba).dim as usize }
+            unsafe { (*ba).dim.as_ptr() as usize }
         }
 
         /// Returns true when `self.len() == 0`
@@ -513,30 +513,76 @@ pub mod bigarray {
     }
 
     #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
-    use ndarray::Dimension;
+    pub use super::bigarray_ext::*;
+}
 
-    /// OCaml Bigarray.Array2 type, , this introduces no
+#[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
+pub(crate) mod bigarray_ext {
+    use ndarray::{ArrayView2, ArrayViewMut2, Dimension, ShapeError};
+
+    use core::{marker::PhantomData, mem, slice};
+
+    use crate::{
+        bigarray::Kind,
+        sys::{self, bigarray},
+        FromValue, ToValue, Value,
+    };
+
+    /// OCaml Bigarray.Array2 type, this introduces no
     /// additional overhead compared to a `Value` type
-    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     #[repr(transparent)]
     #[derive(Clone, Copy, PartialEq)]
     pub struct Array2<T>(Value, PhantomData<T>);
 
-    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
+    impl<T: Copy + Kind> Array2<T> {
+        /// Returns array view
+        pub fn view(&self) -> Result<ArrayView2<T>, ShapeError> {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let data = unsafe { slice::from_raw_parts((*ba).data as *mut T, self.len()) };
+            ArrayView2::from_shape(self.shape(), data)
+        }
+
+        /// Returns mutable array view
+        pub fn view_mut(&mut self) -> Result<ArrayViewMut2<T>, ShapeError> {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let data = unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) };
+            ArrayViewMut2::from_shape(self.shape(), data)
+        }
+
+        /// Returns the shape of `self`
+        pub fn shape(&self) -> (usize, usize) {
+            let dim = self.dim();
+            (dim[0], dim[1])
+        }
+
+        /// Returns the number of items in `self`
+        pub fn len(&self) -> usize {
+            self.dim().iter().sum::<usize>()
+        }
+
+        /// Returns true when the list is empty
+        pub fn is_empty(&self) -> bool {
+            self.len() == 0
+        }
+
+        fn dim(&self) -> &[usize] {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 2) }
+        }
+    }
+
     unsafe impl<T> FromValue for Array2<T> {
         fn from_value(value: Value) -> Array2<T> {
             Array2(value, PhantomData)
         }
     }
 
-    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     unsafe impl<T> ToValue for Array2<T> {
         fn to_value(self) -> Value {
             self.0
         }
     }
 
-    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
         pub fn create(dim: ndarray::Ix2) -> Array2<T> {
@@ -557,7 +603,6 @@ pub mod bigarray {
         }
     }
 
-    #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
     impl<T: Copy + Kind> From<ndarray::Array2<T>> for Array2<T> {
         fn from(data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();
