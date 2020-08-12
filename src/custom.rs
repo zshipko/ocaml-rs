@@ -131,7 +131,7 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 /// }
 ///
 /// impl ocaml::Custom for MyType2 {
-///     const NAME: &'static str = "rust.MyType\0";
+///     const NAME: &str = "rust.MyType\0";
 ///
 ///     const OPS: ocaml::custom::CustomOps = ocaml::custom::CustomOps {
 ///         identifier: Self::NAME.as_ptr() as *mut ocaml::sys::Char,
@@ -177,7 +177,7 @@ macro_rules! custom {
         }
     };
     {name : $name:expr $(, fixed_length: $fl:expr)? $(, $($k:ident : $v:expr),*)? $(,)? } => {
-        const NAME: &'static str = concat!($name, "\0");
+        const NAME: &str = concat!($name, "\0");
 
         const OPS: $crate::custom::CustomOps = $crate::custom::CustomOps {
             identifier: Self::NAME.as_ptr() as *const $crate::sys::Char,
