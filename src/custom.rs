@@ -177,7 +177,7 @@ macro_rules! custom {
         }
     };
     {name : $name:expr $(, fixed_length: $fl:expr)? $(, $($k:ident : $v:expr),*)? $(,)? } => {
-        const NAME: &str = concat!($name, "\0");
+        const NAME: &'static str = concat!($name, "\0");
 
         const OPS: $crate::custom::CustomOps = $crate::custom::CustomOps {
             identifier: Self::NAME.as_ptr() as *const $crate::sys::Char,
