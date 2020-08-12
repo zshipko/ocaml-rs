@@ -558,7 +558,8 @@ pub(crate) mod bigarray_ext {
 
         /// Returns the number of items in `self`
         pub fn len(&self) -> usize {
-            self.dim().iter().sum::<usize>()
+            let dim = self.dim();
+            dim[0] * dim[1]
         }
 
         /// Returns true when the list is empty
