@@ -491,7 +491,8 @@ pub mod bigarray {
         /// Returns the number of items in `self`
         pub fn len(self) -> Size {
             let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-            unsafe { (*ba).dim.as_ptr() as usize }
+            let dim = unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 1) };
+            dim[0]
         }
 
         /// Returns true when `self.len() == 0`
