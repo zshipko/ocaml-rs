@@ -34,10 +34,7 @@ pub fn enum1_get_second_value(e: Enum1) -> Option<ocaml::Array<&'static str>> {
 
 #[ocaml::func]
 pub fn enum1_is_empty(e: Enum1) -> bool {
-    match e {
-        Enum1::Empty => true,
-        _ => false,
-    }
+    matches!(e, Enum1::Empty)
 }
 
 #[derive(ToValue, FromValue, Default)]
