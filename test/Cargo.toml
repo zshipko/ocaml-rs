@@ -6,5 +6,7 @@ edition = "2018"
 [lib]
 crate-type = ["staticlib", "cdylib"]
 
-[dependencies.ocaml]
-path = ".."
+[dependencies]
+ocaml = { path = "..", features = ["bigarray-ext"] }
+
+ndarray = "^0.13.1"
