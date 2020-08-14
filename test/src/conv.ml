@@ -113,7 +113,7 @@ let test_array2_checked dim1 dim2 = (
       if y == dim2 then
         check (x + 1) 0 v
       else
-        let value = Float.of_int (x * y) in
+        let value = float_of_int (x * y) in
         array2_set arr x y value;
         check x (y + 1) (array2_get arr x y = value && arr.{x, y} = value)
   in
