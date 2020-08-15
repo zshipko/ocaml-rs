@@ -519,7 +519,7 @@ pub mod bigarray {
 
 #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
 pub(crate) mod bigarray_ext {
-    use ndarray::{ArrayView2, ArrayViewMut2, Dimension, ShapeError};
+    use ndarray::{ArrayView2, ArrayView3, ArrayViewMut2, ArrayViewMut3, Dimension, ShapeError};
 
     use core::{marker::PhantomData, mem, slice};
 
@@ -609,6 +609,95 @@ pub(crate) mod bigarray_ext {
         fn from(data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();
             let array = Array2::create(dim);
+            let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe {
+                std::ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+            }
+            array
+        }
+    }
+
+    /// OCaml Bigarray.Array3 type, this introduces no
+    /// additional overhead compared to a `Value` type
+    #[repr(transparent)]
+    #[derive(Clone, Copy, PartialEq)]
+    pub struct Array3<T>(Value, PhantomData<T>);
+
+    impl<T: Copy + Kind> Array3<T> {
+        /// Returns array view
+        pub fn view(&self) -> Result<ArrayView3<T>, ShapeError> {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let data = unsafe { slice::from_raw_parts((*ba).data as *mut T, self.len()) };
+            ArrayView3::from_shape(self.shape(), data)
+        }
+
+        /// Returns mutable array view
+        pub fn view_mut(&mut self) -> Result<ArrayViewMut3<T>, ShapeError> {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let data = unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) };
+            ArrayViewMut3::from_shape(self.shape(), data)
+        }
+
+        /// Returns the shape of `self`
+        pub fn shape(&self) -> (usize, usize, usize) {
+            let dim = self.dim();
+            (dim[0], dim[1], dim[2])
+        }
+
+        /// Returns the number of items in `self`
+        pub fn len(&self) -> usize {
+            let dim = self.dim();
+            dim[0] * dim[1] * dim[2]
+        }
+
+        /// Returns true when the list is empty
+        pub fn is_empty(&self) -> bool {
+            self.len() == 0
+        }
+
+        fn dim(&self) -> &[usize] {
+            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 3) }
+        }
+    }
+
+    unsafe impl<T> FromValue for Array3<T> {
+        fn from_value(value: Value) -> Array3<T> {
+            Array3(value, PhantomData)
+        }
+    }
+
+    unsafe impl<T> ToValue for Array3<T> {
+        fn to_value(self) -> Value {
+            self.0
+        }
+    }
+
+    impl<T: Copy + Kind> Array3<T> {
+        /// Create a new OCaml `Bigarray.Array3` with the given type and shape
+        pub fn create(dim: ndarray::Ix3) -> Array3<T> {
+            let x = crate::frame!((x) {
+                let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
+                x = unsafe {
+                    Value(bigarray::caml_ba_alloc_dims(
+                        T::kind() | bigarray::Managed::MANAGED as i32,
+                        3,
+                        data,
+                        dim[0] as sys::Intnat,
+                        dim[1] as sys::Intnat,
+                        dim[2] as sys::Intnat,
+                    ))
+                };
+                x
+            });
+            Array3(x, PhantomData)
+        }
+    }
+
+    impl<T: Copy + Kind> From<ndarray::Array3<T>> for Array3<T> {
+        fn from(data: ndarray::Array3<T>) -> Array3<T> {
+            let dim = data.raw_dim();
+            let array = Array3::create(dim);
             let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
             unsafe {
                 std::ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
