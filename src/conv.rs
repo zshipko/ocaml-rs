@@ -177,12 +177,14 @@ unsafe impl FromValue for bool {
 #[cfg(not(feature = "no-std"))]
 unsafe impl ToValue for String {
     fn to_value(self) -> Value {
-        unsafe {
-            let value = crate::sys::caml_alloc_string(self.len());
-            let ptr = crate::sys::string_val(value);
-            std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-            Value(value)
-        }
+        frame!((value) {
+            unsafe {
+                value.0 = crate::sys::caml_alloc_string(self.len());
+                let ptr = crate::sys::string_val(value.0);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                value
+            }
+        })
     }
 }
 
@@ -239,12 +241,14 @@ unsafe impl FromValue for &str {
 
 unsafe impl ToValue for &str {
     fn to_value(self) -> Value {
-        unsafe {
-            let value = crate::sys::caml_alloc_string(self.len());
-            let ptr = crate::sys::string_val(value);
-            core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-            Value(value)
-        }
+        frame!((value) {
+            unsafe {
+                value.0 = crate::sys::caml_alloc_string(self.len());
+                let ptr = crate::sys::string_val(value.0);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                value
+            }
+        })
     }
 }
 
@@ -261,12 +265,14 @@ unsafe impl FromValue for &mut str {
 
 unsafe impl ToValue for &mut str {
     fn to_value(self) -> Value {
-        unsafe {
-            let value = crate::sys::caml_alloc_string(self.len());
-            let ptr = crate::sys::string_val(value);
-            core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-            Value(value)
-        }
+        frame!((value) {
+            unsafe {
+                value.0 = crate::sys::caml_alloc_string(self.len());
+                let ptr = crate::sys::string_val(value.0);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                value
+            }
+        })
     }
 }
 
@@ -280,12 +286,14 @@ unsafe impl FromValue for &[u8] {
 
 unsafe impl ToValue for &[u8] {
     fn to_value(self) -> Value {
-        unsafe {
-            let value = crate::sys::caml_alloc_string(self.len());
-            let ptr = crate::sys::string_val(value);
-            core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-            Value(value)
-        }
+        frame!((value) {
+            unsafe {
+                value.0 = crate::sys::caml_alloc_string(self.len());
+                let ptr = crate::sys::string_val(value.0);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                value
+            }
+        })
     }
 }
 
@@ -299,12 +307,14 @@ unsafe impl FromValue for &mut [u8] {
 
 unsafe impl ToValue for &mut [u8] {
     fn to_value(self) -> Value {
-        unsafe {
-            let value = crate::sys::caml_alloc_string(self.len());
-            let ptr = crate::sys::string_val(value);
-            core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-            Value(value)
-        }
+        frame!((value) {
+            unsafe {
+                value.0 = crate::sys::caml_alloc_string(self.len());
+                let ptr = crate::sys::string_val(value.0);
+                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                value
+            }
+        })
     }
 }
 
