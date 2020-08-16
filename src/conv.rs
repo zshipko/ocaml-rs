@@ -181,7 +181,7 @@ unsafe impl ToValue for String {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
-                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
                 value
             }
         })
@@ -245,7 +245,7 @@ unsafe impl ToValue for &str {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
-                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
                 value
             }
         })
@@ -269,7 +269,7 @@ unsafe impl ToValue for &mut str {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
-                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
                 value
             }
         })
@@ -290,7 +290,7 @@ unsafe impl ToValue for &[u8] {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
-                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
                 value
             }
         })
@@ -311,7 +311,7 @@ unsafe impl ToValue for &mut [u8] {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
-                std::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
+                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
                 value
             }
         })
