@@ -33,26 +33,6 @@ macro_rules! caml_param {
     }
 }
 
-/// Initializes and registers the given identifier(s) as a local value with the OCaml runtime.
-///
-/// ## Original C code
-///
-/// ```c
-/// #define CAMLlocal1(x) \
-/// value x = Val_unit; \
-/// CAMLxparam1 (x)
-/// ```
-///
-#[macro_export]
-macro_rules! caml_local {
-    ($($local:ident),*) => {
-        #[allow(unused_mut)]
-        $(let mut $local = $crate::UNIT;)*
-        #[allow(unused_unsafe)]
-        $crate::caml_param!($($local),*);
-    }
-}
-
 #[macro_export]
 macro_rules! caml_body {
     ($(($($param:expr),*))? $code:block) => {

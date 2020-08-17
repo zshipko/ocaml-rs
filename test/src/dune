@@ -17,7 +17,7 @@
 (library
  (name ocamlrs_test)
  (public_name ocamlrs-test)
- (modules conv types callbacks runtime custom)
+ (modules conv types callbacks runtime custom util)
  (inline_tests)
  (preprocess (pps ppx_inline_test))
  (libraries unix)

@@ -1,14 +1,3 @@
-#[macro_export]
-#[doc(hidden)]
-macro_rules! local {
-    ($($local:ident),*) => {
-        #[allow(unused_mut)]
-        $(let mut $local = $crate::Value($crate::sys::UNIT);)*
-        #[allow(unused_unsafe)]
-        $crate::sys::caml_param!($($local.0),*);
-    }
-}
-
 /// `frame!` can be used to create new local variables that play nicely with the garbage collector
 #[macro_export]
 macro_rules! frame {
@@ -16,7 +5,10 @@ macro_rules! frame {
        {
             #[allow(unused_unsafe)]
             let caml_frame = unsafe { $crate::sys::local_roots() };
-            $crate::local!($($param),*);
+            #[allow(unused_mut)]
+            $(let mut $param = $crate::Value($crate::sys::UNIT);)*
+            #[allow(unused_unsafe)]
+            $crate::sys::caml_param!($($param.0),*);
             #[allow(unused_mut)]
             let mut res = || { $code };
             let res = res();
