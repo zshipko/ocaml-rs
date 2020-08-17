@@ -2,8 +2,11 @@
 
 use crate::{sys, CamlError, Error};
 
-use core::marker::PhantomData;
-use core::{mem, slice};
+use core::{
+    iter::{IntoIterator, Iterator},
+    marker::PhantomData,
+    mem, slice,
+};
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
