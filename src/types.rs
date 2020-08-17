@@ -520,7 +520,7 @@ pub mod bigarray {
 pub(crate) mod bigarray_ext {
     use ndarray::{ArrayView2, ArrayView3, ArrayViewMut2, ArrayViewMut3, Dimension, ShapeError};
 
-    use core::{marker::PhantomData, mem, slice};
+    use core::{marker::PhantomData, mem, ptr, slice};
 
     use crate::{
         bigarray::Kind,
@@ -610,7 +610,7 @@ pub(crate) mod bigarray_ext {
             let array = Array2::create(dim);
             let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
             unsafe {
-                std::ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+                ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
             array
         }
@@ -699,7 +699,7 @@ pub(crate) mod bigarray_ext {
             let array = Array3::create(dim);
             let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
             unsafe {
-                std::ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+                ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
             array
         }
