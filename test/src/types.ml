@@ -81,7 +81,7 @@ let test_array2_checked dim1 dim2 = (
 )
 
 let%test "array2" = Util.check_leaks (fun () ->
-  let dim1 = 900 and dim2 = 800 in
+  let dim1 = 450 and dim2 = 400 in
   let _, check = test_array2_checked dim1 dim2 in
   check
 )
