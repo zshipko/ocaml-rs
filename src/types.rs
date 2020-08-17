@@ -340,7 +340,6 @@ impl<T: ToValue + FromValue> List<T> {
     }
 }
 
-#[cfg(not(feature = "no-std"))]
 impl<T: ToValue + FromValue> IntoIterator for List<T> {
     type Item = T;
     type IntoIter = ListIterator<T>;
@@ -351,13 +350,11 @@ impl<T: ToValue + FromValue> IntoIterator for List<T> {
 }
 
 /// List iterator.
-#[cfg(not(feature = "no-std"))]
 pub struct ListIterator<T: ToValue + FromValue> {
     inner: Value,
     _marker: PhantomData<T>,
 }
 
-#[cfg(not(feature = "no-std"))]
 impl<T: ToValue + FromValue> Iterator for ListIterator<T> {
     type Item = T;
 
