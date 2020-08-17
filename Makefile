@@ -10,8 +10,8 @@ clean:
 	dune clean --root=test
 
 publish:
-	cd sys && cargo package && cargo publish && sleep 5
-	cd derive && cargo package && cargo publish && sleep 5
+	cd sys && cargo package && cargo publish && sleep 20
+	cd derive && cargo package && cargo publish && sleep 20
 	cargo package && cargo publish
 
 .PHONY: test clean
