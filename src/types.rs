@@ -330,7 +330,6 @@ impl<T: ToValue + FromValue> List<T> {
         FromValue::from_value(self.0)
     }
 
-    #[cfg(not(feature = "no-std"))]
     /// List iterator
     pub fn iter(&self) -> ListIterator<T> {
         ListIterator {
