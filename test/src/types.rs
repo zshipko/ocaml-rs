@@ -65,6 +65,29 @@ pub fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
     vec![1f32, 2f32, 3f32, 4f32, 5f32].into()
 }
 
+#[ocaml::func]
+pub fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
+    let arr = ndarray::Array2::zeros((dim1, dim2));
+    arr.into()
+}
+
+#[ocaml::func]
+pub fn array2_set(mut arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize, v: f32) {
+    let mut view = arr.view_mut().expect("view_mut");
+    view[[x, y]] = v;
+}
+
+#[ocaml::func]
+pub fn array2_get(arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize) -> f32 {
+    let view = arr.view().expect("view");
+    view[[x, y]]
+}
+
+#[ocaml::func]
+pub fn array2_format(arr: ocaml::bigarray::Array2<f32>) -> String {
+    format!("{}", arr.view().unwrap()).replace("\n", "")
+}
+
 #[derive(Debug)]
 struct Abstract {
     f: f64,
