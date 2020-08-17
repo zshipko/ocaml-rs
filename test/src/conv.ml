@@ -98,36 +98,3 @@ external get_pair_vec: unit -> (string * int) array = "pair_vec"
 let%test "get-pair-vec" = (
   get_pair_vec () = [| "foo", 1; "bar", 2 |]
 )
-
-type arr = (float, Bigarray.float32_elt, Bigarray.c_layout) Bigarray.Array2.t
-
-external make_array2: int -> int -> arr = "make_array2"
-external array2_format: arr -> string = "array2_format"
-external array2_set: arr -> int -> int -> float -> unit = "array2_set"
-external array2_get: arr -> int -> int -> float = "array2_get"
-
-let test_array2_checked dim1 dim2 = (
-  let arr = make_array2 dim1 dim2 in
-  let rec check x y v =
-    if not v || x == dim1 then v else
-      if y == dim2 then
-        check (x + 1) 0 v
-      else
-        let value = float_of_int (x * y) in
-        array2_set arr x y value;
-        check x (y + 1) (array2_get arr x y = value && arr.{x, y} = value)
-  in
-  arr, check 0 0 true
-)
-
-let%test "array2" = (
-  let dim1 = 9000 and dim2 = 800 in
-  let _, check = test_array2_checked dim1 dim2 in
-  check
-)
-
-let%test "array2_format" = (
-  let dim1 = 3 and dim2 = 3 in
-  let arr, check = test_array2_checked dim1 dim2 in
-  check && (array2_format arr) = "[[0, 0, 0], [0, 1, 2], [0, 2, 4]]"
-)
