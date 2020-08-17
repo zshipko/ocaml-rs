@@ -80,15 +80,16 @@ let test_array2_checked dim1 dim2 = (
   arr, check 0 0 true
 )
 
-let%test "array2" = (
+let%test "array2" = Util.check_leaks (fun () ->
   let dim1 = 900 and dim2 = 800 in
   let _, check = test_array2_checked dim1 dim2 in
   check
 )
 
-let%test "array2_format" = (
+let%test "array2_format" = Util.check_leaks (fun () ->
   let dim1 = 3 and dim2 = 3 in
   let arr, check = test_array2_checked dim1 dim2 in
+  let () = Util.gc () in
   check && (array2_format arr) = "[[0, 0, 0], [0, 1, 2], [0, 2, 4]]"
 )
 
