@@ -71,6 +71,7 @@ let test_array2_checked dim1 dim2 = (
   let rec check x y v =
     if not v || x == dim1 then v else
       if y == dim2 then
+        let () = Gc.minor () in
         check (x + 1) 0 v
       else
         let value = float_of_int (x * y) in
@@ -81,7 +82,7 @@ let test_array2_checked dim1 dim2 = (
 )
 
 let%test "array2" = Util.check_leaks (fun () ->
-  let dim1 = 450 and dim2 = 400 in
+  let dim1 = 9000 and dim2 = 800 in
   let _, check = test_array2_checked dim1 dim2 in
   check
 )
