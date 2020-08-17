@@ -48,7 +48,7 @@ then follow the instructions for editing `.cargo/config`
 - `derive`
   * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
 - `link`
-  * link the native OCaml runtime, this enables `ocaml::runtime::init`, which is equivalent to `caml_main`
+  * link the native OCaml runtime, this should only be used when no OCaml code will be linked statically
 - `no-std`
   * Allows `ocaml` to be used in `#![no_std]` environments like MirageOS
 
