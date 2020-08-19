@@ -73,19 +73,19 @@ pub fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
 
 #[ocaml::func]
 pub fn array2_set(mut arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize, v: f32) {
-    let mut view = arr.view_mut().expect("view_mut");
+    let mut view = arr.view_mut();
     view[[x, y]] = v;
 }
 
 #[ocaml::func]
 pub fn array2_get(arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize) -> f32 {
-    let view = arr.view().expect("view");
+    let view = arr.view();
     view[[x, y]]
 }
 
 #[ocaml::func]
 pub fn array2_format(arr: ocaml::bigarray::Array2<f32>) -> String {
-    format!("{}", arr.view().unwrap()).replace("\n", "")
+    format!("{}", arr.view()).replace("\n", "")
 }
 
 #[derive(Debug)]
