@@ -9,7 +9,7 @@ macro_rules! caml_param {
     ($($n:expr),*) => {
         let mut caml_roots = $crate::CamlRootsBlock::default();
 
-        let mut n = 0;
+        let mut n = 0isize;
         $(
             if n == 5 {
                 n = 0;
@@ -25,7 +25,7 @@ macro_rules! caml_param {
                 caml_roots.nitems = 1;
             }
 
-            caml_roots.tables[n] = &$n as *const _ as *mut _;
+            caml_roots.tables[n as usize] = &$n as *const _ as *mut _;
 
             n += 1;
             caml_roots.ntables = n;

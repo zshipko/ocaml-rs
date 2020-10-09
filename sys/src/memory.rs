@@ -44,8 +44,8 @@ use crate::mlvalues::{field, Size, Value};
 /// The fields need to be public because the macros need to access them, which means they're out of the module; in a future version, perhaps we will add methods on the struct, and avoid any `pub` exposure of the fields.
 pub struct CamlRootsBlock {
     pub next: *mut CamlRootsBlock,
-    pub ntables: usize,
-    pub nitems: usize,
+    pub ntables: isize,
+    pub nitems: isize,
     pub tables: [*mut Value; 5],
 }
 
