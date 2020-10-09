@@ -94,7 +94,7 @@ impl Value {
         finalizer: unsafe extern "C" fn(Value),
         cfg: Option<(usize, usize)>,
     ) -> Value {
-        let (used, max) = cfg.unwrap_or_else(|| (0, 1));
+        let (used, max) = cfg.unwrap_or((0, 1));
         crate::frame!((x) {
             unsafe {
                 Value(sys::caml_alloc_final(
