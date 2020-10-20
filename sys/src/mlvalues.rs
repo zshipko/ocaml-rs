@@ -86,6 +86,12 @@ pub fn is_long(v: Value) -> bool {
 // #define Max_long (((intnat)1 << (8 * sizeof(value) - 2)) - 1)
 // #define Min_long (-((intnat)1 << (8 * sizeof(value) - 2)))
 
+/// Maximum possible value for an OCaml fixnum.
+pub const MAX_FIXNUM: Intnat = (1 << (8 * core::mem::size_of::<Intnat>() - 2)) - 1;
+
+/// Minimum possible value for an OCaml fixnum.
+pub const MIN_FIXNUM: Intnat = -(1 << (8 * core::mem::size_of::<Intnat>() - 2));
+
 /// Extract a field from an OCaml value
 ///
 /// # Safety
@@ -98,6 +104,9 @@ pub unsafe fn field(block: Value, index: usize) -> *mut Value {
 /// The OCaml `()` (`unit`) value
 pub const UNIT: Value = val_int(0);
 
+/// The OCaml `None` value
+pub const NONE: Value = val_int(0);
+
 /// Empty list value
 pub const EMPTY_LIST: Value = val_int(0);
 
@@ -106,6 +115,12 @@ pub const TRUE: Value = val_int(1);
 
 /// OCaml `false` value
 pub const FALSE: Value = val_int(0);
+
+/// Tag used for OCaml conses
+pub const TAG_CONS: Tag = 0;
+
+/// Tag used for OCaml `Some x` values
+pub const TAG_SOME: Tag = 0;
 
 /// Pointer to the first byte
 #[inline]
