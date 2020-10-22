@@ -67,11 +67,11 @@ pub unsafe fn wosize_val(val: Value) -> Size {
 }
 
 /// `(((intnat)(x) << 1) + 1)`
-pub const fn val_int(i: isize) -> Value {
+pub const unsafe fn val_int(i: isize) -> Value {
     ((i as isize) << 1) + 1
 }
 
-pub const fn int_val(val: Value) -> isize {
+pub const unsafe fn int_val(val: Value) -> isize {
     ((val as isize) >> 1) as isize
 }
 
@@ -79,7 +79,7 @@ pub fn is_block(v: Value) -> bool {
     (v & 1) == 0
 }
 
-pub fn is_long(v: Value) -> bool {
+pub const fn is_long(v: Value) -> bool {
     (v & 1) != 0
 }
 
@@ -102,19 +102,19 @@ pub unsafe fn field(block: Value, index: usize) -> *mut Value {
 }
 
 /// The OCaml `()` (`unit`) value
-pub const UNIT: Value = val_int(0);
+pub const UNIT: Value = unsafe { val_int(0) };
 
 /// The OCaml `None` value
-pub const NONE: Value = val_int(0);
+pub const NONE: Value = unsafe { val_int(0) };
 
 /// Empty list value
-pub const EMPTY_LIST: Value = val_int(0);
+pub const EMPTY_LIST: Value = unsafe { val_int(0) };
 
 /// The OCaml `true` value
-pub const TRUE: Value = val_int(1);
+pub const TRUE: Value = unsafe { val_int(1) };
 
 /// OCaml `false` value
-pub const FALSE: Value = val_int(0);
+pub const FALSE: Value = unsafe { val_int(0) };
 
 /// Tag used for OCaml conses
 pub const TAG_CONS: Tag = 0;

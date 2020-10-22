@@ -42,7 +42,7 @@ unsafe impl FromValue for Value {
     }
 }
 
-const NONE: Value = Value(sys::val_int(0));
+const NONE: Value = Value(sys::NONE);
 const UNIT: Value = Value(sys::UNIT);
 
 impl Value {
@@ -242,12 +242,12 @@ impl Value {
 
     /// Create an OCaml `int`
     pub const fn int(i: crate::Int) -> Value {
-        Value(sys::val_int(i))
+        Value(unsafe { sys::val_int(i) })
     }
 
     /// Create an OCaml `int`
     pub const fn uint(i: crate::Uint) -> Value {
-        Value(sys::val_int(i as crate::Int))
+        Value(unsafe { sys::val_int(i as crate::Int) })
     }
 
     /// Create an OCaml `Int64` from `i64`
@@ -306,7 +306,7 @@ impl Value {
 
     /// Convert an OCaml `int` to `isize`
     pub const fn int_val(self) -> isize {
-        sys::int_val(self.0)
+        unsafe { sys::int_val(self.0) }
     }
 
     /// Convert an OCaml `Float` to `f64`
