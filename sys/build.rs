@@ -67,22 +67,36 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
 #[allow(unused)]
 fn run() -> std::io::Result<()> {
     println!("cargo:rerun-if-env-changed=OCAMLOPT");
-
-    let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
+    println!("cargo:rerun-if-env-changed=OCAML_VERSION");
+    println!("cargo:rerun-if-env-changed=OCAML_WHERE_PATH");
 
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
-    let version = std::process::Command::new(&ocamlopt)
-        .arg("-version")
-        .output()?;
+    let ocaml_version = std::env::var("OCAML_VERSION");
+    let ocaml_where_path = std::env::var("OCAML_WHERE_PATH");
+    let ocamlopt = std::env::var("OCAMLOPT").unwrap_or_else(|_| "ocamlopt".to_string());
 
-    let version = std::str::from_utf8(&version.stdout).unwrap().trim();
+    let version: String;
+    let ocaml_path: String;
 
-    let ocaml_path = std::process::Command::new(&ocamlopt)
-        .arg("-where")
-        .output()?;
-
-    let ocaml_path = std::str::from_utf8(&ocaml_path.stdout).unwrap().trim();
+    match (ocaml_version, ocaml_where_path) {
+        (Ok(ver), Ok(path)) => {
+            version = ver;
+            ocaml_path = path;
+        }
+        _ => {
+            version = std::str::from_utf8(
+                std::process::Command::new(&ocamlopt)
+                    .arg("-version")
+                    .output()?.stdout.as_ref()
+                ).unwrap().trim().to_owned();
+            ocaml_path = std::str::from_utf8(
+                std::process::Command::new(&ocamlopt)
+                    .arg("-where")
+                    .output()?.stdout.as_ref()
+                ).unwrap().trim().to_owned();
+        }
+    }
 
     let bin_path = format!("{}/../../bin/ocamlopt", ocaml_path);
 
@@ -109,7 +123,7 @@ fn run() -> std::io::Result<()> {
     }
 
     #[cfg(feature = "link")]
-    link(out_dir, bin_path, ocaml_path)?;
+    link(out_dir, bin_path, ocaml_path.as_ref())?;
 
     Ok(())
 }
