@@ -43,6 +43,18 @@ cargo vendor
 
 then follow the instructions for editing `.cargo/config`
 
+### Build options
+
+By default, building `ocaml-sys` will invoke the `ocamlopt` command to figure out the version and location of the OCaml compiler. There are a few environment variables to control this.
+
+- `OCAMLOPT` (default: `ocamlopt`) is the command that will invoke `ocamlopt`
+- `OCAML_VERSION` (default: result of `$OCAMLOPT -version`) is the target runtime OCaml version.
+- `OCAML_WHERE_PATH` (default: result of `$OCAMLOPT -where`) is the path of the OCaml standard library.
+
+If both `OCAML_VERSION` and `OCAML_WHERE_PATH` are present, their values are used without invoking `ocamlopt`. If any of those two env variables is undefined, then `ocamlopt` will be invoked to obtain both values.
+
+Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for saving time in CI environments where an OCaml install is not really required (to run `clippy` for example).
+
 ### Features
 
 - `derive`
