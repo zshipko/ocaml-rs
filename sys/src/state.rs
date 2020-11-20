@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#[allow(unused)]
 use crate::{Char, Value};
 
 #[repr(C)]
@@ -86,7 +87,7 @@ extern "C" {
     pub static mut Caml_state: *mut caml_domain_state;
 }
 
-#[cfg(caml_state)]
+#[cfg(not(caml_state))]
 extern "C" {
 
     #[doc(hidden)]
