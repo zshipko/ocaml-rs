@@ -88,13 +88,23 @@ fn run() -> std::io::Result<()> {
             version = std::str::from_utf8(
                 std::process::Command::new(&ocamlopt)
                     .arg("-version")
-                    .output()?.stdout.as_ref()
-                ).unwrap().trim().to_owned();
+                    .output()?
+                    .stdout
+                    .as_ref(),
+            )
+            .unwrap()
+            .trim()
+            .to_owned();
             ocaml_path = std::str::from_utf8(
                 std::process::Command::new(&ocamlopt)
                     .arg("-where")
-                    .output()?.stdout.as_ref()
-                ).unwrap().trim().to_owned();
+                    .output()?
+                    .stdout
+                    .as_ref(),
+            )
+            .unwrap()
+            .trim()
+            .to_owned();
         }
     }
 
@@ -116,7 +126,7 @@ fn run() -> std::io::Result<()> {
     let major = split[0].parse::<usize>().unwrap();
     let minor = split[1].parse::<usize>().unwrap();
 
-    if major >= 4 && minor >= 10 {
+    if major >= 4 && minor >= 10 || cfg!(feature = "caml-state") {
         // This feature determines whether or not caml_local_roots should
         // use the caml_state struct or the caml_local_roots global
         println!("cargo:rustc-cfg=caml_state");

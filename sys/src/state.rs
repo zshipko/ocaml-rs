@@ -1,31 +1,38 @@
 #![allow(non_camel_case_types)]
+#[allow(unused)]
 use crate::{Char, Value};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(caml_state)]
 pub struct caml_ref_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(caml_state)]
 pub struct caml_ephe_ref_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(caml_state)]
 pub struct caml_custom_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(caml_state)]
 pub struct longjmp_buffer {
     pub _address: u8,
 }
 
+#[cfg(caml_state)]
 pub type backtrace_slot = *mut ::core::ffi::c_void;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[cfg(caml_state)]
 pub struct caml_domain_state {
     pub _young_ptr: *mut Value,
     pub _young_limit: *mut Value,
@@ -76,7 +83,6 @@ pub struct caml_domain_state {
 
 #[cfg(caml_state)]
 extern "C" {
-
     #[doc(hidden)]
     pub static mut Caml_state: *mut caml_domain_state;
 }
@@ -113,6 +119,7 @@ pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
 }
 
 #[test]
+#[cfg(caml_state)]
 fn bindgen_test_layout_caml_domain_state() {
     assert_eq!(
         ::core::mem::size_of::<caml_domain_state>(),

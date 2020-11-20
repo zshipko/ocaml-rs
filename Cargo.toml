@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.18.1"
+version = "0.19.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -11,11 +11,11 @@ documentation = "https://docs.rs/ocaml"
 edition = "2018"
 
 [package.metadata.docs.rs]
-features = [ "docs-rs", "derive", "link" ]
+features = [ "without-ocamlopt", "derive", "link" ]
 
 [dependencies]
-ocaml-sys = {path = "./sys", version = "0.18.1"}
-ocaml-derive = {path = "./derive", optional = true, version = "0.18"}
+ocaml-sys = {path = "./sys", version = "0.19.0"}
+ocaml-derive = {path = "./derive", optional = true, version = "0.19"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.13.1", optional = true}
 
@@ -23,7 +23,8 @@ ndarray = {version = "^0.13.1", optional = true}
 default = ["derive"]
 derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
-docs-rs = ["ocaml-sys/docs-rs"]
+without-ocamlopt = ["ocaml-sys/without-ocamlopt"]
+caml-state = ["ocaml-sys/caml-state"]
 no-std = ["cstr_core/alloc"]
 bigarray-ext = ["ndarray"]
 

@@ -149,7 +149,7 @@ pub type Int = sys::Intnat;
 pub type Uint = sys::Uintnat;
 
 /// Wraps `sys::COMPILER` as `std::process::Command`
-#[cfg(not(feature = "no-std"))]
+#[cfg(not(any(feature = "no-std", feature = "without-ocamlopt")))]
 pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }

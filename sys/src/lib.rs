@@ -52,26 +52,14 @@ macro_rules! caml_body {
     }
 }
 
-#[cfg(not(feature = "docs-rs"))]
+#[cfg(not(feature = "without-ocamlopt"))]
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_version"));
 
-#[cfg(feature = "docs-rs")]
-/// OCaml version (4.10.0, 4.09.1, ...)
-pub const VERSION: &str = "";
-
-#[cfg(not(feature = "docs-rs"))]
+#[cfg(not(feature = "without-ocamlopt"))]
 pub const PATH: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_path"));
 
-#[cfg(feature = "docs-rs")]
-/// Path to OCaml libraries
-pub const PATH: &str = "";
-
-#[cfg(not(feature = "docs-rs"))]
+#[cfg(not(feature = "without-ocamlopt"))]
 pub const COMPILER: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_compiler"));
-
-#[cfg(feature = "docs-rs")]
-/// Path to OCaml compiler
-pub const COMPILER: &str = "";
 
 mod mlvalues;
 #[macro_use]
