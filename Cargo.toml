@@ -24,6 +24,7 @@ default = ["derive"]
 derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 without-ocamlopt = ["ocaml-sys/without-ocamlopt"]
+caml-state = ["ocaml-sys/caml-state"]
 no-std = ["cstr_core/alloc"]
 bigarray-ext = ["ndarray"]
 

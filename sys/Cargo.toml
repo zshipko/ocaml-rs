@@ -13,7 +13,7 @@ edition = "2018"
 cty = "0.2"
 
 [package.metadata.docs.rs]
-features = [ "without-ocamlopt" ]
+features = [ "without-ocamlopt", "caml-state" ]
 
 [features]
 link = []
