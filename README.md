@@ -177,6 +177,7 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 | `f32`            | `float`              |
 | `f64`            | `float`              |
 | `str`            | `string`             |
+| `[u8]`           | `bytes`              |
 | `String`         | `string`             |
 | `Option<A>`      | `'a option`          |
 | `Result<A, B>`   | `exception`          |
