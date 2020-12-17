@@ -19,8 +19,8 @@ pub fn enum1_first(i: ocaml::Int) -> Enum1 {
 
 #[ocaml::func]
 pub fn enum1_make_second(s: &'static str) -> Enum1 {
-    let mut arr = ocaml::Array::alloc(1);
-    let _ = arr.set(0, s);
+    let mut arr = ocaml::Array::alloc(gc, 1);
+    let _ = arr.set(gc, 0, s);
     Enum1::Second(arr)
 }
 
@@ -93,10 +93,10 @@ pub unsafe fn direct_slice(data: &[ocaml::Value]) -> i64 {
 #[ocaml::func]
 pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
     let b = a.deep_clone_to_rust();
-    b.deep_clone_to_ocaml()
+    b.deep_clone_to_ocaml(gc)
 }
 
 #[ocaml::func]
 pub fn pair_vec() -> ocaml::Value {
-    vec![("foo", 1), ("bar", 2isize)].to_value()
+    vec![("foo", 1), ("bar", 2isize)].to_value(gc)
 }

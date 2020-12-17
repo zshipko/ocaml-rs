@@ -79,38 +79,39 @@ pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream
         } else if attrs.floats {
             let mut idx = 0usize;
             let init = quote!(
-                value = ocaml::Value::alloc(#arity, ocaml::Tag::DOUBLE_ARRAY);
+                value = ocaml::Value::alloc(gc, #arity, ocaml::Tag::DOUBLE_ARRAY);
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
                 idx += 1;
-                quote!(#acc; ocaml::array::set_double(value, #i, *#b as f64).unwrap();)
+                quote!(#acc; ocaml::array::set_double(gc, value, #i, *#b as f64).unwrap();)
             })
         } else if attrs.unboxed {
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(#field.to_value()))
+            variant.each(|field| quote!(#field.to_value(gc)))
         } else {
             let mut idx = 0usize;
-            let ghost = (0..arity).map(|idx| quote!(value.store_field(#idx, ocaml::Value::unit())));
+            let ghost =
+                (0..arity).map(|idx| quote!(value.store_field(gc, #idx, ocaml::Value::unit())));
             let init = quote!(
-                value = ocaml::Value::alloc(#arity, ocaml::Tag(#tag));
+                value = ocaml::Value::alloc(gc, #arity, ocaml::Tag(#tag));
                 #(#ghost);*;
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
                 idx += 1;
-                quote!(#acc value.store_field(#i, #b.to_value());)
+                quote!(#acc value.store_field(gc, #i, #b);)
             })
         }
     });
 
     s.gen_impl(quote! {
         gen unsafe impl ocaml::ToValue for @Self {
-            fn to_value(self) -> ocaml::Value {
+            fn to_value(self, gc: &mut ocaml::Runtime) -> ocaml::Value {
                 unsafe {
-                    ocaml::frame!((value) {
+                    ocaml::frame!(gc, (value) {
                         match self {
                             #(#body),*
                         }

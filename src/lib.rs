@@ -60,7 +60,7 @@
 //! // This is equivalent to:
 //! #[no_mangle]
 //! pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
-//!     ocaml::body!((value) {
+//!     ocaml::body!(gc: (value) {
 //!         let i = value.int_val();
 //!         ocaml::Value::int( i + 1)
 //!     })
@@ -103,6 +103,8 @@
 
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
+
+pub use ocaml_interop::{self as interop, OCaml, OCamlRooted as Rooted, OCamlRuntime as Runtime};
 
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;

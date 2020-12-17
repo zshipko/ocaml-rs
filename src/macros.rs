@@ -1,43 +1,29 @@
 /// `frame!` can be used to create new local variables that play nicely with the garbage collector
 #[macro_export]
 macro_rules! frame {
-    (($($param:ident),*) $code:block) => {
-       {
-            #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::sys::local_roots() };
-            #[allow(unused_mut)]
-            $(let mut $param = $crate::Value($crate::sys::UNIT);)*
-            #[allow(unused_unsafe)]
-            $crate::sys::caml_param!($($param.0),*);
-            #[allow(unused_mut)]
-            let mut res = || { $code };
-            let res = res();
+    ($gc:ident, ($($param:ident),*) $code:block) => {
+        {
+            struct __Values  {
+               $($param: $crate::Value),*
+            }
 
-            #[allow(unused_unsafe)]
-            unsafe { $crate::sys::set_local_roots(caml_frame) };
-            res
+            $crate::interop::ocaml_frame!($gc, ($($param),*), {
+                let (r, values) = {
+                    $(
+                        #[allow(unused_mut)]
+                        #[allow(unused_assignments)]
+                        let mut $param: $crate::Value = $crate::Value::unit();
+                    )*
+                    let r = $code;
+                    (r, __Values { $(
+                        $param: $param,
+                    )*})
+                };
+
+                $($param.keep_raw(values.$param.0));*;
+                r
+            })
         }
-    }
-}
-
-/// `body!` is needed to help the OCaml runtime to manage garbage collection, it should
-/// be used to wrap the body of each function exported to OCaml.
-///
-/// ```rust
-/// #[no_mangle]
-/// pub extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
-///     ocaml::body!((a, b) {
-///         let a = a.int_val();
-///         let b = b.int_val();
-///         ocaml::Value::int(a + b)
-///     })
-/// }
-/// ```
-#[macro_export]
-#[cfg(feature = "no-std")]
-macro_rules! body {
-    ($(($($param:expr),*))? $code:block) => {
-        $crate::sys::caml_body!($(($($param.0),*))? $code);
     }
 }
 
@@ -53,6 +39,7 @@ pub fn init_panic_handler() {
     }
 
     ::std::panic::set_hook(Box::new(|info| {
+        let mut rt = unsafe { crate::Runtime::recover_handle() };
         let err = info.payload();
         let msg = if err.is::<&str>() {
             err.downcast_ref::<&str>().unwrap()
@@ -63,10 +50,10 @@ pub fn init_panic_handler() {
         };
 
         if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(err, msg);
+            crate::Error::raise_value(&mut rt, err, msg);
         }
 
-        crate::Error::raise_failure(msg)
+        crate::Error::raise_failure(&mut rt, msg)
     }))
 }
 
@@ -77,7 +64,7 @@ pub fn init_panic_handler() {
 /// ```rust
 /// #[no_mangle]
 /// pub extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
-///     ocaml::body!((a, b) {
+///     ocaml::body!(gc: (a, b) {
 ///         let a = a.int_val();
 ///         let b = b.int_val();
 ///         ocaml::Value::int(a + b)
@@ -87,29 +74,26 @@ pub fn init_panic_handler() {
 #[macro_export]
 #[cfg(not(feature = "no-std"))]
 macro_rules! body {
-    ($(($($param:expr),*))? $code:block) => {{
+    ($gc:ident: $(($($param:expr),*))? $code:block) => {{
+        let mut $gc = $crate::Runtime::init();
+
         // Ensure panic handler is initialized
+        #[cfg(not(feature = "no-std"))]
         $crate::init_panic_handler();
 
-        // Initialize OCaml frame
-        #[allow(unused_unsafe)]
-        let caml_frame = unsafe { $crate::sys::local_roots() };
-
-        // Initialize parameters
-        $(
-            $crate::sys::caml_param!($($param.0),*);
-        )?
+        // CAMLparam
+        //$(
+        //    $crate::sys::caml_param!($($param.0),*);
+        //)?
 
         // Execute Rust function
         #[allow(unused_mut)]
-        let mut res = || {$code };
-        let res = res();
-
-        #[allow(unused_unsafe)]
-        unsafe { $crate::sys::set_local_roots(caml_frame) };
+        #[allow(unused)]
+        let mut res = |$gc: &mut $crate::Runtime| $code;
+        let res = res(&mut $gc);
 
         res
-    }}
+    }};
 }
 
 #[macro_export]

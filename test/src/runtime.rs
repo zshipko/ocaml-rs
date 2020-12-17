@@ -46,7 +46,7 @@ pub fn mutable_parameter_with_more_than_five_arguments(
 
 #[ocaml::func]
 pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
-    ocaml::Error::raise_with_arg("Exc", x)
+    ocaml::Error::raise_with_arg(gc, "Exc", x)
 }
 
 #[ocaml::func]
@@ -56,12 +56,13 @@ pub fn raise_failure() -> Result<(), ocaml::Error> {
 
 #[ocaml::func]
 pub fn hash_variant_abc(i: ocaml::Int) -> Value {
-    Value::hash_variant("Abc", Some(Value::int(i)))
+    Value::hash_variant(gc, "Abc", Some(Value::int(i)))
 }
 
 #[ocaml::func]
 pub fn hash_variant_def(i: ocaml::Float) -> Value {
-    Value::hash_variant("Def", Some(Value::float(i)))
+    let f = Some(Value::float(gc, i));
+    Value::hash_variant(gc, "Def", f)
 }
 
 #[ocaml::func]
@@ -72,5 +73,5 @@ pub fn test_panic() -> ocaml::Int {
 #[ocaml::func]
 pub fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
     let f: Value = Value::named("call_named").unwrap();
-    f.call(g)
+    f.call(gc, g)
 }
