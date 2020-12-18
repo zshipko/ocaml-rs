@@ -64,8 +64,8 @@ unsafe impl<'a> crate::interop::ToOCaml<Value> for Value {
         &self,
         token: crate::interop::OCamlAllocToken,
     ) -> crate::interop::OCamlAllocResult<Value> {
-        let mut gc = unsafe { &mut token.recover_runtime_handle() };
-        unsafe { crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&mut gc, self.0)) }
+        let gc = unsafe { &mut token.recover_runtime_handle() };
+        unsafe { crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&gc, self.0)) }
     }
 }
 
@@ -378,7 +378,7 @@ impl Value {
         let len = crate::sys::caml_string_length(self.0);
         let ptr = crate::sys::string_val(self.0);
         let slice = ::core::slice::from_raw_parts(ptr, len);
-        ::core::str::from_utf8(slice).expect("Invalid UTF-8").into()
+        ::core::str::from_utf8(slice).expect("Invalid UTF-8")
     }
 
     /// Get underlying bytes pointer
@@ -389,18 +389,16 @@ impl Value {
     }
 
     /// Get mutable string pointer
-    pub unsafe fn string_val_mut<'a>(&'a mut self) -> &'a mut str {
+    pub unsafe fn string_val_mut(&mut self) -> &mut str {
         let len = crate::sys::caml_string_length(self.0);
         let ptr = crate::sys::string_val(self.0);
 
         let slice = ::core::slice::from_raw_parts_mut(ptr, len);
-        ::core::str::from_utf8_mut(slice)
-            .expect("Invalid UTF-8")
-            .into()
+        ::core::str::from_utf8_mut(slice).expect("Invalid UTF-8")
     }
 
     /// Get mutable bytes pointer
-    pub unsafe fn bytes_val_mut<'a>(&'a mut self) -> &'a mut [u8] {
+    pub unsafe fn bytes_val_mut(&mut self) -> &mut [u8] {
         let len = crate::sys::caml_string_length(self.0);
         let ptr = crate::sys::string_val(self.0);
         ::core::slice::from_raw_parts_mut(ptr, len)

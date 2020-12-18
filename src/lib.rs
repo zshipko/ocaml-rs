@@ -1,5 +1,6 @@
 #![deny(missing_docs)]
 #![cfg_attr(feature = "no-std", no_std)]
+#![allow(clippy::missing_safety_doc)]
 
 //! [ocaml-rs](https://github.com/zshipko/ocaml-rs/) is a library for directly interacting with the C OCaml runtime, in Rust.
 //!

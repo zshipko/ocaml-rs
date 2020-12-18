@@ -16,7 +16,7 @@ macro_rules! frame {
                     )*
                     let r = $code;
                     (r, __Values { $(
-                        $param: $param,
+                        $param,
                     )*})
                 };
 
@@ -100,7 +100,7 @@ macro_rules! body {
         }
 
         let values = __Values { $(
-            $param: $param,
+            $param,
         )*};
 
         $crate::interop::ocaml_frame!($gc, ($($param),+), {

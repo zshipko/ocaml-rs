@@ -20,13 +20,13 @@ pub struct Pointer<T>(pub Value, PhantomData<T>);
 
 unsafe impl<T> ToValue for Pointer<T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
-        self.0.clone()
+        self.0
     }
 }
 
 unsafe impl<T> FromValue for Pointer<T> {
     fn from_value(value: Value) -> Self {
-        Pointer(value.clone(), PhantomData)
+        Pointer(value, PhantomData)
     }
 }
 
@@ -112,13 +112,13 @@ pub struct Array<T: ToValue + FromValue>(Value, PhantomData<T>);
 
 unsafe impl<T: ToValue + FromValue> ToValue for Array<T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
-        self.0.clone()
+        self.0
     }
 }
 
 unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
     fn from_value(value: Value) -> Self {
-        Array(value.clone(), PhantomData)
+        Array(value, PhantomData)
     }
 }
 
@@ -267,7 +267,7 @@ unsafe impl<T: ToValue + FromValue> ToValue for List<T> {
 
 unsafe impl<'a, T: ToValue + FromValue> FromValue for List<T> {
     fn from_value(value: Value) -> Self {
-        List(value.clone(), PhantomData)
+        List(value, PhantomData)
     }
 }
 
