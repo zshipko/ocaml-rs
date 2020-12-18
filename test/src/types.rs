@@ -53,7 +53,7 @@ pub unsafe fn array1_of_string(x: &mut str) -> ocaml::bigarray::Array1<u8> {
 #[ocaml::func]
 pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
     let mut ba = ocaml::bigarray::Array1::<u8>::create(gc, len as usize);
-    let mut data = ba.data_mut();
+    let data = ba.data_mut();
     for i in data {
         *i = init;
     }
@@ -95,14 +95,14 @@ struct Abstract {
 
 #[ocaml::func]
 pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
-    let mut a = Box::into_raw(Box::new(Abstract { f }));
+    let a = Box::into_raw(Box::new(Abstract { f }));
     Value::alloc_abstract_ptr(gc, a)
 }
 
 #[ocaml::func]
 pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::Float {
     let f = f.abstract_ptr_val::<Abstract>();
-    unsafe { (*f).f }
+    (*f).f
 }
 
 #[ocaml::func]

@@ -63,7 +63,7 @@ unsafe extern "C" fn testing_callback_finalize(a: Value) {
 ocaml::custom_finalize!(TestingCallback, testing_callback_finalize);
 
 #[ocaml::func]
-pub fn testing_callback_alloc(mut func: ocaml::Value) -> TestingCallback {
+pub fn testing_callback_alloc(func: ocaml::Value) -> TestingCallback {
     TestingCallback { func }
 }
 

@@ -76,20 +76,43 @@ pub fn init_panic_handler() {
 #[macro_export]
 #[cfg(not(feature = "no-std"))]
 macro_rules! body {
-    ($gc:ident: $(($($param:expr),*))? $code:block) => {{
+    ($gc:ident: $(())? $code:block) => {{
+        #[allow(unused_variables)]
         let mut $gc = $crate::Runtime::init();
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
         $crate::init_panic_handler();
 
-        // Execute Rust function
         #[allow(unused_mut)]
-        #[allow(unused)]
-        let mut res = |$gc: &mut $crate::Runtime| $code;
-        let res = res(&mut $gc);
+        let mut r = |$gc: &mut $crate::Runtime| $code;
+        r(&mut $gc)
+    }};
+    ($gc:ident: ($($param:ident),+) $code:block) => {{
+        let mut $gc = $crate::Runtime::init();
 
-        res
+        // Ensure panic handler is initialized
+        #[cfg(not(feature = "no-std"))]
+        $crate::init_panic_handler();
+
+        struct __Values  {
+           $($param: $crate::Value),*
+        }
+
+        let values = __Values { $(
+            $param: $param,
+        )*};
+
+        $crate::interop::ocaml_frame!($gc, ($($param),+), {
+            $(
+                #[allow(unused_mut)]
+                let mut $param = unsafe { $crate::Value::new($param.keep_raw(values.$param.0).get_raw()) };
+            )+
+
+            #[allow(unused_mut)]
+            let mut r = |$gc: &mut $crate::Runtime| $code;
+            r(&mut $gc)
+        })
     }};
 }
 
