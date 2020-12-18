@@ -35,6 +35,13 @@
 //!     (i + 1, i + 2, i + 3)
 //! }
 //!
+//! /// A name for the garbage collector handle can also be specified:
+//! #[cfg(feature = "derive")]
+//! #[ocaml::func(my_gc_handle)]
+//! pub fn my_string() -> ocaml::Value {
+//!     ocaml::Value::string(my_gc_handle, "My string")
+//! }
+//!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
 //! pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {

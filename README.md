@@ -112,7 +112,7 @@ pub fn incr(value: ocaml::Value) -> ocaml::Value {
 // This is equivalent to:
 #[no_mangle]
 pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
-    ocaml::body!((value) {
+    ocaml::body!(gc: (value) {
         let i = value.int_val();
         ocaml::Value::int( i + 1)
     })

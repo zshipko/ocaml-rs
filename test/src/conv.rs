@@ -17,10 +17,10 @@ pub fn enum1_first(i: ocaml::OCaml<ocaml::interop::OCamlInt>) -> Enum1 {
     Enum1::First(i.as_i64() as ocaml::Int)
 }
 
-#[ocaml::func]
+#[ocaml::func(test)]
 pub fn enum1_make_second(s: &'static str) -> Enum1 {
-    let mut arr = ocaml::Array::alloc(gc, 1);
-    let _ = arr.set(gc, 0, s);
+    let mut arr = ocaml::Array::alloc(test, 1);
+    let _ = arr.set(test, 0, s);
     Enum1::Second(arr)
 }
 
