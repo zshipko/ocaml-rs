@@ -82,7 +82,7 @@ impl Error {
     /// Raise an exception that has been registered using `Callback.register_exception` with no
     /// arguments
     pub fn raise<S: AsRef<str>>(exc: S) -> Result<(), Error> {
-        let value = match Value::named(exc.as_ref()) {
+        let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
                 return Err(Error::Message(
@@ -100,7 +100,7 @@ impl Error {
         exc: S,
         arg: T,
     ) -> Result<(), Error> {
-        let value = match Value::named(exc.as_ref()) {
+        let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
                 return Err(Error::Message(
@@ -154,7 +154,7 @@ impl Error {
 
     /// Get named error registered using `Callback.register_exception`
     pub fn named<S: AsRef<str>>(s: S) -> Option<Value> {
-        Value::named(s.as_ref())
+        unsafe { Value::named(s.as_ref()) }
     }
 }
 
@@ -246,11 +246,13 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
 }
 
 unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
-    fn from_value(value: &Value) -> Result<T, crate::Error> {
-        if value.is_exception_result() {
-            return Err(CamlError::Exception(value.exception().unwrap()).into());
-        }
+    fn from_value(value: Value) -> Result<T, crate::Error> {
+        unsafe {
+            if value.is_exception_result() {
+                return Err(CamlError::Exception(value.exception().unwrap()).into());
+            }
 
-        Ok(T::from_value(value))
+            Ok(T::from_value(value))
+        }
     }
 }

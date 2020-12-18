@@ -16,7 +16,7 @@ pub fn list_cons(l: ocaml::List<ocaml::Value>, x: ocaml::Value) -> ocaml::List<o
 }
 
 #[ocaml::func]
-pub fn array_make_range(
+pub unsafe fn array_make_range(
     start: ocaml::Uint,
     stop: ocaml::Uint,
 ) -> Result<ocaml::Array<ocaml::Value>, ocaml::Error> {
@@ -35,7 +35,7 @@ pub fn array_make_range_f(start: isize, stop: isize) -> Vec<f64> {
 }
 
 #[ocaml::func]
-pub fn array_replace(
+pub unsafe fn array_replace(
     mut arr: ocaml::Array<ocaml::Value>,
     index: ocaml::Uint,
     x: Value,
@@ -94,13 +94,13 @@ struct Abstract {
 }
 
 #[ocaml::func]
-pub fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
+pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
     let mut a = Box::into_raw(Box::new(Abstract { f }));
     Value::alloc_abstract_ptr(gc, a)
 }
 
 #[ocaml::func]
-pub fn abstract_pointer_value(f: Value) -> ocaml::Float {
+pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::Float {
     let f = f.abstract_ptr_val::<Abstract>();
     unsafe { (*f).f }
 }

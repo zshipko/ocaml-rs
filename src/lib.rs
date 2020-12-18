@@ -38,7 +38,7 @@
 //! /// A name for the garbage collector handle can also be specified:
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func(my_gc_handle)]
-//! pub fn my_string() -> ocaml::Value {
+//! pub unsafe fn my_string() -> ocaml::Value {
 //!     ocaml::Value::string(my_gc_handle, "My string")
 //! }
 //!
@@ -59,14 +59,14 @@
 //! // `native_func` has minimal overhead compared to wrapping with `func`
 //! #[cfg(feature = "derive")]
 //! #[ocaml::native_func]
-//! pub fn incr(value: ocaml::Value) -> ocaml::Value {
+//! pub unsafe fn incr(value: ocaml::Value) -> ocaml::Value {
 //!     let i = value.int_val();
 //!     ocaml::Value::int(i + 1)
 //! }
 //!
 //! // This is equivalent to:
 //! #[no_mangle]
-//! pub extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
+//! pub unsafe extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
 //!     ocaml::body!(gc: (value) {
 //!         let i = value.int_val();
 //!         ocaml::Value::int( i + 1)

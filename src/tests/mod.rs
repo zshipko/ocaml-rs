@@ -9,7 +9,7 @@ fn test_basic_array() -> Result<(), Error> {
         let mut a: ocaml::Array<&str> = ocaml::Array::alloc(gc, 2);
         a.set(gc, 0, "testing")?;
         a.set(gc, 1, "123")?;
-        let b: Vec<&str> = FromValue::from_value(&a.to_value(gc));
+        let b: Vec<&str> = FromValue::from_value(a.to_value(gc));
         assert!(b.as_slice() == &["testing", "123"]);
         Ok(())
     })
@@ -29,7 +29,7 @@ fn test_tuple_of_tuples() {
         let ((a, b, c, d, e, f, g, h, i), (j, k, l, m, n, o, p, q, r)): (
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
-        ) = FromValue::from_value(&make_tuple(x, y));
+        ) = FromValue::from_value(make_tuple(x, y));
 
         println!("a: {}, r: {}", a, r);
         assert!(a == r);
@@ -58,7 +58,7 @@ fn test_basic_list() {
 
         assert!(list.len() == 3);
 
-        let ll: std::collections::LinkedList<i64> = FromValue::from_value(&list.to_value(gc));
+        let ll: std::collections::LinkedList<i64> = FromValue::from_value(list.to_value(gc));
 
         for (i, x) in ll.into_iter().enumerate() {
             assert!((i + 1) as i64 == x);
@@ -76,11 +76,11 @@ fn test_int() {
         let d = 1isize.to_value(gc);
         let e = 0isize.to_value(gc);
 
-        let a_: isize = FromValue::from_value(&a);
-        let b_: isize = FromValue::from_value(&b);
-        let c_: isize = FromValue::from_value(&c);
-        let d_: isize = FromValue::from_value(&d);
-        let e_: isize = FromValue::from_value(&e);
+        let a_: isize = FromValue::from_value(a);
+        let b_: isize = FromValue::from_value(b);
+        let c_: isize = FromValue::from_value(c);
+        let d_: isize = FromValue::from_value(d);
+        let e_: isize = FromValue::from_value(e);
         assert_eq!(a_, -123);
         assert_eq!(b_, -1);
         assert_eq!(c_, 123);

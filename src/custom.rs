@@ -102,8 +102,8 @@ unsafe impl<T: 'static + Custom> ToValue for T {
 /// }
 ///
 /// extern "C" fn mytype_compare(a: ocaml::Value, b: ocaml::Value) -> i32 {
-///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(&a);
-///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(&b);
+///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(a);
+///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(b);
 ///
 ///     let a_i = a.as_ref().i;
 ///     let b_i = b.as_ref().i;
@@ -197,7 +197,7 @@ macro_rules! custom {
 /// }
 ///
 /// unsafe extern "C" fn mytype_finalizer(v: ocaml::Value) {
-///     let p: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(&v);
+///     let p: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(v);
 ///     p.drop_in_place()
 /// }
 ///

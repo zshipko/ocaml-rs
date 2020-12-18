@@ -49,8 +49,10 @@ pub fn init_panic_handler() {
             "rust panic"
         };
 
-        if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(&mut rt, err, msg);
+        unsafe {
+            if let Some(err) = crate::Value::named("Rust_exception") {
+                crate::Error::raise_value(&mut rt, err, msg);
+            }
         }
 
         crate::Error::raise_failure(&mut rt, msg)
@@ -63,7 +65,7 @@ pub fn init_panic_handler() {
 ///
 /// ```rust
 /// #[no_mangle]
-/// pub extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
+/// pub unsafe extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
 ///     ocaml::body!(gc: (a, b) {
 ///         let a = a.int_val();
 ///         let b = b.int_val();

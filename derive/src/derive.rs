@@ -74,12 +74,12 @@ pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream
             panic!("ocaml cannot derive unboxed or float arrays for enums")
         }
         if arity == 0 {
-            let init = quote!(value = ocaml::Value::int(#tag as ocaml::Int));
+            let init = quote!(value = unsafe { ocaml::Value::int(#tag as ocaml::Int)});
             variant.fold(init, |_, _| quote!())
         } else if attrs.floats {
             let mut idx = 0usize;
             let init = quote!(
-                value = ocaml::Value::alloc(gc, #arity, ocaml::Tag::DOUBLE_ARRAY);
+                value = unsafe { ocaml::Value::alloc(gc, #arity, ocaml::Tag::DOUBLE_ARRAY) };
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
@@ -90,19 +90,19 @@ pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(#field.to_value(gc)))
+            variant.each(|field| quote!(unsafe {#field.to_value(gc) }))
         } else {
             let mut idx = 0usize;
-            let ghost =
-                (0..arity).map(|idx| quote!(value.store_field(gc, #idx, ocaml::Value::unit())));
+            let ghost = (0..arity)
+                .map(|idx| quote!(unsafe { value.store_field(gc, #idx, ocaml::Value::unit()) }));
             let init = quote!(
-                value = ocaml::Value::alloc(gc, #arity, ocaml::Tag(#tag));
+                value = unsafe { ocaml::Value::alloc(gc, #arity, ocaml::Tag(#tag)) };
                 #(#ghost);*;
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
                 idx += 1;
-                quote!(#acc value.store_field(gc, #i, #b);)
+                quote!(#acc unsafe { value.store_field(gc, #i, #b)};)
             })
         }
     });
@@ -158,7 +158,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
                     let ty = &field.ty;
                     quote!(ocaml::array::get_double(value, #idx).unwrap() as #ty)
                 } else {
-                    quote!(ocaml::FromValue::from_value(&value.field(#idx)))
+                    quote!(ocaml::FromValue::from_value(value.field(#idx)))
                 }
             });
             quote!((#is_block, #tag) => {
@@ -170,7 +170,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     if attrs.unboxed {
         s.gen_impl(quote! {
             gen unsafe impl ocaml::FromValue for @Self {
-                fn from_value(value: &ocaml::Value) -> Self {
+                fn from_value(value: ocaml::Value) -> Self {
                     #(#body),*
                 }
             }
@@ -178,10 +178,10 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         .into()
     } else {
         let tag = if !attrs.floats {
-            quote!({ value.tag() })
+            quote!({ unsafe { value.tag() } })
         } else {
             quote!({
-                if value.tag() != ocaml::Tag::DOUBLE_ARRAY {
+                if unsafe { value.tag() } != ocaml::Tag::DOUBLE_ARRAY {
                     panic!("ocaml ffi: trying to convert a value which is not a double array to an unboxed record")
                 };
                 0
@@ -189,12 +189,14 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         };
         s.gen_impl(quote! {
             gen unsafe impl ocaml::FromValue for @Self {
-                fn from_value(value: &ocaml::Value) -> Self {
-                    let is_block = value.is_block();
-                    let tag = if !is_block { value.int_val() as u8 } else { #tag.0 };
-                    match (is_block, tag) {
-                        #(#body),*
-                        _ => panic!("ocaml ffi: received unknown variant while trying to convert ocaml structure/enum to rust"),
+                fn from_value(value: ocaml::Value) -> Self {
+                    unsafe {
+                        let is_block = value.is_block();
+                        let tag = if !is_block { value.int_val() as u8 } else { #tag.0 };
+                        match (is_block, tag) {
+                            #(#body),*
+                            _ => panic!("ocaml ffi: received unknown variant while trying to convert ocaml structure/enum to rust"),
+                        }
                     }
                 }
             }

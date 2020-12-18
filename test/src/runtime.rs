@@ -55,12 +55,12 @@ pub fn raise_failure() -> Result<(), ocaml::Error> {
 }
 
 #[ocaml::func]
-pub fn hash_variant_abc(i: ocaml::Int) -> Value {
+pub unsafe fn hash_variant_abc(i: ocaml::Int) -> Value {
     Value::hash_variant(gc, "Abc", Some(Value::int(i)))
 }
 
 #[ocaml::func]
-pub fn hash_variant_def(i: ocaml::Float) -> Value {
+pub unsafe fn hash_variant_def(i: ocaml::Float) -> Value {
     let f = Some(Value::float(gc, i));
     Value::hash_variant(gc, "Def", f)
 }
@@ -71,7 +71,7 @@ pub fn test_panic() -> ocaml::Int {
 }
 
 #[ocaml::func]
-pub fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
+pub unsafe fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
     let f: Value = Value::named("call_named").unwrap();
     f.call(gc, g)
 }

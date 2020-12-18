@@ -25,7 +25,7 @@ unsafe impl<T> ToValue for Pointer<T> {
 }
 
 unsafe impl<T> FromValue for Pointer<T> {
-    fn from_value(value: &Value) -> Self {
+    fn from_value(value: Value) -> Self {
         Pointer(value.clone(), PhantomData)
     }
 }
@@ -43,13 +43,15 @@ impl<T> Pointer<T> {
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<T> {
-        let value = match finalizer {
-            Some(f) => Value::alloc_final::<T>(rt, f, used_max),
-            None => Value::alloc_final::<T>(rt, ignore, used_max),
-        };
-        let mut ptr = Pointer::from_value(&value);
-        ptr.set(x);
-        ptr
+        unsafe {
+            let value = match finalizer {
+                Some(f) => Value::alloc_final::<T>(rt, f, used_max),
+                None => Value::alloc_final::<T>(rt, ignore, used_max),
+            };
+            let mut ptr = Pointer::from_value(value);
+            ptr.set(x);
+            ptr
+        }
     }
 
     /// Allocate a `Custom` value
@@ -57,9 +59,11 @@ impl<T> Pointer<T> {
     where
         T: crate::Custom,
     {
-        let mut ptr = Pointer::from_value(&Value::alloc_custom::<T>(rt));
-        ptr.set(x);
-        ptr
+        unsafe {
+            let mut ptr = Pointer::from_value(Value::alloc_custom::<T>(rt));
+            ptr.set(x);
+            ptr
+        }
     }
 
     /// Drop pointer in place
@@ -80,12 +84,12 @@ impl<T> Pointer<T> {
 
     /// Access the underlying pointer
     pub fn as_ptr(&self) -> *const T {
-        self.0.custom_ptr_val()
+        unsafe { self.0.custom_ptr_val() }
     }
 
     /// Access the underlying mutable pointer
     pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.0.custom_ptr_val_mut()
+        unsafe { self.0.custom_ptr_val_mut() }
     }
 }
 
@@ -113,7 +117,7 @@ unsafe impl<T: ToValue + FromValue> ToValue for Array<T> {
 }
 
 unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
-    fn from_value(value: &Value) -> Self {
+    fn from_value(value: Value) -> Self {
         Array(value.clone(), PhantomData)
     }
 }
@@ -229,23 +233,23 @@ impl<T: ToValue + FromValue> Array<T> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
-        T::from_value(&self.0.field(i))
+        T::from_value(self.0.field(i))
     }
 
     /// Array as slice
     pub fn as_slice(&self) -> &[Value] {
-        FromValue::from_value(&self.0)
+        FromValue::from_value(self.0)
     }
 
     /// Array as mutable slice
     pub fn as_mut_slice(&mut self) -> &mut [Value] {
-        FromValue::from_value(&self.0)
+        FromValue::from_value(self.0)
     }
 
     /// Array as `Vec`
     #[cfg(not(feature = "no-std"))]
     pub fn to_vec(&self) -> Vec<T> {
-        FromValue::from_value(&self.0)
+        FromValue::from_value(self.0)
     }
 }
 
@@ -262,7 +266,7 @@ unsafe impl<T: ToValue + FromValue> ToValue for List<T> {
 }
 
 unsafe impl<'a, T: ToValue + FromValue> FromValue for List<T> {
-    fn from_value(value: &Value) -> Self {
+    fn from_value(value: Value) -> Self {
         List(value.clone(), PhantomData)
     }
 }
@@ -279,7 +283,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
         let mut length = 0;
         let mut tmp = self.0;
         while tmp.0 != sys::EMPTY_LIST {
-            tmp = tmp.field(1);
+            tmp = unsafe { tmp.field(1) };
             length += 1;
         }
         length
@@ -311,7 +315,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
             return None;
         }
 
-        Some(self.0.field(0))
+        unsafe { Some(self.0.field(0)) }
     }
 
     /// List tail
@@ -320,7 +324,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
             return Self::empty();
         }
 
-        self.0.field(1)
+        unsafe { self.0.field(1) }
     }
 
     #[cfg(not(feature = "no-std"))]
@@ -332,7 +336,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
     #[cfg(not(feature = "no-std"))]
     /// List as `LinkedList`
     pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
-        FromValue::from_value(&self.0)
+        FromValue::from_value(self.0)
     }
 
     /// List iterator
@@ -364,9 +368,11 @@ impl<'a, T: ToValue + FromValue> Iterator for ListIterator<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.inner != Value::unit() {
-            let val = self.inner.field(0);
-            self.inner = self.inner.field(1);
-            Some(val)
+            unsafe {
+                let val = self.inner.field(0);
+                self.inner = self.inner.field(1);
+                Some(val)
+            }
         } else {
             None
         }
@@ -417,8 +423,8 @@ pub mod bigarray {
     pub struct Array1<T>(Value, PhantomData<T>);
 
     unsafe impl<T> crate::FromValue for Array1<T> {
-        fn from_value(value: &Value) -> Array1<T> {
-            Array1(Value::new(value.0), PhantomData)
+        fn from_value(value: Value) -> Array1<T> {
+            unsafe { Array1(Value::new(value.0), PhantomData) }
         }
     }
 
@@ -478,9 +484,11 @@ pub mod bigarray {
 
         /// Returns the number of items in `self`
         pub fn len(self) -> Size {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-            let dim = unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 1) };
-            dim[0]
+            unsafe {
+                let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+                let dim = slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 1);
+                dim[0]
+            }
         }
 
         /// Returns true when `self.len() == 0`
@@ -490,14 +498,18 @@ pub mod bigarray {
 
         /// Get underlying data as Rust slice
         pub fn data(&self) -> &[T] {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-            unsafe { slice::from_raw_parts((*ba).data as *const T, self.len()) }
+            unsafe {
+                let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+                slice::from_raw_parts((*ba).data as *const T, self.len())
+            }
         }
 
         /// Get underlying data as mutable Rust slice
         pub fn data_mut(&mut self) -> &mut [T] {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
-            unsafe { slice::from_raw_parts_mut((*ba).data as *mut T, self.len()) }
+            unsafe {
+                let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+                slice::from_raw_parts_mut((*ba).data as *mut T, self.len())
+            }
         }
     }
 
@@ -526,13 +538,13 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array2<T> {
         /// Returns array view
         pub fn view(&self) -> ArrayView2<T> {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { ArrayView2::from_shape_ptr(self.shape(), (*ba).data as *const T) }
         }
 
         /// Returns mutable array view
         pub fn view_mut(&mut self) -> ArrayViewMut2<T> {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { ArrayViewMut2::from_shape_ptr(self.shape(), (*ba).data as *mut T) }
         }
 
@@ -554,14 +566,14 @@ pub(crate) mod bigarray_ext {
         }
 
         fn dim(&self) -> &[usize] {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 2) }
         }
     }
 
     unsafe impl<T> FromValue for Array2<T> {
-        fn from_value(value: &Value) -> Array2<T> {
-            Array2(Value::new(value.0), PhantomData)
+        fn from_value(value: Value) -> Array2<T> {
+            unsafe { Array2(Value::new(value.0), PhantomData) }
         }
     }
 
@@ -594,7 +606,7 @@ pub(crate) mod bigarray_ext {
         pub fn from_ndarray(rt: &mut Runtime, data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();
             let array = Array2::create(rt, dim);
-            let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
@@ -611,13 +623,13 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array3<T> {
         /// Returns array view
         pub fn view(&self) -> ArrayView3<T> {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { ArrayView3::from_shape_ptr(self.shape(), (*ba).data as *const T) }
         }
 
         /// Returns mutable array view
         pub fn view_mut(&mut self) -> ArrayViewMut3<T> {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { ArrayViewMut3::from_shape_ptr(self.shape(), (*ba).data as *mut T) }
         }
 
@@ -639,14 +651,14 @@ pub(crate) mod bigarray_ext {
         }
 
         fn dim(&self) -> &[usize] {
-            let ba = self.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe { slice::from_raw_parts((*ba).dim.as_ptr() as *const usize, 3) }
         }
     }
 
     unsafe impl<T> FromValue for Array3<T> {
-        fn from_value(value: &Value) -> Array3<T> {
-            Array3(Value::new(value.0), PhantomData)
+        fn from_value(value: Value) -> Array3<T> {
+            unsafe { Array3(Value::new(value.0), PhantomData) }
         }
     }
 
@@ -680,7 +692,7 @@ pub(crate) mod bigarray_ext {
         pub fn from_ndarray(rt: &mut Runtime, data: ndarray::Array3<T>) -> Array3<T> {
             let dim = data.raw_dim();
             let array = Array3::create(rt, dim);
-            let ba = array.0.custom_ptr_val::<bigarray::Bigarray>();
+            let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
