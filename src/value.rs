@@ -43,15 +43,18 @@ unsafe impl FromValue for Value {
 }
 
 unsafe impl<'a, T> ToValue for OCaml<'a, T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
-        unsafe { Value::new(self.raw()) }
+    fn to_value(self, rt: &mut Runtime) -> Value {
+        let mut frame = rt.open_frame();
+        let gc = frame.initialize(&[]);
+        let mut x = unsafe { crate::interop::internal::OCamlRoot::reserve(gc) };
+        unsafe { Value::new(x.keep(self).get_raw()) }
     }
 }
 
 unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     fn from_value(value: Value) -> OCaml<'a, T> {
-        let gc = unsafe { &mut Runtime::recover_handle() };
-        let x: OCaml<T> = unsafe { OCaml::new(gc, value.0) };
+        let rt = unsafe { &mut Runtime::recover_handle() };
+        let x: OCaml<T> = unsafe { OCaml::new(rt, value.0) };
         unsafe { core::mem::transmute(x) }
     }
 }

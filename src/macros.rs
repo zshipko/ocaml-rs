@@ -83,11 +83,6 @@ macro_rules! body {
         #[cfg(not(feature = "no-std"))]
         $crate::init_panic_handler();
 
-        // CAMLparam
-        //$(
-        //    $crate::sys::caml_param!($($param.0),*);
-        //)?
-
         // Execute Rust function
         #[allow(unused_mut)]
         #[allow(unused)]
