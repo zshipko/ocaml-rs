@@ -12,7 +12,7 @@ macro_rules! value_i {
         }
 
         unsafe impl FromValue for $t {
-            fn from_value(v: $crate::Value) -> $t {
+            fn from_value(v: &$crate::Value) -> $t {
                 v.int_val() as $t
             }
         }
@@ -31,7 +31,7 @@ macro_rules! value_f {
         }
 
         unsafe impl FromValue for $t {
-            fn from_value(v: $crate::Value) -> $t {
+            fn from_value(v: &$crate::Value) -> $t {
                 v.float_val() as $t
             }
         }
@@ -51,7 +51,7 @@ unsafe impl ToValue for i64 {
 }
 
 unsafe impl FromValue for i64 {
-    fn from_value(v: crate::Value) -> i64 {
+    fn from_value(v: &crate::Value) -> i64 {
         v.int64_val()
     }
 }
@@ -63,7 +63,7 @@ unsafe impl ToValue for u64 {
 }
 
 unsafe impl FromValue for u64 {
-    fn from_value(v: crate::Value) -> u64 {
+    fn from_value(v: &crate::Value) -> u64 {
         v.int64_val() as u64
     }
 }
@@ -75,7 +75,7 @@ unsafe impl ToValue for i32 {
 }
 
 unsafe impl FromValue for i32 {
-    fn from_value(v: crate::Value) -> i32 {
+    fn from_value(v: &crate::Value) -> i32 {
         v.int32_val()
     }
 }
@@ -93,12 +93,12 @@ impl Incr {
 macro_rules! tuple_impl {
     ($($t:ident: $n:tt),*) => {
         unsafe impl<'a, $($t: FromValue),*> FromValue for ($($t,)*) {
-            fn from_value(v: crate::Value) -> ($($t,)*) {
+            fn from_value(v: &crate::Value) -> ($($t,)*) {
                 let mut i = Incr(0);
                 #[allow(unused)]
                 (
                     $(
-                        $t::from_value(v.field(i.get())),
+                        $t::from_value(&v.field(i.get())),
                     )*
                 )
             }
@@ -154,7 +154,7 @@ unsafe impl ToValue for bool {
 }
 
 unsafe impl FromValue for bool {
-    fn from_value(v: Value) -> bool {
+    fn from_value(v: &Value) -> bool {
         v.int_val() != 0
     }
 }
@@ -162,26 +162,14 @@ unsafe impl FromValue for bool {
 #[cfg(not(feature = "no-std"))]
 unsafe impl ToValue for String {
     fn to_value(self, rt: &mut Runtime) -> Value {
-        frame!(rt, (value) {
-            unsafe {
-                value.0 = crate::sys::caml_alloc_string(self.len());
-                let ptr = crate::sys::string_val(value.0);
-                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-                value
-            }
-        })
+        Value::string(rt, self.as_str())
     }
 }
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl FromValue for String {
-    fn from_value(value: Value) -> String {
-        let len = unsafe { crate::sys::caml_string_length(value.0) };
-        let ptr = unsafe { crate::sys::string_val(value.0) };
-        unsafe {
-            let slice = ::std::slice::from_raw_parts(ptr, len);
-            ::std::str::from_utf8(slice).expect("Invalid UTF-8").into()
-        }
+    fn from_value(value: &Value) -> String {
+        value.string_val().into()
     }
 }
 
@@ -192,8 +180,8 @@ unsafe impl ToValue for () {
 }
 
 unsafe impl<'a, T: FromValue> FromValue for Option<T> {
-    fn from_value(value: Value) -> Option<T> {
-        if value == Value::none() {
+    fn from_value(value: &Value) -> Option<T> {
+        if *value == Value::none() {
             return None;
         }
 
@@ -213,8 +201,8 @@ unsafe impl<'a, T: ToValue> ToValue for Option<T> {
     }
 }
 
-unsafe impl FromValue for &str {
-    fn from_value(value: Value) -> Self {
+unsafe impl<'a> FromValue for &str {
+    fn from_value(value: &Value) -> Self {
         let len = unsafe { crate::sys::caml_string_length(value.0) };
         let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe {
@@ -238,7 +226,7 @@ unsafe impl<'a> ToValue for &str {
 }
 
 unsafe impl<'a> FromValue for &mut str {
-    fn from_value(value: Value) -> Self {
+    fn from_value(value: &Value) -> Self {
         let len = unsafe { crate::sys::caml_string_length(value.0) };
         let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe {
@@ -262,7 +250,7 @@ unsafe impl<'a> ToValue for &mut str {
 }
 
 unsafe impl<'a> FromValue for &[u8] {
-    fn from_value(value: Value) -> Self {
+    fn from_value(value: &Value) -> Self {
         let len = unsafe { crate::sys::caml_string_length(value.0) };
         let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe { ::core::slice::from_raw_parts(ptr, len) }
@@ -283,7 +271,7 @@ unsafe impl<'a> ToValue for &[u8] {
 }
 
 unsafe impl<'a> FromValue for &mut [u8] {
-    fn from_value(value: Value) -> Self {
+    fn from_value(value: &Value) -> Self {
         let len = unsafe { crate::sys::caml_string_length(value.0) };
         let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe { ::core::slice::from_raw_parts_mut(ptr, len) }
@@ -319,12 +307,12 @@ unsafe impl<'a, V: ToValue> ToValue for Vec<V> {
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl<'a, V: FromValue> FromValue for Vec<V> {
-    fn from_value(v: Value) -> Vec<V> {
+    fn from_value(v: &Value) -> Vec<V> {
         unsafe {
             let len = crate::sys::caml_array_length(v.0);
             let mut dst = Vec::with_capacity(len);
             for i in 0..len {
-                dst.push(V::from_value(Value::new(*crate::sys::field(v.0, i))))
+                dst.push(V::from_value(&Value::new(*crate::sys::field(v.0, i))))
             }
             dst
         }
@@ -332,7 +320,7 @@ unsafe impl<'a, V: FromValue> FromValue for Vec<V> {
 }
 
 unsafe impl<'a> FromValue for &'a [Value] {
-    fn from_value(value: Value) -> &'a [Value] {
+    fn from_value(value: &Value) -> &'a [Value] {
         unsafe {
             ::core::slice::from_raw_parts(
                 crate::sys::field(value.0, 0) as *mut Value,
@@ -343,7 +331,7 @@ unsafe impl<'a> FromValue for &'a [Value] {
 }
 
 unsafe impl<'a> FromValue for &'a mut [Value] {
-    fn from_value(value: Value) -> &'a mut [Value] {
+    fn from_value(value: &Value) -> &'a mut [Value] {
         unsafe {
             ::core::slice::from_raw_parts_mut(
                 crate::sys::field(value.0, 0) as *mut Value,
@@ -355,10 +343,10 @@ unsafe impl<'a> FromValue for &'a mut [Value] {
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BTreeMap<K, V> {
-    fn from_value(v: Value) -> std::collections::BTreeMap<K, V> {
+    fn from_value(v: &Value) -> std::collections::BTreeMap<K, V> {
         let mut dest = std::collections::BTreeMap::new();
 
-        let mut tmp = v;
+        let mut tmp = *v;
         while tmp.0 != crate::sys::EMPTY_LIST {
             let (k, v) = tmp.field(0);
             dest.insert(k, v);
@@ -389,10 +377,10 @@ unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V>
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
-    fn from_value(v: Value) -> std::collections::LinkedList<T> {
+    fn from_value(v: &Value) -> std::collections::LinkedList<T> {
         let mut dest = std::collections::LinkedList::new();
 
-        let mut tmp = v;
+        let mut tmp = *v;
         while tmp.0 != crate::sys::EMPTY_LIST {
             let t = tmp.field(0);
             dest.push_back(t);

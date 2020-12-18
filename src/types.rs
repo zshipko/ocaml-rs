@@ -20,13 +20,13 @@ pub struct Pointer<T>(pub Value, PhantomData<T>);
 
 unsafe impl<T> ToValue for Pointer<T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
-        self.0
+        self.0.clone()
     }
 }
 
 unsafe impl<T> FromValue for Pointer<T> {
-    fn from_value(value: Value) -> Self {
-        Pointer(value, PhantomData)
+    fn from_value(value: &Value) -> Self {
+        Pointer(value.clone(), PhantomData)
     }
 }
 
@@ -43,10 +43,11 @@ impl<T> Pointer<T> {
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<T> {
-        let mut ptr = Pointer::from_value(match finalizer {
+        let value = match finalizer {
             Some(f) => Value::alloc_final::<T>(rt, f, used_max),
             None => Value::alloc_final::<T>(rt, ignore, used_max),
-        });
+        };
+        let mut ptr = Pointer::from_value(&value);
         ptr.set(x);
         ptr
     }
@@ -56,7 +57,7 @@ impl<T> Pointer<T> {
     where
         T: crate::Custom,
     {
-        let mut ptr = Pointer::from_value(Value::alloc_custom::<T>(rt));
+        let mut ptr = Pointer::from_value(&Value::alloc_custom::<T>(rt));
         ptr.set(x);
         ptr
     }
@@ -107,13 +108,13 @@ pub struct Array<T: ToValue + FromValue>(Value, PhantomData<T>);
 
 unsafe impl<T: ToValue + FromValue> ToValue for Array<T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
-        self.0
+        self.0.clone()
     }
 }
 
 unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
-    fn from_value(value: Value) -> Self {
-        Array(value, PhantomData)
+    fn from_value(value: &Value) -> Self {
+        Array(value.clone(), PhantomData)
     }
 }
 
@@ -228,23 +229,23 @@ impl<T: ToValue + FromValue> Array<T> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
-        T::from_value(self.0.field(i))
+        T::from_value(&self.0.field(i))
     }
 
     /// Array as slice
     pub fn as_slice(&self) -> &[Value] {
-        FromValue::from_value(self.0)
+        FromValue::from_value(&self.0)
     }
 
     /// Array as mutable slice
     pub fn as_mut_slice(&mut self) -> &mut [Value] {
-        FromValue::from_value(self.0)
+        FromValue::from_value(&self.0)
     }
 
     /// Array as `Vec`
     #[cfg(not(feature = "no-std"))]
     pub fn to_vec(&self) -> Vec<T> {
-        FromValue::from_value(self.0)
+        FromValue::from_value(&self.0)
     }
 }
 
@@ -261,8 +262,8 @@ unsafe impl<T: ToValue + FromValue> ToValue for List<T> {
 }
 
 unsafe impl<'a, T: ToValue + FromValue> FromValue for List<T> {
-    fn from_value(value: Value) -> Self {
-        List(value, PhantomData)
+    fn from_value(value: &Value) -> Self {
+        List(value.clone(), PhantomData)
     }
 }
 
@@ -331,7 +332,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
     #[cfg(not(feature = "no-std"))]
     /// List as `LinkedList`
     pub fn to_linked_list(&self) -> std::collections::LinkedList<T> {
-        FromValue::from_value(self.0)
+        FromValue::from_value(&self.0)
     }
 
     /// List iterator
@@ -416,7 +417,7 @@ pub mod bigarray {
     pub struct Array1<T>(Value, PhantomData<T>);
 
     unsafe impl<T> crate::FromValue for Array1<T> {
-        fn from_value(value: Value) -> Array1<T> {
+        fn from_value(value: &Value) -> Array1<T> {
             Array1(Value::new(value.0), PhantomData)
         }
     }
@@ -559,7 +560,7 @@ pub(crate) mod bigarray_ext {
     }
 
     unsafe impl<T> FromValue for Array2<T> {
-        fn from_value(value: Value) -> Array2<T> {
+        fn from_value(value: &Value) -> Array2<T> {
             Array2(Value::new(value.0), PhantomData)
         }
     }
@@ -644,7 +645,7 @@ pub(crate) mod bigarray_ext {
     }
 
     unsafe impl<T> FromValue for Array3<T> {
-        fn from_value(value: Value) -> Array3<T> {
+        fn from_value(value: &Value) -> Array3<T> {
             Array3(Value::new(value.0), PhantomData)
         }
     }

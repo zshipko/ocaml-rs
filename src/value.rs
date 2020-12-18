@@ -26,7 +26,7 @@ pub unsafe trait ToValue {
 /// `FromValue` is used to convert from OCaml values to Rust types
 pub unsafe trait FromValue {
     /// Convert from OCaml value
-    fn from_value(v: Value) -> Self;
+    fn from_value(v: &Value) -> Self;
 }
 
 unsafe impl ToValue for Value {
@@ -37,14 +37,22 @@ unsafe impl ToValue for Value {
 
 unsafe impl FromValue for Value {
     #[inline]
-    fn from_value(v: Value) -> Value {
-        v
+    fn from_value(v: &Value) -> Value {
+        v.clone()
     }
 }
 
 unsafe impl<'a, T> ToValue for OCaml<'a, T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.raw()) }
+    }
+}
+
+unsafe impl<'a, T> FromValue for OCaml<'a, T> {
+    fn from_value(value: &Value) -> OCaml<'a, T> {
+        let gc = unsafe { &mut Runtime::recover_handle() };
+        let x: OCaml<T> = unsafe { OCaml::new(gc, value.0) };
+        unsafe { core::mem::transmute(x) }
     }
 }
 
@@ -55,6 +63,12 @@ unsafe impl<'a> crate::interop::ToOCaml<Value> for Value {
     ) -> crate::interop::OCamlAllocResult<Value> {
         let mut gc = unsafe { &mut token.recover_runtime_handle() };
         unsafe { crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&mut gc, self.0)) }
+    }
+}
+
+unsafe impl<'a> crate::interop::FromOCaml<Value> for Value {
+    fn from_ocaml(v: OCaml<Value>) -> Value {
+        unsafe { Value::new(v.raw()) }
     }
 }
 
@@ -74,7 +88,7 @@ impl Value {
                 return None;
             }
 
-            Some(FromValue::from_value(Value::new(*named)))
+            Some(FromValue::from_value(&Value::new(*named)))
         }
     }
 
@@ -180,6 +194,14 @@ impl Value {
 
     /// Allocate and copy a string value
     pub fn string<S: AsRef<str>>(rt: &mut Runtime, s: S) -> Value {
+        Value::new(unsafe {
+            let x: OCaml<ocaml_interop::OCamlBytes> = ocaml_interop::to_ocaml!(rt, s.as_ref());
+            x.raw()
+        })
+    }
+
+    /// Allocate and copy a byte array value
+    pub fn bytes<S: AsRef<[u8]>>(rt: &mut Runtime, s: S) -> Value {
         Value::new(unsafe {
             let x: OCaml<ocaml_interop::OCamlBytes> = ocaml_interop::to_ocaml!(rt, s.as_ref());
             x.raw()
@@ -305,7 +327,7 @@ impl Value {
 
     /// Get index of underlying OCaml block value
     pub fn field<T: FromValue>(self, i: Size) -> T {
-        unsafe { T::from_value(Value::new(*sys::field(self.0, i))) }
+        unsafe { T::from_value(&Value::new(*sys::field(self.0, i))) }
     }
 
     /// Set index of underlying OCaml block value
@@ -358,13 +380,49 @@ impl Value {
         unsafe { *(self.0 as *mut *mut T) }
     }
 
+    /// Get underlying string pointer
+    pub fn string_val(&self) -> &str {
+        let len = unsafe { crate::sys::caml_string_length(self.0) };
+        let ptr = unsafe { crate::sys::string_val(self.0) };
+        unsafe {
+            let slice = ::core::slice::from_raw_parts(ptr, len);
+            ::core::str::from_utf8(slice).expect("Invalid UTF-8").into()
+        }
+    }
+
+    /// Get underlying bytes pointer
+    pub fn bytes_val(&self) -> &[u8] {
+        let len = unsafe { crate::sys::caml_string_length(self.0) };
+        let ptr = unsafe { crate::sys::string_val(self.0) };
+        unsafe { ::core::slice::from_raw_parts(ptr, len) }
+    }
+
+    /// Get mutable string pointer
+    pub fn string_val_mut<'a>(&'a mut self) -> &'a mut str {
+        let len = unsafe { crate::sys::caml_string_length(self.0) };
+        let ptr = unsafe { crate::sys::string_val(self.0) };
+        unsafe {
+            let slice = ::core::slice::from_raw_parts_mut(ptr, len);
+            ::core::str::from_utf8_mut(slice)
+                .expect("Invalid UTF-8")
+                .into()
+        }
+    }
+
+    /// Get mutable bytes pointer
+    pub fn bytes_val_mut<'a>(&'a mut self) -> &'a mut [u8] {
+        let len = unsafe { crate::sys::caml_string_length(self.0) };
+        let ptr = unsafe { crate::sys::string_val(self.0) };
+        unsafe { ::core::slice::from_raw_parts_mut(ptr, len) }
+    }
+
     /// Extract OCaml exception
     pub fn exception<A: FromValue>(self) -> Option<A> {
         if !self.is_exception_result() {
             return None;
         }
 
-        Some(A::from_value(Value::new(crate::sys::extract_exception(
+        Some(A::from_value(&Value::new(crate::sys::extract_exception(
             self.0,
         ))))
     }

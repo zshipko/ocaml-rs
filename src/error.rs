@@ -246,7 +246,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
 }
 
 unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
-    fn from_value(value: Value) -> Result<T, crate::Error> {
+    fn from_value(value: &Value) -> Result<T, crate::Error> {
         if value.is_exception_result() {
             return Err(CamlError::Exception(value.exception().unwrap()).into());
         }

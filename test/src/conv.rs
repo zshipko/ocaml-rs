@@ -13,8 +13,8 @@ pub fn enum1_empty() -> Enum1 {
 }
 
 #[ocaml::func]
-pub fn enum1_first(i: ocaml::Int) -> Enum1 {
-    Enum1::First(i)
+pub fn enum1_first(i: ocaml::OCaml<ocaml::interop::OCamlInt>) -> Enum1 {
+    Enum1::First(i.as_i64() as ocaml::Int)
 }
 
 #[ocaml::func]
@@ -84,7 +84,7 @@ pub unsafe fn string_non_copying(s: &str) -> ocaml::Value {
 pub unsafe fn direct_slice(data: &[ocaml::Value]) -> i64 {
     let mut total = 0;
     for i in data {
-        let x: i64 = ocaml::FromValue::from_value(*i);
+        let x: i64 = ocaml::FromValue::from_value(i);
         total += x;
     }
     total

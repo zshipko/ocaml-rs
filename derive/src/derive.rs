@@ -158,7 +158,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
                     let ty = &field.ty;
                     quote!(ocaml::array::get_double(value, #idx).unwrap() as #ty)
                 } else {
-                    quote!(ocaml::FromValue::from_value(value.field(#idx)))
+                    quote!(ocaml::FromValue::from_value(&value.field(#idx)))
                 }
             });
             quote!((#is_block, #tag) => {
@@ -170,7 +170,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     if attrs.unboxed {
         s.gen_impl(quote! {
             gen unsafe impl ocaml::FromValue for @Self {
-                fn from_value(value: ocaml::Value) -> Self {
+                fn from_value(value: &ocaml::Value) -> Self {
                     #(#body),*
                 }
             }
@@ -189,7 +189,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         };
         s.gen_impl(quote! {
             gen unsafe impl ocaml::FromValue for @Self {
-                fn from_value(value: ocaml::Value) -> Self {
+                fn from_value(value: &ocaml::Value) -> Self {
                     let is_block = value.is_block();
                     let tag = if !is_block { value.int_val() as u8 } else { #tag.0 };
                     match (is_block, tag) {
