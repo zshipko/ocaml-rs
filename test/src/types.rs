@@ -1,8 +1,9 @@
+use ocaml::interop::ToOCaml;
 use ocaml::Value;
 
 #[ocaml::func]
-pub fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::Int {
-    x.len() as ocaml::Int
+pub fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::OCaml<ocaml::interop::OCamlInt> {
+    ocaml::OCaml::of_i32(x.len() as i32)
 }
 
 #[ocaml::func]
@@ -78,9 +79,13 @@ pub fn array2_set(mut arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize, v: 
 }
 
 #[ocaml::func]
-pub fn array2_get(arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize) -> f32 {
+pub fn array2_get(
+    arr: ocaml::bigarray::Array2<f32>,
+    x: usize,
+    y: usize,
+) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let view = arr.view();
-    view[[x, y]]
+    ocaml::interop::to_ocaml!(gc, view[[x, y]] as f64)
 }
 
 #[ocaml::func]
@@ -100,9 +105,9 @@ pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
 }
 
 #[ocaml::func]
-pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::Float {
+pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let f = f.abstract_ptr_val::<Abstract>();
-    (*f).f
+    ocaml::interop::to_ocaml!(gc, (*f).f)
 }
 
 #[ocaml::func]

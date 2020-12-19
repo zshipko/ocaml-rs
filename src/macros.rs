@@ -106,16 +106,15 @@ macro_rules! body {
             $param,
         )*};
 
-        $crate::interop::ocaml_frame!($gc, ($($param),+), {
-            $(
-                #[allow(unused_mut)]
-                let mut $param = unsafe { $crate::Value::new($param.keep_raw(values.$param.0).get_raw()) };
-            )+
+        let ($($param),+) = $crate::interop::ocaml_frame!($gc, ($($param),+), {
+            ($(
+                unsafe { $crate::Value::new($param.keep_raw(values.$param.0).get_raw()) }
+            ),+)
+        });
 
-            #[allow(unused_mut)]
-            let mut r = |$gc: &mut $crate::Runtime| $code;
-            r(&mut $gc)
-        })
+        #[allow(unused_mut)]
+        let mut r = |$gc: &mut $crate::Runtime| $code;
+        r(&mut $gc)
     }};
 }
 

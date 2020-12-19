@@ -110,7 +110,9 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             #[inline(always)]
             #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
-                let _ = #gc_name;
+                {
+                    let _ = #gc_name;
+                }
                 #body
             }
         }
@@ -118,7 +120,9 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             #[inline(always)]
             #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*)  {
-                let _ = #gc_name;
+                {
+                    let _ = #gc_name;
+                }
                 #body
             }
         }
@@ -161,7 +165,10 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
             ocaml::body!(#gc_name: (#param_names) {
                 #(#convert_params);*
                 let res = inner(#gc_name, #param_names);
-                ocaml::ToValue::to_value(res, #gc_name)
+
+                #[allow(unused_unsafe)]
+                let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
+                ocaml::ToValue::to_value(res, &mut gc_)
             })
         }
     };
