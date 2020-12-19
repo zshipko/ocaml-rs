@@ -1,7 +1,7 @@
 /// `frame!` can be used to create new local variables that play nicely with the garbage collector
 #[macro_export]
 macro_rules! frame {
-    ($gc:ident, ($($param:ident),*) $code:block) => {
+    ($gc:ident: ($($param:ident),*) $code:block) => {
         {
             struct __Values  {
                $($param: $crate::Value),*
@@ -20,7 +20,12 @@ macro_rules! frame {
                     )*})
                 };
 
-                $($param.keep_raw(values.$param.0));*;
+
+                $(
+                    if values.$param != $crate::Value::unit() {
+                        $param.keep_raw(values.$param.0);
+                    }
+                )*
                 r
             })
         }
@@ -38,8 +43,8 @@ pub fn init_panic_handler() {
         return;
     }
 
-    ::std::panic::set_hook(Box::new(|info| {
-        let mut rt = unsafe { crate::Runtime::recover_handle() };
+    ::std::panic::set_hook(Box::new(|info| unsafe {
+        let mut rt = crate::Runtime::recover_handle();
         let err = info.payload();
         let msg = if err.is::<&str>() {
             err.downcast_ref::<&str>().unwrap()
@@ -49,10 +54,8 @@ pub fn init_panic_handler() {
             "rust panic"
         };
 
-        unsafe {
-            if let Some(err) = crate::Value::named("Rust_exception") {
-                crate::Error::raise_value(&mut rt, err, msg);
-            }
+        if let Some(err) = crate::Value::named("Rust_exception") {
+            crate::Error::raise_value(&mut rt, err, msg);
         }
 
         crate::Error::raise_failure(&mut rt, msg)

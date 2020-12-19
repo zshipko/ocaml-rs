@@ -195,7 +195,7 @@ unsafe impl<'a, T: FromValue> FromValue for Option<T> {
 unsafe impl<'a, T: ToValue> ToValue for Option<T> {
     fn to_value(self, rt: &mut Runtime) -> Value {
         match self {
-            Some(y) => crate::frame!(rt, (x) {
+            Some(y) => crate::frame!(rt: (x) {
                 x = y.to_value(rt);
                 unsafe { Value::some(rt, x) }
             }),
@@ -217,7 +217,7 @@ unsafe impl<'a> FromValue for &str {
 
 unsafe impl<'a> ToValue for &str {
     fn to_value(self, rt: &mut Runtime) -> Value {
-        frame!(rt, (value) {
+        frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
@@ -241,7 +241,7 @@ unsafe impl<'a> FromValue for &mut str {
 
 unsafe impl<'a> ToValue for &mut str {
     fn to_value(self, rt: &mut Runtime) -> Value {
-        frame!(rt, (value) {
+        frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
@@ -262,7 +262,7 @@ unsafe impl<'a> FromValue for &[u8] {
 
 unsafe impl<'a> ToValue for &[u8] {
     fn to_value(self, rt: &mut Runtime) -> Value {
-        frame!(rt, (value) {
+        frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
@@ -283,7 +283,7 @@ unsafe impl<'a> FromValue for &mut [u8] {
 
 unsafe impl<'a> ToValue for &mut [u8] {
     fn to_value(self, rt: &mut Runtime) -> Value {
-        frame!(rt, (value) {
+        frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
                 let ptr = crate::sys::string_val(value.0);
@@ -368,7 +368,7 @@ unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V>
     fn to_value(self, rt: &mut Runtime) -> Value {
         let mut list = crate::List::empty();
 
-        crate::frame!(rt, (l, k_, v_) {
+        crate::frame!(rt: (l, k_, v_) {
             for (k, v) in self.into_iter().rev() {
                 k_ = k.to_value(rt);
                 v_ = v.to_value(rt);
@@ -404,7 +404,7 @@ unsafe impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
     fn to_value(self, rt: &mut Runtime) -> Value {
         let mut list = crate::List::empty();
 
-        frame!(rt, (l, x) {
+        frame!(rt: (l, x) {
             for t in self.into_iter().rev() {
                 let v = t.to_value(rt);
                 list = list.add(rt, v);

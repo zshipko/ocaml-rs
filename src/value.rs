@@ -64,8 +64,10 @@ unsafe impl<'a> crate::interop::ToOCaml<Value> for Value {
         &self,
         token: crate::interop::OCamlAllocToken,
     ) -> crate::interop::OCamlAllocResult<Value> {
-        let gc = unsafe { &mut token.recover_runtime_handle() };
-        unsafe { crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&gc, self.0)) }
+        unsafe {
+            let gc = &mut token.recover_runtime_handle();
+            crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&gc, self.0))
+        }
     }
 }
 
@@ -95,7 +97,7 @@ impl Value {
 
     /// Allocate a new value with the given size and tag.
     pub unsafe fn alloc(rt: &mut Runtime, n: usize, tag: Tag) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc(n, tag.into()));
             x
         })
@@ -103,7 +105,7 @@ impl Value {
 
     /// Allocate a new tuple value
     pub unsafe fn alloc_tuple(rt: &mut Runtime, n: usize) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_tuple(n));
             x
         })
@@ -111,7 +113,7 @@ impl Value {
 
     /// Allocate a new small value with the given size and tag
     pub unsafe fn alloc_small(rt: &mut Runtime, n: usize, tag: Tag) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_small(n, tag.into()));
             x
         })
@@ -127,7 +129,7 @@ impl Value {
         cfg: Option<(usize, usize)>,
     ) -> Value {
         let (used, max) = cfg.unwrap_or((0, 1));
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             Value::new(sys::caml_alloc_final(
                 core::mem::size_of::<T>(),
                 core::mem::transmute(finalizer),
@@ -140,7 +142,7 @@ impl Value {
     /// Allocate custom value
     pub unsafe fn alloc_custom<T: crate::Custom>(rt: &mut Runtime) -> Value {
         let size = core::mem::size_of::<T>();
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_custom(T::ops() as *const _ as *const sys::custom_operations, size, T::USED, T::MAX));
             x
         })
@@ -221,7 +223,7 @@ impl Value {
 
     /// OCaml Some value
     pub unsafe fn some<V: ToValue>(rt: &mut Runtime, v: V) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc(1, 0));
             x.store_field(rt, 0, v);
             x
@@ -242,7 +244,7 @@ impl Value {
 
     /// Create a variant value
     pub unsafe fn variant(rt: &mut Runtime, tag: u8, value: Option<Value>) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             match value {
                 Some(v) => {
                     x = Value::new(sys::caml_alloc(1, tag));
@@ -276,7 +278,7 @@ impl Value {
 
     /// Create an OCaml `Int64` from `i64`
     pub unsafe fn int64(rt: &mut Runtime, i: i64) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_copy_int64(i));
             x
         })
@@ -284,7 +286,7 @@ impl Value {
 
     /// Create an OCaml `Int32` from `i32`
     pub unsafe fn int32(rt: &mut Runtime, i: i32) -> Value {
-        crate::frame!(rt, (x) {
+        crate::frame!(rt: (x) {
             x = Value::new(sys::caml_copy_int32(i));
             x
         })
@@ -292,7 +294,7 @@ impl Value {
 
     /// Create an OCaml `Nativeint` from `isize`
     pub unsafe fn nativeint(rt: &mut Runtime, i: isize) -> Value {
-        frame!(rt, (x) {
+        frame!(rt: (x) {
             x = Value::new(sys::caml_copy_nativeint(i));
             x
         })
@@ -300,7 +302,7 @@ impl Value {
 
     /// Create an OCaml `Float` from `f64`
     pub unsafe fn float(rt: &mut Runtime, d: f64) -> Value {
-        frame!(rt, (x) {
+        frame!(rt: (x) {
             x = Value::new(sys::caml_copy_double(d));
             x
         })
@@ -421,7 +423,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt, (res) {
+        let mut v = crate::frame!(rt: (res) {
             res = Value::new(sys::caml_callback_exn(self.0, arg.to_value(rt).0));
             res
         });
@@ -445,7 +447,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt, (res) {
+        let mut v = crate::frame!(rt: (res) {
             res =
                 Value::new(sys::caml_callback2_exn(self.0, arg1.to_value(rt).0, arg2.to_value(rt).0));
             res
@@ -471,7 +473,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt, (res) {
+        let mut v = crate::frame!(rt: (res) {
             res =
                 Value::new(sys::caml_callback3_exn(
                     self.0,
@@ -503,7 +505,7 @@ impl Value {
         let n = args.as_ref().len();
         let x = args.as_ref();
 
-        let mut v = crate::frame!(rt, (res) {
+        let mut v = crate::frame!(rt: (res) {
             res =
                 Value::new(sys::caml_callbackN_exn(
                     self.0,

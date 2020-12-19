@@ -176,7 +176,7 @@ impl Array<f64> {
 impl<T: ToValue + FromValue> Array<T> {
     /// Allocate a new Array
     pub fn alloc(rt: &mut Runtime, n: usize) -> Array<T> {
-        let x = crate::frame!(rt, (x) {
+        let x = crate::frame!(rt: (x) {
             x = unsafe { Value::new(sys::caml_alloc(n, 0)) };
             x
         });
@@ -298,7 +298,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
     #[must_use]
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, rt: &'a mut Runtime, v: T) -> List<T> {
-        frame!(rt, (x, tmp) {
+        frame!(rt: (x, tmp) {
                 x = v.to_value(rt);
             unsafe {
                 tmp = Value::new(sys::caml_alloc(2, 0));
@@ -440,7 +440,7 @@ pub mod bigarray {
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
         pub fn of_slice(rt: &mut Runtime, data: &mut [T]) -> Array1<T> {
-            let x = crate::frame!(rt, (x) {
+            let x = crate::frame!(rt: (x) {
                 x = unsafe {
                     Value::new(bigarray::caml_ba_alloc_dims(
                         T::kind() | bigarray::Managed::EXTERNAL as i32,
@@ -467,7 +467,7 @@ pub mod bigarray {
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
         pub fn create(rt: &mut Runtime, n: Size) -> Array1<T> {
-            let x = crate::frame!(rt, (x) {
+            let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
                 x = unsafe {
                     Value::new(bigarray::caml_ba_alloc_dims(
@@ -586,7 +586,7 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
         pub fn create(rt: &mut Runtime, dim: ndarray::Ix2) -> Array2<T> {
-            let x = crate::frame!(rt, (x) {
+            let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
                 x = unsafe {
                     Value::new(bigarray::caml_ba_alloc_dims(
@@ -671,7 +671,7 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array3<T> {
         /// Create a new OCaml `Bigarray.Array3` with the given type and shape
         pub fn create(rt: &mut Runtime, dim: ndarray::Ix3) -> Array3<T> {
-            let x = crate::frame!(rt, (x) {
+            let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
                 x = unsafe {
                     Value::new(bigarray::caml_ba_alloc_dims(
