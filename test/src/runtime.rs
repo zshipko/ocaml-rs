@@ -11,6 +11,7 @@ pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::func]
+#[allow(clippy::too_many_arguments)]
 pub unsafe fn more_than_five_params(
     mut a: ocaml::Float,
     mut b: ocaml::Float,

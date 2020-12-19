@@ -6,11 +6,20 @@ pub type Char = cty::c_char;
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_version"));
 
+#[cfg(feature = "without-ocamlopt")]
+pub const VERSION: &str = "";
+
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const PATH: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_path"));
 
+#[cfg(feature = "without-ocamlopt")]
+pub const PATH: &str = "";
+
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const COMPILER: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_compiler"));
+
+#[cfg(feature = "without-ocamlopt")]
+pub const COMPILER: &str = "";
 
 mod mlvalues;
 #[macro_use]
