@@ -71,7 +71,6 @@ let test_array2_checked dim1 dim2 = (
   let rec check x y v =
     if not v || x == dim1 then v else
       if y == dim2 then
-        let () = Gc.minor () in
         check (x + 1) 0 v
       else
         let value = float_of_int (x * y) in
