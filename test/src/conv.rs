@@ -66,6 +66,7 @@ pub fn struct1_set_c(mut s: Struct1, v: String) {
 }
 
 #[ocaml::func]
+#[allow(clippy::unnecessary-wraps)]
 pub unsafe fn make_struct1(
     a: ocaml::Int,
     b: ocaml::Float,
