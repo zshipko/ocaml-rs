@@ -14,7 +14,7 @@ pub fn enum1_empty() -> Enum1 {
 
 #[ocaml::func]
 pub fn enum1_first(i: ocaml::OCaml<ocaml::interop::OCamlInt>) -> Enum1 {
-    Enum1::First(i.as_i64() as ocaml::Int)
+    Enum1::First(i.to_i64() as ocaml::Int)
 }
 
 #[ocaml::func(test)]
