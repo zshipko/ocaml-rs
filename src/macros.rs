@@ -23,7 +23,8 @@ macro_rules! frame {
 
                 $(
                     if values.$param != $crate::Value::unit() {
-                        $param.keep_raw(values.$param.0);
+                        #[allow(unused_unsafe)]
+                        unsafe { $param.keep_raw::<$crate::Value>(values.$param.0); }
                     }
                 )*
                 r
@@ -39,7 +40,15 @@ static PANIC_HANDLER_INIT: std::sync::atomic::AtomicBool =
 #[cfg(not(feature = "no-std"))]
 #[doc(hidden)]
 pub fn init_panic_handler() {
-    if PANIC_HANDLER_INIT.compare_and_swap(false, true, std::sync::atomic::Ordering::Relaxed) {
+    if !PANIC_HANDLER_INIT
+        .compare_exchange(
+            false,
+            true,
+            std::sync::atomic::Ordering::Relaxed,
+            std::sync::atomic::Ordering::Relaxed,
+        )
+        .is_ok()
+    {
         return;
     }
 
@@ -108,7 +117,7 @@ macro_rules! body {
 
         let ($($param),+) = $crate::interop::ocaml_frame!($gc, ($($param),+), {
             ($(
-                unsafe { $crate::Value::new($param.keep_raw(values.$param.0).get_raw()) }
+                unsafe { $crate::Value::new($param.keep_raw::<$crate::Value>(values.$param.0).get_raw()) }
             ),+)
         });
 

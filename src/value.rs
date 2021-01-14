@@ -1,6 +1,6 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{interop::ToOCaml, sys, OCaml, Root, Runtime};
+use crate::{interop::ToOCaml, sys, OCaml, OCamlRef, Runtime};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
@@ -56,31 +56,25 @@ unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     }
 }
 
-unsafe impl<'a, T> ToValue for Root<'a, T> {
+unsafe impl<'a, T> ToValue for OCamlRef<'a, T> {
     fn to_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.get_raw()) }
     }
 }
 
-unsafe impl<'a, T> FromValue for Root<'a, T> {
-    fn from_value(value: Value) -> Root<'a, T> {
+unsafe impl<'a, T> FromValue for OCamlRef<'a, T> {
+    fn from_value(value: Value) -> OCamlRef<'a, T> {
         let rt = unsafe { Runtime::recover_handle() };
         let mut frame = rt.open_frame();
         let gc = frame.initialize(&[]);
-        let mut x = unsafe { crate::interop::internal::OCamlRoot::reserve(gc) };
+        let mut x = unsafe { crate::interop::internal::OCamlRawRoot::reserve(gc) };
         unsafe { core::mem::transmute(x.keep(OCaml::<T>::from_value(value))) }
     }
 }
 
-unsafe impl<'a> crate::interop::ToOCaml<Value> for Value {
-    fn to_ocaml(
-        &self,
-        token: crate::interop::OCamlAllocToken,
-    ) -> crate::interop::OCamlAllocResult<Value> {
-        unsafe {
-            let gc = &mut token.recover_runtime_handle();
-            crate::interop::OCamlAllocResult::of_ocaml(OCaml::new(&gc, self.0))
-        }
+unsafe impl crate::interop::ToOCaml<Value> for Value {
+    fn to_ocaml<'a>(&self, gc: &'a mut Runtime) -> OCaml<'a, Value> {
+        unsafe { OCaml::new(gc, self.0) }
     }
 }
 

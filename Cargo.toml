@@ -16,7 +16,7 @@ features = [ "without-ocamlopt", "derive", "link" ]
 [dependencies]
 ocaml-sys = {path = "./sys", version = "0.19"}
 ocaml-derive = {path = "./derive", optional = true, version = "0.19"}
-ocaml-interop = {git = "https://github.com/zshipko/ocaml-interop", branch="without-ocamlopt"}
+ocaml-interop = {git = "https://github.com/zshipko/ocaml-interop", branch="without-ocamlopt3"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.14.0", optional = true}
 
