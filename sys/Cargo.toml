@@ -16,6 +16,7 @@ cty = "0.2"
 features = [ "without-ocamlopt", "caml-state" ]
 
 [features]
+default = []
 link = []
 without-ocamlopt = []
 caml-state = []
