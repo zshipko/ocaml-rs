@@ -1,12 +1,12 @@
 use crate::{
-    value::{FromValue, ToValue, Value},
+    value::{FromValue, IntoValue, Value},
     Runtime, Tag,
 };
 
 macro_rules! value_i {
     ($t:ty) => {
-        unsafe impl ToValue for $t {
-            fn to_value(self, _rt: &mut Runtime) -> $crate::Value {
+        unsafe impl IntoValue for $t {
+            fn into_value(self, _rt: &mut Runtime) -> $crate::Value {
                 unsafe { $crate::Value::int(self as crate::Int) }
             }
         }
@@ -24,8 +24,8 @@ macro_rules! value_i {
 
 macro_rules! value_f {
     ($t:ty) => {
-        unsafe impl ToValue for $t {
-            fn to_value(self, rt: &mut Runtime) -> $crate::Value {
+        unsafe impl IntoValue for $t {
+            fn into_value(self, rt: &mut Runtime) -> $crate::Value {
                 unsafe { $crate::Value::float(rt, self as crate::Float) }
             }
         }
@@ -44,8 +44,8 @@ macro_rules! value_f {
 value_i!(i8, u8, i16, u16, crate::Int, crate::Uint);
 value_f!(f32, f64);
 
-unsafe impl ToValue for i64 {
-    fn to_value(self, rt: &mut Runtime) -> crate::Value {
+unsafe impl IntoValue for i64 {
+    fn into_value(self, rt: &mut Runtime) -> crate::Value {
         unsafe { Value::int64(rt, self) }
     }
 }
@@ -56,8 +56,8 @@ unsafe impl FromValue for i64 {
     }
 }
 
-unsafe impl ToValue for u64 {
-    fn to_value(self, rt: &mut Runtime) -> crate::Value {
+unsafe impl IntoValue for u64 {
+    fn into_value(self, rt: &mut Runtime) -> crate::Value {
         unsafe { Value::int64(rt, self as i64) }
     }
 }
@@ -68,8 +68,8 @@ unsafe impl FromValue for u64 {
     }
 }
 
-unsafe impl ToValue for i32 {
-    fn to_value(self, rt: &mut Runtime) -> crate::Value {
+unsafe impl IntoValue for i32 {
+    fn into_value(self, rt: &mut Runtime) -> crate::Value {
         unsafe { Value::int32(rt, self) }
     }
 }
@@ -104,8 +104,8 @@ macro_rules! tuple_impl {
             }
         }
 
-        unsafe impl<$($t: ToValue),*> ToValue for ($($t,)*) {
-            fn to_value(self, rt: &mut Runtime) -> crate::Value {
+        unsafe impl<$($t: IntoValue),*> IntoValue for ($($t,)*) {
+            fn into_value(self, rt: &mut Runtime) -> crate::Value {
                 #[allow(unused)]
                 let mut len = 0;
                 $(
@@ -150,8 +150,8 @@ tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L
 tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19);
 tuple_impl!(A: 0, B: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, J: 9, K: 10, L: 11, M: 12, N: 13, O: 14, P: 15, Q: 16, R: 17, S: 18, T: 19, U: 20);
 
-unsafe impl ToValue for bool {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl IntoValue for bool {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::int(self as isize) }
     }
 }
@@ -163,8 +163,8 @@ unsafe impl FromValue for bool {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl ToValue for String {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl IntoValue for String {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         unsafe { Value::string(rt, self.as_str()) }
     }
 }
@@ -176,8 +176,8 @@ unsafe impl FromValue for String {
     }
 }
 
-unsafe impl ToValue for () {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl IntoValue for () {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         Value::unit()
     }
 }
@@ -192,11 +192,11 @@ unsafe impl<'a, T: FromValue> FromValue for Option<T> {
     }
 }
 
-unsafe impl<'a, T: ToValue> ToValue for Option<T> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         match self {
             Some(y) => crate::frame!(rt: (x) {
-                x = y.to_value(rt);
+                x = y.into_value(rt);
                 unsafe { Value::some(rt, x) }
             }),
             None => Value::none(),
@@ -215,8 +215,8 @@ unsafe impl<'a> FromValue for &str {
     }
 }
 
-unsafe impl<'a> ToValue for &str {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a> IntoValue for &str {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
@@ -239,8 +239,8 @@ unsafe impl<'a> FromValue for &mut str {
     }
 }
 
-unsafe impl<'a> ToValue for &mut str {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a> IntoValue for &mut str {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
@@ -260,8 +260,8 @@ unsafe impl<'a> FromValue for &[u8] {
     }
 }
 
-unsafe impl<'a> ToValue for &[u8] {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a> IntoValue for &[u8] {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
@@ -281,8 +281,8 @@ unsafe impl<'a> FromValue for &mut [u8] {
     }
 }
 
-unsafe impl<'a> ToValue for &mut [u8] {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a> IntoValue for &mut [u8] {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         frame!(rt: (value) {
             unsafe {
                 value.0 = crate::sys::caml_alloc_string(self.len());
@@ -295,8 +295,8 @@ unsafe impl<'a> ToValue for &mut [u8] {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<'a, V: ToValue> ToValue for Vec<V> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<'a, V: IntoValue> IntoValue for Vec<V> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         let len = self.len();
         let mut arr = unsafe { Value::alloc(rt, len, Tag(0)) };
 
@@ -364,18 +364,18 @@ unsafe impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BT
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<K: ToValue, V: ToValue> ToValue for std::collections::BTreeMap<K, V> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<K: IntoValue, V: IntoValue> IntoValue for std::collections::BTreeMap<K, V> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         let mut list = crate::List::empty();
 
         crate::frame!(rt: (l, k_, v_) {
             for (k, v) in self.into_iter().rev() {
-                k_ = k.to_value(rt);
-                v_ = v.to_value(rt);
+                k_ = k.into_value(rt);
+                v_ = v.into_value(rt);
                 list = list.add(rt, (k_, v_));
             }
 
-            l = list.to_value(rt);
+            l = list.into_value(rt);
             l
         })
     }
@@ -400,23 +400,23 @@ unsafe impl<T: FromValue> FromValue for std::collections::LinkedList<T> {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<T: ToValue> ToValue for std::collections::LinkedList<T> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         let mut list = crate::List::empty();
 
         frame!(rt: (l, x) {
             for t in self.into_iter().rev() {
-                let v = t.to_value(rt);
+                let v = t.into_value(rt);
                 list = list.add(rt, v);
             }
-            l = list.to_value(rt);
+            l = list.into_value(rt);
             l
         })
     }
 }
 
-unsafe impl<'a> ToValue for &Value {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<'a> IntoValue for &Value {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.0) }
     }
 }

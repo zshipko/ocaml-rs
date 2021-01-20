@@ -40,14 +40,14 @@ static PANIC_HANDLER_INIT: std::sync::atomic::AtomicBool =
 #[cfg(not(feature = "no-std"))]
 #[doc(hidden)]
 pub fn init_panic_handler() {
-    if !PANIC_HANDLER_INIT
+    if PANIC_HANDLER_INIT
         .compare_exchange(
             false,
             true,
             std::sync::atomic::Ordering::Relaxed,
             std::sync::atomic::Ordering::Relaxed,
         )
-        .is_ok()
+        .is_err()
     {
         return;
     }

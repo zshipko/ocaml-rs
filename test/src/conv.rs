@@ -1,6 +1,6 @@
-use ocaml::{FromValue, ToValue};
+use ocaml::{FromValue, IntoValue};
 
-#[derive(ToValue, FromValue)]
+#[derive(IntoValue, FromValue)]
 enum Enum1 {
     Empty,
     First(ocaml::Int),
@@ -37,7 +37,7 @@ pub fn enum1_is_empty(e: Enum1) -> bool {
     matches!(e, Enum1::Empty)
 }
 
-#[derive(ToValue, FromValue, Default)]
+#[derive(IntoValue, FromValue, Default)]
 struct Struct1 {
     a: ocaml::Int,
     b: ocaml::Float,
@@ -99,5 +99,5 @@ pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
 
 #[ocaml::func]
 pub fn pair_vec() -> ocaml::Value {
-    vec![("foo", 1), ("bar", 2isize)].to_value(gc)
+    vec![("foo", 1), ("bar", 2isize)].into_value(gc)
 }

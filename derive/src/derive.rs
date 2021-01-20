@@ -53,7 +53,7 @@ fn variant_attrs(attrs: &[syn::Attribute]) -> Attrs {
         })
 }
 
-pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream {
+pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream {
     let mut unit_tag = 0u8;
     let mut non_unit_tag = 0u8;
     let is_record_like = s.variants().len() == 1;
@@ -90,7 +90,7 @@ pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(unsafe {#field.to_value(gc) }))
+            variant.each(|field| quote!(unsafe {#field.into_value(gc) }))
         } else {
             let mut idx = 0usize;
             let ghost = (0..arity)
@@ -108,8 +108,8 @@ pub fn tovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStream
     });
 
     s.gen_impl(quote! {
-        gen unsafe impl ocaml::ToValue for @Self {
-            fn to_value(self, gc: &mut ocaml::Runtime) -> ocaml::Value {
+        gen unsafe impl ocaml::IntoValue for @Self {
+            fn into_value(self, gc: &mut ocaml::Runtime) -> ocaml::Value {
                 let mut value = ocaml::Value::unit();
                 match self {
                     #(#body),*

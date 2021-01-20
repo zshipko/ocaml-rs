@@ -8,7 +8,7 @@ use core::{
     mem, slice,
 };
 
-use crate::value::{FromValue, Size, ToValue, Value};
+use crate::value::{FromValue, IntoValue, Size, Value};
 
 /// A handle to a Rust value/reference owned by the OCaml heap.
 ///
@@ -18,8 +18,8 @@ use crate::value::{FromValue, Size, ToValue, Value};
 #[repr(transparent)]
 pub struct Pointer<T>(pub Value, PhantomData<T>);
 
-unsafe impl<T> ToValue for Pointer<T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<T> IntoValue for Pointer<T> {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         self.0
     }
 }
@@ -108,15 +108,15 @@ impl<'a, T> AsMut<T> for Pointer<T> {
 /// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct Array<T: ToValue + FromValue>(Value, PhantomData<T>);
+pub struct Array<T: IntoValue + FromValue>(Value, PhantomData<T>);
 
-unsafe impl<T: ToValue + FromValue> ToValue for Array<T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<T: IntoValue + FromValue> IntoValue for Array<T> {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         self.0
     }
 }
 
-unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
+unsafe impl<T: IntoValue + FromValue> FromValue for Array<T> {
     fn from_value(value: Value) -> Self {
         Array(value, PhantomData)
     }
@@ -173,7 +173,7 @@ impl Array<f64> {
     }
 }
 
-impl<T: ToValue + FromValue> Array<T> {
+impl<T: IntoValue + FromValue> Array<T> {
     /// Allocate a new Array
     pub fn alloc(rt: &mut Runtime, n: usize) -> Array<T> {
         let x = crate::frame!(rt: (x) {
@@ -257,21 +257,21 @@ impl<T: ToValue + FromValue> Array<T> {
 /// additional overhead compared to a `Value` type
 #[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub struct List<T: ToValue + FromValue>(Value, PhantomData<T>);
+pub struct List<T: IntoValue + FromValue>(Value, PhantomData<T>);
 
-unsafe impl<T: ToValue + FromValue> ToValue for List<T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<T: IntoValue + FromValue> IntoValue for List<T> {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T: ToValue + FromValue> FromValue for List<T> {
+unsafe impl<'a, T: IntoValue + FromValue> FromValue for List<T> {
     fn from_value(value: Value) -> Self {
         List(value, PhantomData)
     }
 }
 
-impl<'a, T: ToValue + FromValue> List<T> {
+impl<'a, T: IntoValue + FromValue> List<T> {
     /// An empty list
     #[inline(always)]
     pub fn empty() -> List<T> {
@@ -299,7 +299,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, rt: &'a mut Runtime, v: T) -> List<T> {
         frame!(rt: (x, tmp) {
-                x = v.to_value(rt);
+                x = v.into_value(rt);
             unsafe {
                 tmp = Value::new(sys::caml_alloc(2, 0));
                 tmp.store_field(rt, 0, x);
@@ -348,7 +348,7 @@ impl<'a, T: ToValue + FromValue> List<T> {
     }
 }
 
-impl<T: ToValue + FromValue> IntoIterator for List<T> {
+impl<T: IntoValue + FromValue> IntoIterator for List<T> {
     type Item = T;
     type IntoIter = ListIterator<T>;
 
@@ -358,12 +358,12 @@ impl<T: ToValue + FromValue> IntoIterator for List<T> {
 }
 
 /// List iterator.
-pub struct ListIterator<T: ToValue + FromValue> {
+pub struct ListIterator<T: IntoValue + FromValue> {
     inner: Value,
     _marker: PhantomData<T>,
 }
 
-impl<'a, T: ToValue + FromValue> Iterator for ListIterator<T> {
+impl<'a, T: IntoValue + FromValue> Iterator for ListIterator<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -428,8 +428,8 @@ pub mod bigarray {
         }
     }
 
-    unsafe impl<T> crate::ToValue for Array1<T> {
-        fn to_value(self, _rt: &mut Runtime) -> Value {
+    unsafe impl<T> crate::IntoValue for Array1<T> {
+        fn into_value(self, _rt: &mut Runtime) -> Value {
             self.0
         }
     }
@@ -526,7 +526,7 @@ pub(crate) mod bigarray_ext {
     use crate::{
         bigarray::Kind,
         sys::{self, bigarray},
-        FromValue, Runtime, ToValue, Value,
+        FromValue, IntoValue, Runtime, Value,
     };
 
     /// OCaml Bigarray.Array2 type, this introduces no
@@ -577,8 +577,8 @@ pub(crate) mod bigarray_ext {
         }
     }
 
-    unsafe impl<T> ToValue for Array2<T> {
-        fn to_value(self, _rt: &mut Runtime) -> Value {
+    unsafe impl<T> IntoValue for Array2<T> {
+        fn into_value(self, _rt: &mut Runtime) -> Value {
             self.0
         }
     }
@@ -662,8 +662,8 @@ pub(crate) mod bigarray_ext {
         }
     }
 
-    unsafe impl<T> ToValue for Array3<T> {
-        fn to_value(self, _rt: &mut Runtime) -> Value {
+    unsafe impl<T> IntoValue for Array3<T> {
+        fn into_value(self, _rt: &mut Runtime) -> Value {
             self.0
         }
     }

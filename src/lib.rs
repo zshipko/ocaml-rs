@@ -15,9 +15,9 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! // Automatically derive `ToValue` and `FromValue`
+//! // Automatically derive `IntoValue` and `FromValue`
 //! #[cfg(feature = "derive")]
-//! #[derive(ocaml::ToValue, ocaml::FromValue)]
+//! #[derive(ocaml::IntoValue, ocaml::FromValue)]
 //! struct Example<'a> {
 //!     name: &'a str,
 //!     i: ocaml::Int,
@@ -120,7 +120,7 @@ pub use ocaml_sys as sys;
 #[cfg(feature = "derive")]
 pub use ocaml_derive::{
     ocaml_bytecode_func as bytecode_func, ocaml_func as func, ocaml_native_func as native_func,
-    FromValue, ToValue,
+    FromValue, IntoValue,
 };
 
 #[macro_use]
@@ -144,7 +144,7 @@ pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
-pub use crate::value::{FromValue, ToValue, Value};
+pub use crate::value::{FromValue, IntoValue, Value};
 
 #[cfg(not(feature = "no-std"))]
 pub use crate::macros::init_panic_handler;

@@ -17,10 +17,10 @@ impl Clone for Value {
     }
 }
 
-/// `ToValue` is used to convert from Rust types to OCaml values
-pub unsafe trait ToValue {
+/// `IntoValue` is used to convert from Rust types to OCaml values
+pub unsafe trait IntoValue {
     /// Convert to OCaml value
-    fn to_value(self, rt: &mut Runtime) -> Value;
+    fn into_value(self, rt: &mut Runtime) -> Value;
 }
 
 /// `FromValue` is used to convert from OCaml values to Rust types
@@ -29,8 +29,8 @@ pub unsafe trait FromValue {
     fn from_value(v: Value) -> Self;
 }
 
-unsafe impl ToValue for Value {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl IntoValue for Value {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.0) }
     }
 }
@@ -42,8 +42,8 @@ unsafe impl FromValue for Value {
     }
 }
 
-unsafe impl<'a, T> ToValue for OCaml<'a, T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<'a, T> IntoValue for OCaml<'a, T> {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.raw()) }
     }
 }
@@ -56,8 +56,8 @@ unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     }
 }
 
-unsafe impl<'a, T> ToValue for OCamlRef<'a, T> {
-    fn to_value(self, _rt: &mut Runtime) -> Value {
+unsafe impl<'a, T> IntoValue for OCamlRef<'a, T> {
+    fn into_value(self, _rt: &mut Runtime) -> Value {
         unsafe { Value::new(self.get_raw()) }
     }
 }
@@ -229,7 +229,7 @@ impl Value {
     }
 
     /// OCaml Some value
-    pub unsafe fn some<V: ToValue>(rt: &mut Runtime, v: V) -> Value {
+    pub unsafe fn some<V: IntoValue>(rt: &mut Runtime, v: V) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc(1, 0));
             x.store_field(rt, 0, v);
@@ -333,8 +333,8 @@ impl Value {
     }
 
     /// Set index of underlying OCaml block value
-    pub unsafe fn store_field<V: ToValue>(&mut self, rt: &mut Runtime, i: Size, val: V) {
-        sys::store_field(self.0, i, val.to_value(rt).0)
+    pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &mut Runtime, i: Size, val: V) {
+        sys::store_field(self.0, i, val.into_value(rt).0)
     }
 
     /// Convert an OCaml `int` to `isize`
@@ -425,13 +425,13 @@ impl Value {
     }
 
     /// Call a closure with a single argument, returning an exception value
-    pub unsafe fn call<A: ToValue>(self, rt: &mut Runtime, arg: A) -> Result<Value, Error> {
+    pub unsafe fn call<A: IntoValue>(self, rt: &mut Runtime, arg: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
         let mut v = crate::frame!(rt: (res) {
-            res = Value::new(sys::caml_callback_exn(self.0, arg.to_value(rt).0));
+            res = Value::new(sys::caml_callback_exn(self.0, arg.into_value(rt).0));
             res
         });
 
@@ -444,7 +444,7 @@ impl Value {
     }
 
     /// Call a closure with two arguments, returning an exception value
-    pub unsafe fn call2<A: ToValue, B: ToValue>(
+    pub unsafe fn call2<A: IntoValue, B: IntoValue>(
         self,
         rt: &mut Runtime,
         arg1: A,
@@ -456,7 +456,7 @@ impl Value {
 
         let mut v = crate::frame!(rt: (res) {
             res =
-                Value::new(sys::caml_callback2_exn(self.0, arg1.to_value(rt).0, arg2.to_value(rt).0));
+                Value::new(sys::caml_callback2_exn(self.0, arg1.into_value(rt).0, arg2.into_value(rt).0));
             res
         });
 
@@ -469,7 +469,7 @@ impl Value {
     }
 
     /// Call a closure with three arguments, returning an exception value
-    pub unsafe fn call3<A: ToValue, B: ToValue, C: ToValue>(
+    pub unsafe fn call3<A: IntoValue, B: IntoValue, C: IntoValue>(
         self,
         rt: &mut Runtime,
         arg1: A,
@@ -484,9 +484,9 @@ impl Value {
             res =
                 Value::new(sys::caml_callback3_exn(
                     self.0,
-                    arg1.to_value(rt).0,
-                    arg2.to_value(rt).0,
-                    arg3.to_value(rt).0,
+                    arg1.into_value(rt).0,
+                    arg2.into_value(rt).0,
+                    arg3.into_value(rt).0,
                 ));
             res
         });
@@ -531,8 +531,8 @@ impl Value {
     }
 
     /// Modify an OCaml value in place
-    pub unsafe fn modify<V: ToValue>(&mut self, rt: &mut Runtime, v: V) {
-        sys::caml_modify(&mut self.0, v.to_value(rt).0)
+    pub unsafe fn modify<V: IntoValue>(&mut self, rt: &mut Runtime, v: V) {
+        sys::caml_modify(&mut self.0, v.into_value(rt).0)
     }
 
     /// Determines if the current value is an exception

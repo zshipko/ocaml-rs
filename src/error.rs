@@ -1,4 +1,4 @@
-use crate::{FromValue, Runtime, ToValue, Value};
+use crate::{FromValue, IntoValue, Runtime, Value};
 
 /// Errors that are translated directly into OCaml exceptions
 #[derive(Debug)]
@@ -95,7 +95,7 @@ impl Error {
 
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
-    pub fn raise_with_arg<S: AsRef<str>, T: ToValue>(
+    pub fn raise_with_arg<S: AsRef<str>, T: IntoValue>(
         rt: &mut Runtime,
         exc: S,
         arg: T,
@@ -109,7 +109,7 @@ impl Error {
             }
         };
 
-        Err(CamlError::WithArg(value, arg.to_value(rt)).into())
+        Err(CamlError::WithArg(value, arg.into_value(rt)).into())
     }
 
     /// Raise `Not_found`
@@ -134,7 +134,7 @@ impl Error {
 
     #[doc(hidden)]
     pub fn raise_failure(rt: &mut Runtime, s: &str) -> ! {
-        let s = s.to_value(rt);
+        let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_failwith_value(s.0);
         }
@@ -144,7 +144,7 @@ impl Error {
 
     #[doc(hidden)]
     pub fn raise_value(rt: &mut Runtime, v: Value, s: &str) -> ! {
-        let s = s.to_value(rt);
+        let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_raise_with_arg(v.0, s.0);
         }
@@ -159,22 +159,22 @@ impl Error {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<T: ToValue, E: 'static + std::error::Error> ToValue for Result<T, E> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T, E> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         match self {
-            Ok(x) => x.to_value(rt),
+            Ok(x) => x.into_value(rt),
             Err(y) => {
                 let e: Result<T, Error> = Err(Error::Error(Box::new(y)));
-                e.to_value(rt)
+                e.into_value(rt)
             }
         }
     }
 }
 
-unsafe impl<T: ToValue> ToValue for Result<T, Error> {
-    fn to_value(self, rt: &mut Runtime) -> Value {
+unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
+    fn into_value(self, rt: &mut Runtime) -> Value {
         match self {
-            Ok(x) => return x.to_value(rt),
+            Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
                 crate::sys::caml_raise(e.0);
             },
@@ -210,7 +210,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
                 unsafe {
-                    let s = s.to_value(rt);
+                    let s = s.into_value(rt);
                     crate::sys::caml_raise_sys_error(s.0)
                 };
             }
