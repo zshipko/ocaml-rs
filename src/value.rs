@@ -79,9 +79,8 @@ const UNIT: Value = unsafe { Value::new(sys::UNIT) };
 
 impl Value {
     /// Convert from `Value` into `interop::OCaml<T>`
-    pub fn interop<'a, T>(&self, rt: &'a Runtime) -> OCaml<'a, T> {
-        let x: OCaml<T> = unsafe { OCaml::new(rt, self.0) };
-        unsafe { core::mem::transmute(x) }
+    pub unsafe fn interop<'a, T>(&self, rt: &'a Runtime) -> OCaml<'a, T> {
+        OCaml::new(rt, self.0)
     }
 
     /// Returns a named value registered by OCaml
