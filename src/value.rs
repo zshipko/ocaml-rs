@@ -48,13 +48,13 @@ unsafe impl<'a, T> IntoValue for OCaml<'a, T> {
     }
 }
 
-unsafe impl<'a, T> FromValue for OCaml<'a, T> {
+/*unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     fn from_value(value: Value) -> OCaml<'a, T> {
         let rt = unsafe { &Runtime::recover_handle() };
         let x: OCaml<T> = unsafe { OCaml::new(rt, value.0) };
         unsafe { core::mem::transmute(x) }
     }
-}
+}*/
 
 unsafe impl<'a, T> IntoValue for OCamlRef<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
@@ -78,6 +78,12 @@ const NONE: Value = unsafe { Value::new(sys::NONE) };
 const UNIT: Value = unsafe { Value::new(sys::UNIT) };
 
 impl Value {
+    /// Convert from `Value` into `interop::OCaml<T>`
+    pub fn interop<'a, T>(&self, rt: &'a Runtime) -> OCaml<'a, T> {
+        let x: OCaml<T> = unsafe { OCaml::new(rt, self.0) };
+        unsafe { core::mem::transmute(x) }
+    }
+
     /// Returns a named value registered by OCaml
     pub unsafe fn named<T: FromValue>(name: &str) -> Option<T> {
         let s = match crate::util::CString::new(name) {

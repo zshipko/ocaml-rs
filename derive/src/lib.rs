@@ -129,30 +129,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let where_clause = &item_fn.sig.generics.where_clause;
-    let attr: Vec<_> = item_fn
-        .attrs
-        .iter()
-        .filter(|x| {
-            let seg: Vec<_> = x
-                .path
-                .segments
-                .iter()
-                .map(|x| format!("{}", x.ident))
-                .collect();
-
-            let s = seg.join("::");
-            if s == "ocaml::bytecode_func"
-                || s == "ocaml::native_func"
-                || s == "ocaml_bytecode_func"
-                || s == "ocaml_native_func"
-                || s == "bytecode_func"
-                || s == "native_func"
-            {
-                panic!("Cannot mix OCaml function macros");
-            }
-            s != "ocaml_func" && s != "ocaml::func" && s != "func"
-        })
-        .collect();
+    let attr: Vec<_> = item_fn.attrs.iter().collect();
 
     let gen = quote! {
         #[no_mangle]
@@ -211,29 +188,7 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
     }
 
     let where_clause = &item_fn.sig.generics.where_clause;
-    let attr: Vec<_> = item_fn
-        .attrs
-        .iter()
-        .filter(|x| {
-            let seg: Vec<_> = x
-                .path
-                .segments
-                .iter()
-                .map(|x| format!("{}", x.ident))
-                .collect();
-            let s = seg.join("::");
-            if s == "ocaml::bytecode_func"
-                || s == "ocaml::func"
-                || s == "ocaml_bytecode_func"
-                || s == "ocaml_func"
-                || s == "bytecode_func"
-                || s == "func"
-            {
-                panic!("Cannot mix OCaml function macros");
-            }
-            s != "ocaml_native_func" && s != "ocaml::native_func" && s != "native_func"
-        })
-        .collect();
+    let attr: Vec<_> = item_fn.attrs.iter().collect();
 
     let rust_args = &item_fn.sig.inputs;
 
@@ -403,34 +358,7 @@ fn ocaml_bytecode_func_impl(
     };
 
     let where_clause = &item_fn.sig.generics.where_clause;
-    let attr: Vec<_> = item_fn
-        .attrs
-        .iter()
-        .filter(|x| {
-            let seg: Vec<_> = x
-                .path
-                .segments
-                .iter()
-                .map(|x| format!("{}", x.ident))
-                .collect();
-            let s = seg.join("::");
-            if s == "ocaml::func"
-                || s == "ocaml::native_func"
-                || s == "ocaml_func"
-                || s == "ocaml_native_func"
-                || s == "func"
-                || s == "native_func"
-            {
-                panic!("Cannot mix OCaml function macros");
-            }
-            s != "ocaml_bytecode_func"
-                && s != "ocaml::bytecode_func"
-                && s != "bytecode_func"
-                && s != "ocaml_func"
-                && s != "ocaml::func"
-                && s != "func"
-        })
-        .collect();
+    let attr: Vec<_> = item_fn.attrs.iter().collect();
 
     let len = ocaml_args.len();
 

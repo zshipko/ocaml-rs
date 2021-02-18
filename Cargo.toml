@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.19.1"
+version = "0.20.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -15,8 +15,8 @@ features = [ "without-ocamlopt", "derive", "link" ]
 
 [dependencies]
 ocaml-interop = "0.5"
-ocaml-sys = {path = "./sys", version = "0.19.0"}
-ocaml-derive = {path = "./derive", optional = true, version = "0.19"}
+ocaml-sys = {path = "./sys", version = "0.20"}
+ocaml-derive = {path = "./derive", optional = true, version = "0.20"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.14.0", optional = true}
 
