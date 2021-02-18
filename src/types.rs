@@ -19,7 +19,7 @@ use crate::value::{FromValue, IntoValue, Size, Value};
 pub struct Pointer<T>(pub Value, PhantomData<T>);
 
 unsafe impl<T> IntoValue for Pointer<T> {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         self.0
     }
 }
@@ -38,7 +38,7 @@ impl<T> Pointer<T> {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final(
-        rt: &mut Runtime,
+        rt: &Runtime,
         x: T,
         finalizer: Option<unsafe extern "C" fn(Value)>,
         used_max: Option<(usize, usize)>,
@@ -55,7 +55,7 @@ impl<T> Pointer<T> {
     }
 
     /// Allocate a `Custom` value
-    pub fn alloc_custom(rt: &mut Runtime, x: T) -> Pointer<T>
+    pub fn alloc_custom(rt: &Runtime, x: T) -> Pointer<T>
     where
         T: crate::Custom,
     {
@@ -111,7 +111,7 @@ impl<'a, T> AsMut<T> for Pointer<T> {
 pub struct Array<T: IntoValue + FromValue>(Value, PhantomData<T>);
 
 unsafe impl<T: IntoValue + FromValue> IntoValue for Array<T> {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         self.0
     }
 }
@@ -175,7 +175,7 @@ impl Array<f64> {
 
 impl<T: IntoValue + FromValue> Array<T> {
     /// Allocate a new Array
-    pub fn alloc(rt: &mut Runtime, n: usize) -> Array<T> {
+    pub fn alloc(rt: &Runtime, n: usize) -> Array<T> {
         let x = crate::frame!(rt: (x) {
             x = unsafe { Value::new(sys::caml_alloc(n, 0)) };
             x
@@ -200,7 +200,7 @@ impl<T: IntoValue + FromValue> Array<T> {
     }
 
     /// Set array index
-    pub fn set(&mut self, rt: &mut Runtime, i: usize, v: T) -> Result<(), Error> {
+    pub fn set(&mut self, rt: &Runtime, i: usize, v: T) -> Result<(), Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
@@ -214,7 +214,7 @@ impl<T: IntoValue + FromValue> Array<T> {
     ///
     /// This function does not perform bounds checking
     #[inline]
-    pub unsafe fn set_unchecked(&mut self, rt: &mut Runtime, i: usize, v: T) {
+    pub unsafe fn set_unchecked(&mut self, rt: &Runtime, i: usize, v: T) {
         self.0.store_field(rt, i, v);
     }
 
@@ -260,7 +260,7 @@ impl<T: IntoValue + FromValue> Array<T> {
 pub struct List<T: IntoValue + FromValue>(Value, PhantomData<T>);
 
 unsafe impl<T: IntoValue + FromValue> IntoValue for List<T> {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         self.0
     }
 }
@@ -297,7 +297,7 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     /// Add an element to the front of the list returning the new list
     #[must_use]
     #[allow(clippy::should_implement_trait)]
-    pub fn add(self, rt: &'a mut Runtime, v: T) -> List<T> {
+    pub fn add(self, rt: &'a Runtime, v: T) -> List<T> {
         frame!(rt: (x, tmp) {
                 x = v.into_value(rt);
             unsafe {
@@ -429,7 +429,7 @@ pub mod bigarray {
     }
 
     unsafe impl<T> crate::IntoValue for Array1<T> {
-        fn into_value(self, _rt: &mut Runtime) -> Value {
+        fn into_value(self, _rt: &Runtime) -> Value {
             self.0
         }
     }
@@ -439,7 +439,7 @@ pub mod bigarray {
         /// the `data` parameter must outlive the resulting bigarray or there is
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
-        pub fn of_slice(rt: &mut Runtime, data: &mut [T]) -> Array1<T> {
+        pub fn of_slice(rt: &Runtime, data: &mut [T]) -> Array1<T> {
             let x = crate::frame!(rt: (x) {
                 x = unsafe {
                     Value::new(bigarray::caml_ba_alloc_dims(
@@ -457,7 +457,7 @@ pub mod bigarray {
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
         #[cfg(not(feature = "no-std"))]
-        pub fn from_slice(rt: &mut Runtime, data: impl AsRef<[T]>) -> Array1<T> {
+        pub fn from_slice(rt: &Runtime, data: impl AsRef<[T]>) -> Array1<T> {
             let x = data.as_ref();
             let mut arr = Array1::<T>::create(rt, x.len());
             let data = arr.data_mut();
@@ -466,7 +466,7 @@ pub mod bigarray {
         }
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
-        pub fn create(rt: &mut Runtime, n: Size) -> Array1<T> {
+        pub fn create(rt: &Runtime, n: Size) -> Array1<T> {
             let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
                 x = unsafe {
@@ -578,14 +578,14 @@ pub(crate) mod bigarray_ext {
     }
 
     unsafe impl<T> IntoValue for Array2<T> {
-        fn into_value(self, _rt: &mut Runtime) -> Value {
+        fn into_value(self, _rt: &Runtime) -> Value {
             self.0
         }
     }
 
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
-        pub fn create(rt: &mut Runtime, dim: ndarray::Ix2) -> Array2<T> {
+        pub fn create(rt: &Runtime, dim: ndarray::Ix2) -> Array2<T> {
             let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
                 x = unsafe {
@@ -603,7 +603,7 @@ pub(crate) mod bigarray_ext {
         }
 
         /// Create Array2 from ndarray
-        pub fn from_ndarray(rt: &mut Runtime, data: ndarray::Array2<T>) -> Array2<T> {
+        pub fn from_ndarray(rt: &Runtime, data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();
             let array = Array2::create(rt, dim);
             let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };
@@ -663,14 +663,14 @@ pub(crate) mod bigarray_ext {
     }
 
     unsafe impl<T> IntoValue for Array3<T> {
-        fn into_value(self, _rt: &mut Runtime) -> Value {
+        fn into_value(self, _rt: &Runtime) -> Value {
             self.0
         }
     }
 
     impl<T: Copy + Kind> Array3<T> {
         /// Create a new OCaml `Bigarray.Array3` with the given type and shape
-        pub fn create(rt: &mut Runtime, dim: ndarray::Ix3) -> Array3<T> {
+        pub fn create(rt: &Runtime, dim: ndarray::Ix3) -> Array3<T> {
             let x = crate::frame!(rt: (x) {
                 let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
                 x = unsafe {
@@ -689,7 +689,7 @@ pub(crate) mod bigarray_ext {
         }
 
         /// Create Array3 from ndarray
-        pub fn from_ndarray(rt: &mut Runtime, data: ndarray::Array3<T>) -> Array3<T> {
+        pub fn from_ndarray(rt: &Runtime, data: ndarray::Array3<T>) -> Array3<T> {
             let dim = data.raw_dim();
             let array = Array3::create(rt, dim);
             let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };

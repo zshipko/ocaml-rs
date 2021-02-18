@@ -79,7 +79,7 @@ pub trait Custom {
 }
 
 unsafe impl<T: 'static + Custom> IntoValue for T {
-    fn into_value(self, rt: &mut Runtime) -> Value {
+    fn into_value(self, rt: &Runtime) -> Value {
         let val: crate::Pointer<T> = Pointer::alloc_custom(rt, self);
         val.into_value(rt)
     }

@@ -96,7 +96,7 @@ impl Error {
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
     pub fn raise_with_arg<S: AsRef<str>, T: IntoValue>(
-        rt: &mut Runtime,
+        rt: &Runtime,
         exc: S,
         arg: T,
     ) -> Result<(), Error> {
@@ -133,7 +133,7 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_failure(rt: &mut Runtime, s: &str) -> ! {
+    pub fn raise_failure(rt: &Runtime, s: &str) -> ! {
         let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_failwith_value(s.0);
@@ -143,7 +143,7 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_value(rt: &mut Runtime, v: Value, s: &str) -> ! {
+    pub fn raise_value(rt: &Runtime, v: Value, s: &str) -> ! {
         let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_raise_with_arg(v.0, s.0);
@@ -160,7 +160,7 @@ impl Error {
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T, E> {
-    fn into_value(self, rt: &mut Runtime) -> Value {
+    fn into_value(self, rt: &Runtime) -> Value {
         match self {
             Ok(x) => x.into_value(rt),
             Err(y) => {
@@ -172,7 +172,7 @@ unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T
 }
 
 unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
-    fn into_value(self, rt: &mut Runtime) -> Value {
+    fn into_value(self, rt: &Runtime) -> Value {
         match self {
             Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {

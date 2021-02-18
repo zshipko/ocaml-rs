@@ -109,7 +109,7 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
 
     s.gen_impl(quote! {
         gen unsafe impl ocaml::IntoValue for @Self {
-            fn into_value(self, gc: &mut ocaml::Runtime) -> ocaml::Value {
+            fn into_value(self, gc: &ocaml::Runtime) -> ocaml::Value {
                 let mut value = ocaml::Value::unit();
                 match self {
                     #(#body),*

@@ -1,6 +1,6 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{interop::ToOCaml, sys, OCaml, OCamlRef, Runtime};
+use crate::{sys, OCaml, OCamlRef, Runtime};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
@@ -20,7 +20,7 @@ impl Clone for Value {
 /// `IntoValue` is used to convert from Rust types to OCaml values
 pub unsafe trait IntoValue {
     /// Convert to OCaml value
-    fn into_value(self, rt: &mut Runtime) -> Value;
+    fn into_value(self, rt: &Runtime) -> Value;
 }
 
 /// `FromValue` is used to convert from OCaml values to Rust types
@@ -30,7 +30,7 @@ pub unsafe trait FromValue {
 }
 
 unsafe impl IntoValue for Value {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.0) }
     }
 }
@@ -43,32 +43,22 @@ unsafe impl FromValue for Value {
 }
 
 unsafe impl<'a, T> IntoValue for OCaml<'a, T> {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.raw()) }
     }
 }
 
 unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     fn from_value(value: Value) -> OCaml<'a, T> {
-        let rt = unsafe { &mut Runtime::recover_handle() };
+        let rt = unsafe { &Runtime::recover_handle() };
         let x: OCaml<T> = unsafe { OCaml::new(rt, value.0) };
         unsafe { core::mem::transmute(x) }
     }
 }
 
 unsafe impl<'a, T> IntoValue for OCamlRef<'a, T> {
-    fn into_value(self, _rt: &mut Runtime) -> Value {
+    fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.get_raw()) }
-    }
-}
-
-unsafe impl<'a, T> FromValue for OCamlRef<'a, T> {
-    fn from_value(value: Value) -> OCamlRef<'a, T> {
-        let rt = unsafe { Runtime::recover_handle() };
-        let mut frame = rt.open_frame();
-        let gc = frame.initialize(&[]);
-        let mut x = unsafe { crate::interop::internal::OCamlRawRoot::reserve(gc) };
-        unsafe { core::mem::transmute(x.keep(OCaml::<T>::from_value(value))) }
     }
 }
 
@@ -103,7 +93,7 @@ impl Value {
     }
 
     /// Allocate a new value with the given size and tag.
-    pub unsafe fn alloc(rt: &mut Runtime, n: usize, tag: Tag) -> Value {
+    pub unsafe fn alloc(rt: &Runtime, n: usize, tag: Tag) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc(n, tag.into()));
             x
@@ -111,7 +101,7 @@ impl Value {
     }
 
     /// Allocate a new tuple value
-    pub unsafe fn alloc_tuple(rt: &mut Runtime, n: usize) -> Value {
+    pub unsafe fn alloc_tuple(rt: &Runtime, n: usize) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_tuple(n));
             x
@@ -119,7 +109,7 @@ impl Value {
     }
 
     /// Allocate a new small value with the given size and tag
-    pub unsafe fn alloc_small(rt: &mut Runtime, n: usize, tag: Tag) -> Value {
+    pub unsafe fn alloc_small(rt: &Runtime, n: usize, tag: Tag) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_small(n, tag.into()));
             x
@@ -131,7 +121,7 @@ impl Value {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Pointer::alloc_custom` when possible.
     pub unsafe fn alloc_final<T>(
-        rt: &mut Runtime,
+        rt: &Runtime,
         finalizer: unsafe extern "C" fn(Value),
         cfg: Option<(usize, usize)>,
     ) -> Value {
@@ -147,7 +137,7 @@ impl Value {
     }
 
     /// Allocate custom value
-    pub unsafe fn alloc_custom<T: crate::Custom>(rt: &mut Runtime) -> Value {
+    pub unsafe fn alloc_custom<T: crate::Custom>(rt: &Runtime) -> Value {
         let size = core::mem::size_of::<T>();
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc_custom(T::ops() as *const _ as *const sys::custom_operations, size, T::USED, T::MAX));
@@ -158,7 +148,7 @@ impl Value {
     /// Allocate an abstract pointer value, it is best to ensure the value is
     /// on the heap using `Box::into_raw(Box::from(...))` to create the pointer
     /// and `Box::from_raw` to free it
-    pub unsafe fn alloc_abstract_ptr<T>(rt: &mut Runtime, ptr: *mut T) -> Value {
+    pub unsafe fn alloc_abstract_ptr<T>(rt: &Runtime, ptr: *mut T) -> Value {
         let x = Self::alloc(rt, 1, Tag::ABSTRACT);
         let dest = x.0 as *mut *mut T;
         *dest = ptr;
@@ -197,19 +187,13 @@ impl Value {
     }
 
     /// Allocate and copy a string value
-    pub unsafe fn string<S: AsRef<str>>(rt: &mut Runtime, s: S) -> Value {
-        Value::new({
-            let x: OCaml<ocaml_interop::OCamlBytes> = ocaml_interop::to_ocaml!(rt, s.as_ref());
-            x.raw()
-        })
+    pub unsafe fn string<S: AsRef<str>>(rt: &Runtime, s: S) -> Value {
+        s.as_ref().into_value(rt)
     }
 
     /// Allocate and copy a byte array value
-    pub unsafe fn bytes<S: AsRef<[u8]>>(rt: &mut Runtime, s: S) -> Value {
-        Value::new({
-            let x: OCaml<ocaml_interop::OCamlBytes> = ocaml_interop::to_ocaml!(rt, s.as_ref());
-            x.raw()
-        })
+    pub unsafe fn bytes<S: AsRef<[u8]>>(rt: &Runtime, s: S) -> Value {
+        s.as_ref().into_value(rt)
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
@@ -229,7 +213,7 @@ impl Value {
     }
 
     /// OCaml Some value
-    pub unsafe fn some<V: IntoValue>(rt: &mut Runtime, v: V) -> Value {
+    pub unsafe fn some<V: IntoValue>(rt: &Runtime, v: V) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_alloc(1, 0));
             x.store_field(rt, 0, v);
@@ -250,7 +234,7 @@ impl Value {
     }
 
     /// Create a variant value
-    pub unsafe fn variant(rt: &mut Runtime, tag: u8, value: Option<Value>) -> Value {
+    pub unsafe fn variant(rt: &Runtime, tag: u8, value: Option<Value>) -> Value {
         crate::frame!(rt: (x) {
             match value {
                 Some(v) => {
@@ -264,12 +248,12 @@ impl Value {
     }
 
     /// Result.Ok value
-    pub unsafe fn result_ok(rt: &mut Runtime, value: impl Into<Value>) -> Value {
+    pub unsafe fn result_ok(rt: &Runtime, value: impl Into<Value>) -> Value {
         Self::variant(rt, 0, Some(value.into()))
     }
 
     /// Result.Error value
-    pub unsafe fn result_error(rt: &mut Runtime, value: impl Into<Value>) -> Value {
+    pub unsafe fn result_error(rt: &Runtime, value: impl Into<Value>) -> Value {
         Self::variant(rt, 1, Some(value.into()))
     }
 
@@ -284,7 +268,7 @@ impl Value {
     }
 
     /// Create an OCaml `Int64` from `i64`
-    pub unsafe fn int64(rt: &mut Runtime, i: i64) -> Value {
+    pub unsafe fn int64(rt: &Runtime, i: i64) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_copy_int64(i));
             x
@@ -292,7 +276,7 @@ impl Value {
     }
 
     /// Create an OCaml `Int32` from `i32`
-    pub unsafe fn int32(rt: &mut Runtime, i: i32) -> Value {
+    pub unsafe fn int32(rt: &Runtime, i: i32) -> Value {
         crate::frame!(rt: (x) {
             x = Value::new(sys::caml_copy_int32(i));
             x
@@ -300,7 +284,7 @@ impl Value {
     }
 
     /// Create an OCaml `Nativeint` from `isize`
-    pub unsafe fn nativeint(rt: &mut Runtime, i: isize) -> Value {
+    pub unsafe fn nativeint(rt: &Runtime, i: isize) -> Value {
         frame!(rt: (x) {
             x = Value::new(sys::caml_copy_nativeint(i));
             x
@@ -308,7 +292,7 @@ impl Value {
     }
 
     /// Create an OCaml `Float` from `f64`
-    pub unsafe fn float(rt: &mut Runtime, d: f64) -> Value {
+    pub unsafe fn float(rt: &Runtime, d: f64) -> Value {
         frame!(rt: (x) {
             x = Value::new(sys::caml_copy_double(d));
             x
@@ -333,7 +317,7 @@ impl Value {
     }
 
     /// Set index of underlying OCaml block value
-    pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &mut Runtime, i: Size, val: V) {
+    pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &Runtime, i: Size, val: V) {
         sys::store_field(self.0, i, val.into_value(rt).0)
     }
 
@@ -425,7 +409,7 @@ impl Value {
     }
 
     /// Call a closure with a single argument, returning an exception value
-    pub unsafe fn call<A: IntoValue>(self, rt: &mut Runtime, arg: A) -> Result<Value, Error> {
+    pub unsafe fn call<A: IntoValue>(self, rt: &Runtime, arg: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -446,7 +430,7 @@ impl Value {
     /// Call a closure with two arguments, returning an exception value
     pub unsafe fn call2<A: IntoValue, B: IntoValue>(
         self,
-        rt: &mut Runtime,
+        rt: &Runtime,
         arg1: A,
         arg2: B,
     ) -> Result<Value, Error> {
@@ -471,7 +455,7 @@ impl Value {
     /// Call a closure with three arguments, returning an exception value
     pub unsafe fn call3<A: IntoValue, B: IntoValue, C: IntoValue>(
         self,
-        rt: &mut Runtime,
+        rt: &Runtime,
         arg1: A,
         arg2: B,
         arg3: C,
@@ -500,11 +484,7 @@ impl Value {
     }
 
     /// Call a closure with `n` arguments, returning an exception value
-    pub unsafe fn call_n<A: AsRef<[Value]>>(
-        self,
-        rt: &mut Runtime,
-        args: A,
-    ) -> Result<Value, Error> {
+    pub unsafe fn call_n<A: AsRef<[Value]>>(self, rt: &Runtime, args: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -531,7 +511,7 @@ impl Value {
     }
 
     /// Modify an OCaml value in place
-    pub unsafe fn modify<V: IntoValue>(&mut self, rt: &mut Runtime, v: V) {
+    pub unsafe fn modify<V: IntoValue>(&mut self, rt: &Runtime, v: V) {
         sys::caml_modify(&mut self.0, v.into_value(rt).0)
     }
 
@@ -541,11 +521,7 @@ impl Value {
     }
 
     /// Get hash variant as OCaml value
-    pub unsafe fn hash_variant<S: AsRef<str>>(
-        rt: &mut Runtime,
-        name: S,
-        a: Option<Value>,
-    ) -> Value {
+    pub unsafe fn hash_variant<S: AsRef<str>>(rt: &Runtime, name: S, a: Option<Value>) -> Value {
         let s = crate::util::CString::new(name.as_ref()).expect("Invalid C string");
         let hash = Value::new(sys::caml_hash_variant(s.as_ptr() as *const u8));
         match a {
@@ -560,7 +536,7 @@ impl Value {
     }
 
     /// Get object method
-    pub unsafe fn method<S: AsRef<str>>(self, rt: &mut Runtime, name: S) -> Option<Value> {
+    pub unsafe fn method<S: AsRef<str>>(self, rt: &Runtime, name: S) -> Option<Value> {
         if self.tag() != Tag::OBJECT {
             return None;
         }
@@ -590,7 +566,7 @@ impl Value {
     /// This will recursively clone any OCaml value
     /// The new value is allocated inside the OCaml heap,
     /// and may end up being moved or garbage collected.
-    pub unsafe fn deep_clone_to_ocaml(self, rt: &mut Runtime) -> Self {
+    pub unsafe fn deep_clone_to_ocaml(self, rt: &Runtime) -> Self {
         if self.is_long() {
             return self;
         }
