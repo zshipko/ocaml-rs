@@ -90,7 +90,7 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(unsafe {#field.into_value(gc) }))
+            variant.each(|field| quote!(#field.into_value(gc)))
         } else {
             let mut idx = 0usize;
             let ghost = (0..arity)
