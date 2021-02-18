@@ -13,7 +13,7 @@ pub fn enum1_empty() -> Enum1 {
 }
 
 #[ocaml::func]
-pub fn enum1_first(i: ocaml::Value) -> Enum1 {
+pub unsafe fn enum1_first(i: ocaml::Value) -> Enum1 {
     let i: ocaml::interop::OCaml<ocaml::Int> = i.interop(gc);
     Enum1::First(i.to_i64() as ocaml::Int)
 }
