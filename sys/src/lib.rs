@@ -1,4 +1,5 @@
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::upper_case_acronyms)]
 #![no_std]
 
 pub type Char = cty::c_char;

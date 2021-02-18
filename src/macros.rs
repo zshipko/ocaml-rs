@@ -53,7 +53,7 @@ pub fn init_panic_handler() {
     }
 
     ::std::panic::set_hook(Box::new(|info| unsafe {
-        let mut rt = crate::Runtime::recover_handle();
+        let rt = crate::Runtime::recover_handle();
         let err = info.payload();
         let msg = if err.is::<&str>() {
             err.downcast_ref::<&str>().unwrap()
@@ -64,10 +64,10 @@ pub fn init_panic_handler() {
         };
 
         if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(&mut rt, err, msg);
+            crate::Error::raise_value(&rt, err, msg);
         }
 
-        crate::Error::raise_failure(&mut rt, msg)
+        crate::Error::raise_failure(&rt, msg)
     }))
 }
 

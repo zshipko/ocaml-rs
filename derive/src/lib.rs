@@ -145,7 +145,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
 
                 #[allow(unused_unsafe)]
                 let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
-                ocaml::IntoValue::into_value(res, &mut gc_)
+                ocaml::IntoValue::into_value(res, &gc_)
             })
         }
     };
@@ -391,7 +391,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &mut #gc_name)
+                ocaml::IntoValue::into_value(res, &#gc_name)
             }
         }
     } else {
@@ -417,7 +417,7 @@ fn ocaml_bytecode_func_impl(
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &mut #gc_name)
+                ocaml::IntoValue::into_value(res, &#gc_name)
             }
         }
     }
