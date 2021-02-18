@@ -107,5 +107,5 @@ extern "C" {
     pub fn caml_remove_global_root(value: *mut Value);
     pub fn caml_register_generational_global_root(value: *mut Value);
     pub fn caml_remove_generational_global_root(value: *mut Value);
-    pub fn caml_modify_generational_global_root(value: *mut Value);
+    pub fn caml_modify_generational_global_root(value: *mut Value, newval: Value);
 }
