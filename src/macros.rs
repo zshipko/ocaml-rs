@@ -1,13 +1,16 @@
 /// `frame!` can be used to create new local variables that play nicely with the garbage collector
 #[macro_export]
 macro_rules! frame {
-    ($gc:ident: ($($param:ident),*) $code:block) => {
+    ($gc:ident: () $code:block) => {{
+        $code
+    }};
+    ($gc:ident: ($($param:ident),+) $code:block) => {
         {
             struct __Values  {
                $($param: $crate::Value),*
             }
 
-            $crate::interop::ocaml_frame!($gc, ($($param),*), {
+            $crate::interop::ocaml_frame!($gc, ($($param),+), {
                 let (r, values) = {
                     $(
                         #[allow(unused_mut)]

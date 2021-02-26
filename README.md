@@ -10,6 +10,8 @@ Works with OCaml versions `4.06.0` and up
 
 Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
+NOTE: While `ocaml-rs` *can* be used safely, it does not prevent a wide range of potential errors or mistakes. It should be thought of as a Rust implementation of the existing C API. [ocaml-interop](https://github.com/simplestaking/ocaml-interop) can be used to perform safe OCaml/Rust interop. The latest version of `ocaml-rs` actually uses `ocaml-interop` behind the scenes to interact with the garbage collector. `ocaml-rs` also exports an `interop` module, which is an alias for `ocaml_interop` and the two interfaces can be combined if desired.
+
 ### Getting started
 
 Take a look at the [ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) project for a basic example to help get started with `ocaml-rs`.

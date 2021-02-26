@@ -1,3 +1,4 @@
+use ocaml::interop::{ocaml_frame, to_ocaml, OCaml, ToOCaml};
 use ocaml::Value;
 
 #[no_mangle]
@@ -71,8 +72,14 @@ pub fn test_panic() -> ocaml::Int {
     panic!("XXX")
 }
 
+ocaml::interop::ocaml! {
+    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::Float;
+}
+
 #[ocaml::func]
-pub unsafe fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
-    let f: Value = Value::named("call_named").unwrap();
-    f.call(gc, g)
+pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::Float> {
+    ocaml_frame!(gc, (a), {
+        let x = to_ocaml!(gc, g, a);
+        call_named(gc, x)
+    })
 }

@@ -48,14 +48,6 @@ unsafe impl<'a, T> IntoValue for OCaml<'a, T> {
     }
 }
 
-/*unsafe impl<'a, T> FromValue for OCaml<'a, T> {
-    fn from_value(value: Value) -> OCaml<'a, T> {
-        let rt = unsafe { &Runtime::recover_handle() };
-        let x: OCaml<T> = unsafe { OCaml::new(rt, value.0) };
-        unsafe { core::mem::transmute(x) }
-    }
-}*/
-
 unsafe impl<'a, T> IntoValue for OCamlRef<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.get_raw()) }
