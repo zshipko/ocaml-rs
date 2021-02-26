@@ -19,4 +19,4 @@ jobs:
       env:
         OCAML_VERSION: 4.09.1
         OCAML_WHERE_PATH: /ignored
-      run: cargo +nightly clippy --all -- -D warnings
+      run: cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings

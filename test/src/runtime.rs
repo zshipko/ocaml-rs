@@ -1,3 +1,4 @@
+use ocaml::interop::{ocaml_frame, to_ocaml, OCaml, ToOCaml};
 use ocaml::Value;
 
 #[no_mangle]
@@ -11,6 +12,7 @@ pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -> f64 {
 }
 
 #[ocaml::func]
+#[allow(clippy::too_many_arguments)]
 pub unsafe fn more_than_five_params(
     mut a: ocaml::Float,
     mut b: ocaml::Float,
@@ -46,7 +48,7 @@ pub fn mutable_parameter_with_more_than_five_arguments(
 
 #[ocaml::func]
 pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
-    ocaml::Error::raise_with_arg("Exc", x)
+    ocaml::Error::raise_with_arg(gc, "Exc", x)
 }
 
 #[ocaml::func]
@@ -55,13 +57,14 @@ pub fn raise_failure() -> Result<(), ocaml::Error> {
 }
 
 #[ocaml::func]
-pub fn hash_variant_abc(i: ocaml::Int) -> Value {
-    Value::hash_variant("Abc", Some(Value::int(i)))
+pub unsafe fn hash_variant_abc(i: ocaml::Int) -> Value {
+    Value::hash_variant(gc, "Abc", Some(Value::int(i)))
 }
 
 #[ocaml::func]
-pub fn hash_variant_def(i: ocaml::Float) -> Value {
-    Value::hash_variant("Def", Some(Value::float(i)))
+pub unsafe fn hash_variant_def(i: ocaml::Float) -> Value {
+    let f = Some(Value::float(gc, i));
+    Value::hash_variant(gc, "Def", f)
 }
 
 #[ocaml::func]
@@ -69,8 +72,14 @@ pub fn test_panic() -> ocaml::Int {
     panic!("XXX")
 }
 
+ocaml::interop::ocaml! {
+    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::Float;
+}
+
 #[ocaml::func]
-pub fn test_call_named(g: ocaml::Float) -> Result<ocaml::Value, ocaml::Error> {
-    let f: Value = Value::named("call_named").unwrap();
-    f.call(g)
+pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::Float> {
+    ocaml_frame!(gc, (a), {
+        let x = to_ocaml!(gc, g, a);
+        call_named(gc, x)
+    })
 }

@@ -1,8 +1,9 @@
+use ocaml::interop::ToOCaml;
 use ocaml::Value;
 
 #[ocaml::func]
-pub fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::Int {
-    x.len() as ocaml::Int
+pub fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::OCaml<ocaml::interop::OCamlInt> {
+    ocaml::OCaml::of_i32(x.len() as i32)
 }
 
 #[ocaml::func]
@@ -12,19 +13,19 @@ pub fn list_nil() -> ocaml::List<ocaml::Value> {
 
 #[ocaml::func]
 pub fn list_cons(l: ocaml::List<ocaml::Value>, x: ocaml::Value) -> ocaml::List<ocaml::Value> {
-    l.add(x)
+    l.add(gc, x)
 }
 
 #[ocaml::func]
-pub fn array_make_range(
+pub unsafe fn array_make_range(
     start: ocaml::Uint,
     stop: ocaml::Uint,
 ) -> Result<ocaml::Array<ocaml::Value>, ocaml::Error> {
     let len = stop - start;
-    let mut arr = ocaml::Array::alloc(len);
+    let mut arr = ocaml::Array::alloc(gc, len);
 
     for i in 0..len {
-        arr.set(i, Value::uint(i + start))?;
+        arr.set(gc, i, Value::uint(i + start))?;
     }
     Ok(arr)
 }
@@ -35,25 +36,25 @@ pub fn array_make_range_f(start: isize, stop: isize) -> Vec<f64> {
 }
 
 #[ocaml::func]
-pub fn array_replace(
+pub unsafe fn array_replace(
     mut arr: ocaml::Array<ocaml::Value>,
     index: ocaml::Uint,
     x: Value,
 ) -> Result<Option<Value>, ocaml::Error> {
     let y = arr.get(index)?;
-    arr.set(index, x)?;
+    arr.set(gc, index, x)?;
     Ok(Some(y))
 }
 
 #[ocaml::func]
 pub unsafe fn array1_of_string(x: &mut str) -> ocaml::bigarray::Array1<u8> {
-    ocaml::bigarray::Array1::of_slice(x.as_bytes_mut())
+    ocaml::bigarray::Array1::of_slice(gc, x.as_bytes_mut())
 }
 
 #[ocaml::func]
 pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
-    let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
-    let mut data = ba.data_mut();
+    let mut ba = ocaml::bigarray::Array1::<u8>::create(gc, len as usize);
+    let data = ba.data_mut();
     for i in data {
         *i = init;
     }
@@ -62,13 +63,13 @@ pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
 
 #[ocaml::func]
 pub fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
-    vec![1f32, 2f32, 3f32, 4f32, 5f32].into()
+    ocaml::bigarray::Array1::from_slice(gc, &[1f32, 2f32, 3f32, 4f32, 5f32])
 }
 
 #[ocaml::func]
 pub fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
     let arr = ndarray::Array2::zeros((dim1, dim2));
-    arr.into()
+    ocaml::bigarray::Array2::from_ndarray(gc, arr)
 }
 
 #[ocaml::func]
@@ -78,9 +79,13 @@ pub fn array2_set(mut arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize, v: 
 }
 
 #[ocaml::func]
-pub fn array2_get(arr: ocaml::bigarray::Array2<f32>, x: usize, y: usize) -> f32 {
+pub fn array2_get(
+    arr: ocaml::bigarray::Array2<f32>,
+    x: usize,
+    y: usize,
+) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let view = arr.view();
-    view[[x, y]]
+    ocaml::interop::to_ocaml!(gc, view[[x, y]] as f64)
 }
 
 #[ocaml::func]
@@ -94,15 +99,15 @@ struct Abstract {
 }
 
 #[ocaml::func]
-pub fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
-    let mut a = Box::into_raw(Box::new(Abstract { f }));
-    Value::alloc_abstract_ptr(a)
+pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
+    let a = Box::into_raw(Box::new(Abstract { f }));
+    Value::alloc_abstract_ptr(gc, a)
 }
 
 #[ocaml::func]
-pub fn abstract_pointer_value(f: Value) -> ocaml::Float {
+pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let f = f.abstract_ptr_val::<Abstract>();
-    unsafe { (*f).f }
+    ocaml::interop::to_ocaml!(gc, (*f).f)
 }
 
 #[ocaml::func]

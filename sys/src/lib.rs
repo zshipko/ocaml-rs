@@ -1,65 +1,26 @@
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::upper_case_acronyms)]
 #![no_std]
 
 pub type Char = cty::c_char;
 
-#[macro_export]
-/// Registers OCaml parameters with the GC
-macro_rules! caml_param {
-    ($($n:expr),*) => {
-        let mut caml_roots = $crate::CamlRootsBlock::default();
-
-        let mut n = 0isize;
-        $(
-            if n == 5 {
-                n = 0;
-            }
-
-            if n == 0 {
-                caml_roots = $crate::CamlRootsBlock::default();
-                #[allow(unused_unsafe)]
-                unsafe {
-                    caml_roots.next = $crate::local_roots();
-                    $crate::set_local_roots(&mut caml_roots);
-                };
-                caml_roots.nitems = 1;
-            }
-
-            caml_roots.tables[n as usize] = &$n as *const _ as *mut _;
-
-            n += 1;
-            caml_roots.ntables = n;
-        )*
-    }
-}
-
-#[macro_export]
-macro_rules! caml_body {
-    ($(($($param:expr),*))? $code:block) => {
-        {
-            #[allow(unused_unsafe)]
-            let caml_frame = unsafe { $crate::local_roots() };
-            $(
-                $crate::caml_param!($($param),*);
-            )?
-            #[allow(unused_mut)]
-            let mut res = || $code;
-            let res = res();
-            #[allow(unused_unsafe)]
-            unsafe { $crate::set_local_roots(caml_frame) };
-            res
-        }
-    }
-}
-
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_version"));
+
+#[cfg(feature = "without-ocamlopt")]
+pub const VERSION: &str = "";
 
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const PATH: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_path"));
 
+#[cfg(feature = "without-ocamlopt")]
+pub const PATH: &str = "";
+
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const COMPILER: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_compiler"));
+
+#[cfg(feature = "without-ocamlopt")]
+pub const COMPILER: &str = "";
 
 mod mlvalues;
 #[macro_use]

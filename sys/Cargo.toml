@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-sys"
-version = "0.19.1"
+version = "0.20.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 keywords = ["ocaml", "rust", "ffi"]
 repository = "https://github.com/zshipko/ocaml-rs"
@@ -16,6 +16,7 @@ cty = "0.2"
 features = [ "without-ocamlopt", "caml-state" ]
 
 [features]
+default = []
 link = []
 without-ocamlopt = []
 caml-state = []

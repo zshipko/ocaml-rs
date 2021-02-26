@@ -56,23 +56,21 @@ struct TestingCallback {
 }
 
 unsafe extern "C" fn testing_callback_finalize(a: Value) {
-    let mut t0 = ocaml::Pointer::<TestingCallback>::from_value(a);
-    t0.as_mut().func.remove_global_root();
+    let t0 = ocaml::Pointer::<TestingCallback>::from_value(a);
     t0.drop_in_place();
 }
 
 ocaml::custom_finalize!(TestingCallback, testing_callback_finalize);
 
 #[ocaml::func]
-pub fn testing_callback_alloc(mut func: ocaml::Value) -> TestingCallback {
-    func.register_global_root();
+pub fn testing_callback_alloc(func: ocaml::Value) -> TestingCallback {
     TestingCallback { func }
 }
 
 #[ocaml::func]
-pub fn testing_callback_call(
+pub unsafe fn testing_callback_call(
     t: ocaml::Pointer<TestingCallback>,
     x: ocaml::Value,
 ) -> Result<ocaml::Value, ocaml::Error> {
-    t.as_ref().func.call(x)
+    t.as_ref().func.call(gc, x)
 }

@@ -33,7 +33,7 @@ impl Default for CustomOps {
 /// `Custom` is used to define OCaml types that wrap existing Rust types, but are owned by the
 /// garbage collector
 ///
-/// A custom type can only be converted to a `Value` using `ToValue`, but can't be converted from a
+/// A custom type can only be converted to a `Value` using `IntoValue`, but can't be converted from a
 /// value. Once the Rust value is owned by OCaml it should be accessed using `ocaml::Pointer` to
 /// avoid reallocating the same value
 ///
@@ -78,10 +78,10 @@ pub trait Custom {
     }
 }
 
-unsafe impl<T: 'static + Custom> ToValue for T {
-    fn to_value(self) -> Value {
-        let val: crate::Pointer<T> = Pointer::alloc_custom(self);
-        val.to_value()
+unsafe impl<T: 'static + Custom> IntoValue for T {
+    fn into_value(self, rt: &Runtime) -> Value {
+        let val: crate::Pointer<T> = Pointer::alloc_custom(rt, self);
+        val.into_value(rt)
     }
 }
 

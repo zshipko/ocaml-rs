@@ -1,6 +1,6 @@
-use ocaml::{FromValue, ToValue};
+use ocaml::{FromValue, IntoValue};
 
-#[derive(ToValue, FromValue)]
+#[derive(IntoValue, FromValue)]
 enum Enum1 {
     Empty,
     First(ocaml::Int),
@@ -13,14 +13,15 @@ pub fn enum1_empty() -> Enum1 {
 }
 
 #[ocaml::func]
-pub fn enum1_first(i: ocaml::Int) -> Enum1 {
-    Enum1::First(i)
+pub unsafe fn enum1_first(i: ocaml::Value) -> Enum1 {
+    let i: ocaml::interop::OCaml<ocaml::Int> = i.interop(gc);
+    Enum1::First(i.to_i64() as ocaml::Int)
 }
 
-#[ocaml::func]
+#[ocaml::func(test)]
 pub fn enum1_make_second(s: &'static str) -> Enum1 {
-    let mut arr = ocaml::Array::alloc(1);
-    let _ = arr.set(0, s);
+    let mut arr = ocaml::Array::alloc(test, 1);
+    let _ = arr.set(test, 0, s);
     Enum1::Second(arr)
 }
 
@@ -37,7 +38,7 @@ pub fn enum1_is_empty(e: Enum1) -> bool {
     matches!(e, Enum1::Empty)
 }
 
-#[derive(ToValue, FromValue, Default)]
+#[derive(IntoValue, FromValue, Default)]
 struct Struct1 {
     a: ocaml::Int,
     b: ocaml::Float,
@@ -66,6 +67,7 @@ pub fn struct1_set_c(mut s: Struct1, v: String) {
 }
 
 #[ocaml::func]
+#[allow(clippy::unnecessary_wraps)]
 pub unsafe fn make_struct1(
     a: ocaml::Int,
     b: ocaml::Float,
@@ -93,10 +95,10 @@ pub unsafe fn direct_slice(data: &[ocaml::Value]) -> i64 {
 #[ocaml::func]
 pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
     let b = a.deep_clone_to_rust();
-    b.deep_clone_to_ocaml()
+    b.deep_clone_to_ocaml(gc)
 }
 
 #[ocaml::func]
 pub fn pair_vec() -> ocaml::Value {
-    vec![("foo", 1), ("bar", 2isize)].to_value()
+    vec![("foo", 1), ("bar", 2isize)].into_value(gc)
 }

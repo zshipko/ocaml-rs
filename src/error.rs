@@ -1,4 +1,4 @@
-use crate::{FromValue, ToValue, Value};
+use crate::{FromValue, IntoValue, Runtime, Value};
 
 /// Errors that are translated directly into OCaml exceptions
 #[derive(Debug)]
@@ -82,7 +82,7 @@ impl Error {
     /// Raise an exception that has been registered using `Callback.register_exception` with no
     /// arguments
     pub fn raise<S: AsRef<str>>(exc: S) -> Result<(), Error> {
-        let value = match Value::named(exc.as_ref()) {
+        let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
                 return Err(Error::Message(
@@ -95,8 +95,12 @@ impl Error {
 
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
-    pub fn raise_with_arg<S: AsRef<str>, T: ToValue>(exc: S, arg: T) -> Result<(), Error> {
-        let value = match Value::named(exc.as_ref()) {
+    pub fn raise_with_arg<S: AsRef<str>, T: IntoValue>(
+        rt: &Runtime,
+        exc: S,
+        arg: T,
+    ) -> Result<(), Error> {
+        let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
                 return Err(Error::Message(
@@ -105,7 +109,7 @@ impl Error {
             }
         };
 
-        Err(CamlError::WithArg(value, arg.to_value()).into())
+        Err(CamlError::WithArg(value, arg.into_value(rt)).into())
     }
 
     /// Raise `Not_found`
@@ -129,8 +133,8 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_failure(s: &str) -> ! {
-        let s = s.to_value();
+    pub fn raise_failure(rt: &Runtime, s: &str) -> ! {
+        let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_failwith_value(s.0);
         }
@@ -139,8 +143,8 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_value(v: Value, s: &str) -> ! {
-        let s = s.to_value();
+    pub fn raise_value(rt: &Runtime, v: Value, s: &str) -> ! {
+        let s = s.into_value(rt);
         unsafe {
             crate::sys::caml_raise_with_arg(v.0, s.0);
         }
@@ -150,27 +154,27 @@ impl Error {
 
     /// Get named error registered using `Callback.register_exception`
     pub fn named<S: AsRef<str>>(s: S) -> Option<Value> {
-        Value::named(s.as_ref())
+        unsafe { Value::named(s.as_ref()) }
     }
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<T: ToValue, E: 'static + std::error::Error> ToValue for Result<T, E> {
-    fn to_value(self) -> Value {
+unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T, E> {
+    fn into_value(self, rt: &Runtime) -> Value {
         match self {
-            Ok(x) => x.to_value(),
+            Ok(x) => x.into_value(rt),
             Err(y) => {
                 let e: Result<T, Error> = Err(Error::Error(Box::new(y)));
-                e.to_value()
+                e.into_value(rt)
             }
         }
     }
 }
 
-unsafe impl<T: ToValue> ToValue for Result<T, Error> {
-    fn to_value(self) -> Value {
+unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
+    fn into_value(self, rt: &Runtime) -> Value {
         match self {
-            Ok(x) => return x.to_value(),
+            Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
                 crate::sys::caml_raise(e.0);
             },
@@ -206,7 +210,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
                 unsafe {
-                    let s = s.to_value();
+                    let s = s.into_value(rt);
                     crate::sys::caml_raise_sys_error(s.0)
                 };
             }
@@ -243,10 +247,12 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
 
 unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
-        if value.is_exception_result() {
-            return Err(CamlError::Exception(value.exception().unwrap()).into());
-        }
+        unsafe {
+            if value.is_exception_result() {
+                return Err(CamlError::Exception(value.exception().unwrap()).into());
+            }
 
-        Ok(T::from_value(value))
+            Ok(T::from_value(value))
+        }
     }
 }
