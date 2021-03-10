@@ -60,7 +60,7 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Features
 
 - `derive`
-  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
+  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `IntoValue`
 - `link`
   * link the native OCaml runtime, this should only be used when no OCaml code will be linked statically
 - `no-std`
@@ -73,8 +73,8 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Examples
 
 ```rust
-// Automatically derive `ToValue` and `FromValue`
-#[derive(ocaml::ToValue, ocaml::FromValue)]
+// Automatically derive `IntoValue` and `FromValue`
+#[derive(ocaml::IntoValue, ocaml::FromValue)]
 struct Example<'a> {
     name: &'a str,
     i: ocaml::Int,
@@ -189,7 +189,7 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 | `BTreeMap<A, B>` | `('a, 'b) list`      |
 | `LinkedList<A>`  | `'a list`            |
 
-NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
+NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `IntoValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
 
 If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
 
@@ -213,8 +213,8 @@ ocaml::custom_finalize!(MyType, mytype_finalizer);
 
 #[ocaml::func]
 pub fn new_my_type() -> ocaml::Pointer<MyType> {
-    ocaml::Pointer::alloc_custom(MyType)
-    // ocaml::Pointer::alloc_final(MyType, finalizer) can also be used
+    ocaml::Pointer::alloc_custom(gc, MyType)
+    // ocaml::Pointer::alloc_final(gc, MyType, finalizer, None) can also be used
     // if you don't intend to implement `Custom`
 }
 
@@ -242,13 +242,13 @@ It must take a single `string` argument.
 
 Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:
 
-- `FromValue` and `ToValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
+- `FromValue` and `IntoValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
   * A possible solution to this would be a `cbindgen` like tool that generates the correct OCaml types from the Rust code
-- `ToValue` now takes ownership of the value being converted
+- `IntoValue` now takes ownership of the value being converted
 - The `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
   * `ocaml::native_func` and `ocaml::bytecode_func` were also added to create functions at a slightly lower level
   * `derive` feature required
-- Added `derive` implementations for `ToValue` and `FromValue` for stucts and enums
+- Added `derive` implementations for `IntoValue` and `FromValue` for stucts and enums
   * `derive` feature required
 - `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
   * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
