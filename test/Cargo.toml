@@ -9,4 +9,4 @@ crate-type = ["staticlib", "cdylib"]
 [dependencies]
 ocaml = { path = "..", features = ["bigarray-ext"] }
 
-ndarray = "^0.14.0"
+ndarray = "^0.15.0"
