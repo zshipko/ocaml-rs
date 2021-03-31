@@ -93,7 +93,7 @@ pub fn init_panic_handler() {
 macro_rules! body {
     ($gc:ident: $(())? $code:block) => {{
         #[allow(unused_variables)]
-        let mut $gc = $crate::Runtime::init();
+        let $gc = unsafe { $crate::Runtime::recover_handle() };
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
@@ -101,10 +101,10 @@ macro_rules! body {
 
         #[allow(unused_mut)]
         let mut r = |$gc: &mut $crate::Runtime| $code;
-        r(&mut $gc)
+        r($gc)
     }};
     ($gc:ident: ($($param:ident),+) $code:block) => {{
-        let mut $gc = $crate::Runtime::init();
+        let $gc = unsafe { $crate::Runtime::recover_handle() };
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
@@ -126,7 +126,7 @@ macro_rules! body {
 
         #[allow(unused_mut)]
         let mut r = |$gc: &mut $crate::Runtime| $code;
-        r(&mut $gc)
+        r($gc)
     }};
 }
 
