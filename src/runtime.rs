@@ -1,4 +1,4 @@
-use crate::sys;
+use crate::{sys, Runtime};
 
 #[cfg(not(feature = "no-std"))]
 static RUNTIME: std::sync::Once = std::sync::Once::new();
@@ -29,28 +29,8 @@ pub fn unlocked<T, F: FnOnce() -> T>(f: F) -> T {
     x
 }
 
-/// Initialize the OCaml runtime, this will all command-line arguments to be available using
-/// `Sys.argv`.
-///
-/// This is equivalent to calling `caml_main`
+/// Initialize the OCaml runtime
 #[cfg(not(feature = "no-std"))]
-pub fn init() {
-    RUNTIME.call_once(|| {
-        let args = std::env::args()
-            .map(|arg| std::ffi::CString::new(arg).unwrap())
-            .collect::<Vec<std::ffi::CString>>();
-
-        // convert the strings to raw pointers
-        let mut c_args = args
-            .iter()
-            .map(|arg| arg.as_ptr() as *const std::os::raw::c_char)
-            .collect::<Vec<*const std::os::raw::c_char>>();
-        c_args.push(std::ptr::null());
-        unsafe { crate::sys::caml_main(c_args.as_ptr()) }
-    })
-}
-
-/// Shutdown and cleanup OCaml runtime
-pub fn shutdown() {
-    unsafe { crate::sys::caml_shutdown() }
+pub fn init() -> Runtime {
+    Runtime::init()
 }
