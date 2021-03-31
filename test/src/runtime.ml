@@ -73,3 +73,6 @@ let%test "test call named" = Util.check_leaks (fun () ->
   Util.gc ();
   x = 4.0
 )
+
+external func : unit -> unit = "bench_func"
+external native_func : unit -> unit = "bench_native_func"
