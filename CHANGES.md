@@ -1,3 +1,7 @@
+## 0.20.1
+
+- Fix issue with OCaml runtime initialization: https://github.com/zshipko/ocaml-rs/pull/59
+
 ## 0.20.0
 
 - `Value` methods marked as `unsafe`: the `Value` API is considered the "unsafe" API and `ocaml-interop` is the safer choice
