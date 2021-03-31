@@ -32,7 +32,7 @@ jobs:
         run: opam env >> $GITHUB_ENV
       - name: Add Opam switch to PATH
         run: opam var bin >> $GITHUB_PATH
-      - run: opam install dune ppx_inline_test
+      - run: opam install dune ppx_inline_test core_bench
       - name: Run OCaml tests
         run: opam exec -- dune runtest --root=./test
 

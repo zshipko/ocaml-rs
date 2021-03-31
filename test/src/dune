@@ -26,3 +26,9 @@
  (foreign_archives ocamlrs_test_stubs)
  (c_library_flags
   (-lpthread -lc -lm)))
+
+(tests
+ (names bench)
+ (libraries core_bench ocamlrs_test)
+ (modules bench)
+ (preprocess no_preprocessing))
