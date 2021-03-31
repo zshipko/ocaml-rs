@@ -4,7 +4,7 @@ use crate::{Error, FromValue, IntoValue, Value};
 
 #[test]
 fn test_basic_array() -> Result<(), Error> {
-    ocaml::runtime::init();
+    ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let mut a: ocaml::Array<&str> = ocaml::Array::alloc(gc, 2);
         a.set(gc, 0, "testing")?;
@@ -22,7 +22,7 @@ pub fn make_tuple(a: Value, b: Value) -> (Value, Value) {
 
 #[test]
 fn test_tuple_of_tuples() {
-    ocaml::runtime::init();
+    ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let x = (1f64, 2f64, 3f64, 4f64, 5f64, 6f64, 7f64, 8f64, 9f64).into_value(gc);
         let y = (9f64, 8f64, 7f64, 6f64, 5f64, 4f64, 3f64, 2f64, 1f64).into_value(gc);
@@ -46,7 +46,7 @@ fn test_tuple_of_tuples() {
 
 #[test]
 fn test_basic_list() {
-    ocaml::runtime::init();
+    ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let mut list = ocaml::List::empty();
         let a = 3i64.into_value(gc);
@@ -68,7 +68,7 @@ fn test_basic_list() {
 
 #[test]
 fn test_int() {
-    ocaml::runtime::init();
+    ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let a = (-123isize).into_value(gc);
         let b = (-1isize).into_value(gc);

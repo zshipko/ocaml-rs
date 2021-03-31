@@ -85,7 +85,8 @@ pub fn array2_get(
     y: usize,
 ) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let view = arr.view();
-    ocaml::interop::to_ocaml!(gc, view[[x, y]] as f64)
+    let item = view[[x, y]] as f64;
+    item.to_ocaml(gc)
 }
 
 #[ocaml::func]
@@ -107,7 +108,8 @@ pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
 #[ocaml::func]
 pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::OCaml<ocaml::interop::OCamlFloat> {
     let f = f.abstract_ptr_val::<Abstract>();
-    ocaml::interop::to_ocaml!(gc, (*f).f)
+    let x = (*f).f;
+    x.to_ocaml(gc)
 }
 
 #[ocaml::func]

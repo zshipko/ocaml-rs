@@ -6,32 +6,35 @@ macro_rules! frame {
     }};
     ($gc:ident: ($($param:ident),+) $code:block) => {
         {
-            struct __Values  {
-               $($param: $crate::Value),*
-            }
+            $(
+                #[allow(unused_unsafe)]
+                #[allow(unused_variables)]
+                let mut $param: $crate::BoxRoot<$crate::Value> = unsafe { $crate::OCaml::new($gc, $crate::sys::UNIT).root() };
+            )*
 
-            $crate::interop::ocaml_frame!($gc, ($($param),+), {
-                let (r, values) = {
-                    $(
-                        #[allow(unused_mut)]
-                        #[allow(unused_assignments)]
-                        let mut $param: $crate::Value = $crate::Value::unit();
-                    )*
-                    let r = $code;
-                    (r, __Values { $(
-                        $param,
-                    )*})
-                };
-
+            let r = {
 
                 $(
-                    if values.$param != $crate::Value::unit() {
-                        #[allow(unused_unsafe)]
-                        unsafe { $param.keep_raw::<$crate::Value>(values.$param.0); }
-                    }
+                    #[allow(unused_mut)]
+                    #[allow(unused_variables)]
+                    #[allow(unused_assignments)]
+                    let mut $param: $crate::Value = $param.get(&$gc).to_rust();
                 )*
-                r
-            })
+                $code
+            };
+
+            $(
+                #[allow(unused_unsafe)]
+                unsafe {
+                    let value = $param.get(&$gc);
+                    if value.raw() != $crate::sys::UNIT {
+                        #[allow(unused_unsafe)]
+                        unsafe { $param.keep(value); }
+                    }
+                }
+            )*
+
+            r
         }
     }
 }
@@ -53,6 +56,10 @@ pub fn init_panic_handler() {
         .is_err()
     {
         return;
+    }
+
+    unsafe {
+        ocaml_boxroot_sys::boxroot_setup();
     }
 
     ::std::panic::set_hook(Box::new(|info| unsafe {
@@ -112,21 +119,29 @@ macro_rules! body {
 
         struct __Values  {
            $($param: $crate::Value),*
-        }
+         }
 
         let values = __Values { $(
             $param,
         )*};
 
-        let ($($param),+) = $crate::interop::ocaml_frame!($gc, ($($param),+), {
+
+        let ($($param),+) = $crate::frame!($gc: ($($param),+) {
+            {
+            $(
+                $param.0 = values.$param.0;
+            )*
+            }
+
             ($(
-                unsafe { $crate::Value::new($param.keep_raw::<$crate::Value>(values.$param.0).get_raw()) }
+                $param
             ),+)
         });
 
         #[allow(unused_mut)]
         let mut r = |$gc: &mut $crate::Runtime| $code;
         r($gc)
+
     }};
 }
 

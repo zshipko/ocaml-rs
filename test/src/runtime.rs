@@ -1,4 +1,4 @@
-use ocaml::interop::{ocaml_frame, to_ocaml, OCaml, ToOCaml};
+use ocaml::interop::{BoxRoot, OCaml, ToOCaml};
 use ocaml::Value;
 
 #[no_mangle]
@@ -73,15 +73,14 @@ pub fn test_panic() -> ocaml::Int {
 }
 
 ocaml::interop::ocaml! {
-    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::Float;
+    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::interop::OCamlFloat;
 }
 
 #[ocaml::func]
-pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::Float> {
-    ocaml_frame!(gc, (a), {
-        let x = to_ocaml!(gc, g, a);
-        call_named(gc, x)
-    })
+pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::interop::OCamlFloat> {
+    let g = g.to_ocaml(gc).root();
+    let r: BoxRoot<ocaml::interop::OCamlFloat> = call_named(gc, &g);
+    r.get(gc)
 }
 
 #[ocaml::func]
