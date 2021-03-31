@@ -1,6 +1,6 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{sys, OCaml, OCamlRef, Runtime};
+use crate::{sys, BoxRoot, OCaml, OCamlRef, Runtime};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
@@ -18,12 +18,20 @@ impl Clone for Value {
 }
 
 /// `IntoValue` is used to convert from Rust types to OCaml values
+///
+/// NOTE: This should only be used after the OCaml runtime has been initialized, when calling
+/// Rust functions from OCaml, the runtime is already initialized otherwise `ocaml::Runtime::init`
+/// should be used
 pub unsafe trait IntoValue {
     /// Convert to OCaml value
     fn into_value(self, rt: &Runtime) -> Value;
 }
 
 /// `FromValue` is used to convert from OCaml values to Rust types
+///
+/// NOTE: This should only be used after the OCaml runtime has been initialized, when calling
+/// Rust functions from OCaml, the runtime is already initialized otherwise `ocaml::Runtime::init`
+/// should be used
 pub unsafe trait FromValue {
     /// Convert from OCaml value
     fn from_value(v: Value) -> Self;
@@ -51,6 +59,27 @@ unsafe impl<'a, T> IntoValue for OCaml<'a, T> {
 unsafe impl<'a, T> IntoValue for OCamlRef<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.get_raw()) }
+    }
+}
+
+unsafe impl<T> IntoValue for BoxRoot<T> {
+    fn into_value(self, _rt: &Runtime) -> Value {
+        unsafe { Value::new(self.get_raw()) }
+    }
+}
+
+unsafe impl<T> FromValue for BoxRoot<T> {
+    fn from_value(v: Value) -> BoxRoot<T> {
+        let ocaml: OCaml<'_, T> = FromValue::from_value(v);
+        ocaml.root()
+    }
+}
+
+unsafe impl<'a, T> FromValue for OCaml<'a, T> {
+    fn from_value(v: Value) -> OCaml<'a, T> {
+        // NOTE: this should only be used after the runtime is initialized
+        let rt = unsafe { Runtime::recover_handle() };
+        unsafe { OCaml::new(rt, v.0) }
     }
 }
 

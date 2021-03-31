@@ -1,4 +1,4 @@
-use ocaml::interop::{BoxRoot, OCaml, ToOCaml};
+use ocaml::interop::{BoxRoot, OCamlFloat};
 use ocaml::Value;
 
 #[no_mangle]
@@ -77,10 +77,8 @@ ocaml::interop::ocaml! {
 }
 
 #[ocaml::func]
-pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::interop::OCamlFloat> {
-    let g = g.to_ocaml(gc).root();
-    let r: BoxRoot<ocaml::interop::OCamlFloat> = call_named(gc, &g);
-    r.get(gc)
+pub unsafe fn test_call_named(g: BoxRoot<OCamlFloat>) -> BoxRoot<OCamlFloat> {
+    call_named(gc, &g)
 }
 
 #[ocaml::func]
