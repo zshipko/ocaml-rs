@@ -16,7 +16,7 @@ depends: [
   "dune" {>= "2.0.0"}
   "ppx_inline_test" {with-test}
   "bechamel-notty" {with-test}
-  "notty.unix" {with-test}
+  "notty" {with-test}
   "conf-rust-2018"
 ]
 synopsis: """

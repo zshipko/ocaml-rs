@@ -29,6 +29,6 @@
 
 (tests
  (names bench)
- (libraries bechamel-notty notty.unix ocamlrs_test)
+ (libraries notty unix notty.unix bechamel-notty ocamlrs_test)
  (modules bench)
  (preprocess no_preprocessing))
