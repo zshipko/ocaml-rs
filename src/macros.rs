@@ -88,7 +88,7 @@ pub fn inital_setup() {
 /// ```rust
 /// #[no_mangle]
 /// pub unsafe extern "C" fn example(a: ocaml::Value, b: ocaml::Value) -> ocaml::Value {
-///     ocaml::body!(gc: (a, b) {
+///     ocaml::body!(gc: {
 ///         let a = a.int_val();
 ///         let b = b.int_val();
 ///         ocaml::Value::int(a + b)
@@ -98,8 +98,7 @@ pub fn inital_setup() {
 #[macro_export]
 #[cfg(not(feature = "no-std"))]
 macro_rules! body {
-    ($gc:ident: $(())? $code:block) => {{
-        #[allow(unused_variables)]
+    ($gc:ident: $code:block) => {{
         let $gc = unsafe { $crate::Runtime::recover_handle() };
 
         // Ensure panic handler is initialized
@@ -107,18 +106,12 @@ macro_rules! body {
         $crate::inital_setup();
 
         #[allow(unused_mut)]
-        let mut r = |#[allow(unused_variables)] $gc: &mut $crate::Runtime| $code;
-        r($gc)
-    }};
-    ($gc:ident: ($($param:ident),+) $code:block) => {{
-        let $gc = unsafe { $crate::Runtime::recover_handle() };
-
-        // Ensure panic handler is initialized
-        #[cfg(not(feature = "no-std"))]
-        $crate::inital_setup();
-
-        #[allow(unused_mut)]
-        let mut r = |$gc: &mut $crate::Runtime| $code;
+        let mut r = |$gc: &mut $crate::Runtime| {
+            {
+                let _ = &$gc;
+            };
+            $code
+        };
         r($gc)
     }};
 }

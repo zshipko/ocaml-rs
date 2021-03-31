@@ -68,7 +68,7 @@
 //! // This is equivalent to:
 //! #[no_mangle]
 //! pub unsafe extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
-//!     ocaml::body!(gc: (value) {
+//!     ocaml::body!(gc: {
 //!         let i = value.int_val();
 //!         ocaml::Value::int( i + 1)
 //!     })

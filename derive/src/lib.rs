@@ -140,7 +140,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
             #inner
 
-            ocaml::body!(#gc_name: (#param_names) {
+            ocaml::body!(#gc_name: {
                 #(#convert_params);*
                 let res = inner(#gc_name, #param_names);
 
@@ -214,13 +214,13 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
         })
         .collect();
 
-    let param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
-        .iter()
-        .filter_map(|arg| match arg {
-            Some(ident) => Some(ident.ident.clone()),
-            None => None,
-        })
-        .collect();
+    /*let param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
+    .iter()
+    .filter_map(|arg| match arg {
+        Some(ident) => Some(ident.ident.clone()),
+        None => None,
+    })
+    .collect();*/
 
     if ocaml_args.is_empty() {
         ocaml_args.push(quote! { _: ocaml::Value});
@@ -239,7 +239,7 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
             #attr
         )*
         pub #constness #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
-            ocaml::body!(#gc_name: (#param_names) {
+            ocaml::body!(#gc_name: {
                 #body
             })
         }
@@ -412,6 +412,7 @@ fn ocaml_bytecode_func_impl(
                 #attr
             )*
             pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+                #[allow(unused_variables)]
                 let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
 
                 #inner
