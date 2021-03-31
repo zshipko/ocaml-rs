@@ -14,7 +14,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-latest, ubuntu-latest]
-        ocaml-version: ["4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
+        ocaml-version: ["4.12.0", "4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
