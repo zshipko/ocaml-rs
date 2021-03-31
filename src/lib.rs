@@ -147,7 +147,7 @@ pub use crate::types::{bigarray, Array, List, Pointer};
 pub use crate::value::{FromValue, IntoValue, Value};
 
 #[cfg(not(feature = "no-std"))]
-pub use crate::macros::init_panic_handler;
+pub use crate::macros::inital_setup;
 
 /// OCaml `float`
 pub type Float = f64;

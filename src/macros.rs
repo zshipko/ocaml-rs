@@ -45,7 +45,7 @@ static PANIC_HANDLER_INIT: std::sync::atomic::AtomicBool =
 
 #[cfg(not(feature = "no-std"))]
 #[doc(hidden)]
-pub fn init_panic_handler() {
+pub fn inital_setup() {
     if PANIC_HANDLER_INIT
         .compare_exchange(
             false,
@@ -104,7 +104,7 @@ macro_rules! body {
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
-        $crate::init_panic_handler();
+        $crate::inital_setup();
 
         #[allow(unused_mut)]
         let mut r = |#[allow(unused_variables)] $gc: &mut $crate::Runtime| $code;
@@ -115,33 +115,11 @@ macro_rules! body {
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
-        $crate::init_panic_handler();
-
-        struct __Values  {
-           $($param: $crate::Value),*
-         }
-
-        let values = __Values { $(
-            $param,
-        )*};
-
-
-        let ($($param),+) = $crate::frame!($gc: ($($param),+) {
-            {
-            $(
-                $param.0 = values.$param.0;
-            )*
-            }
-
-            ($(
-                $param
-            ),+)
-        });
+        $crate::inital_setup();
 
         #[allow(unused_mut)]
         let mut r = |$gc: &mut $crate::Runtime| $code;
         r($gc)
-
     }};
 }
 
