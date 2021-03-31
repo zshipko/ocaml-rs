@@ -7,9 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  run:
-    name: Build
-    runs-on: ${{ matrix.os }}
+  build:
     strategy:
       fail-fast: true
       matrix:
@@ -35,4 +33,30 @@ jobs:
       - run: opam install dune ppx_inline_test
       - name: Run OCaml tests
         run: opam exec -- dune runtest --root=./test
+
+  bench:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        ocaml-version: ["4.11.0"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: OCaml/Opam cache
+        id: ocaml-rs-opam-cache
+        uses: actions/cache@v2
+        with:
+          path: "~/.opam"
+          key: ocaml-rs-opam-${{ matrix.ocaml-version }}-${{ matrix.os }}
+      - name: Use OCaml ${{ matrix.ocaml-version }}
+        uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: ${{ matrix.ocaml-version }}
+      - name: Set Opam env
+        run: opam env >> $GITHUB_ENV
+      - name: Add Opam switch to PATH
+        run: opam var bin >> $GITHUB_PATH
+      - run: opam install dune ppx_inline_test notty bechamel-notty
+      - name: Run OCaml tests
+        run: opam exec -- dune exec --root=./test src/bench.exe
 

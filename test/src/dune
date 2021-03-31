@@ -27,8 +27,10 @@
  (c_library_flags
   (-lpthread -lc -lm)))
 
-(tests
- (names bench)
+(executable
+ (name bench)
+ (public_name bench)
+ (package ocamlrs-test)
  (libraries notty unix notty.unix bechamel-notty ocamlrs_test)
  (modules bench)
  (preprocess no_preprocessing))
