@@ -105,14 +105,10 @@ macro_rules! body {
         #[cfg(not(feature = "no-std"))]
         $crate::inital_setup();
 
-        #[allow(unused_mut)]
-        let mut r = |$gc: &mut $crate::Runtime| {
-            {
-                let _ = &$gc;
-            };
-            $code
+        {
+            let _ = &$gc;
         };
-        r($gc)
+        $code
     }};
 }
 
