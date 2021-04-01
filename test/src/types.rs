@@ -12,7 +12,10 @@ pub fn list_nil() -> ocaml::List<ocaml::Value> {
 }
 
 #[ocaml::func]
-pub fn list_cons(l: ocaml::List<ocaml::Value>, x: ocaml::Value) -> ocaml::List<ocaml::Value> {
+pub unsafe fn list_cons(
+    l: ocaml::List<ocaml::Value>,
+    x: ocaml::Value,
+) -> ocaml::List<ocaml::Value> {
     l.add(gc, x)
 }
 
@@ -52,7 +55,7 @@ pub unsafe fn array1_of_string(x: &mut str) -> ocaml::bigarray::Array1<u8> {
 }
 
 #[ocaml::func]
-pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
+pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
     let mut ba = ocaml::bigarray::Array1::<u8>::create(gc, len as usize);
     let data = ba.data_mut();
     for i in data {
@@ -62,12 +65,12 @@ pub fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
 }
 
 #[ocaml::func]
-pub fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
+pub unsafe fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
     ocaml::bigarray::Array1::from_slice(gc, &[1f32, 2f32, 3f32, 4f32, 5f32])
 }
 
 #[ocaml::func]
-pub fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
+pub unsafe fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
     let arr = ndarray::Array2::zeros((dim1, dim2));
     ocaml::bigarray::Array2::from_ndarray(gc, arr)
 }

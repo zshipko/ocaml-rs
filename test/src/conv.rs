@@ -19,7 +19,7 @@ pub unsafe fn enum1_first(i: ocaml::Value) -> Enum1 {
 }
 
 #[ocaml::func(test)]
-pub fn enum1_make_second(s: &'static str) -> Enum1 {
+pub unsafe fn enum1_make_second(s: &'static str) -> Enum1 {
     let mut arr = ocaml::Array::alloc(test, 1);
     let _ = arr.set(test, 0, s);
     Enum1::Second(arr)

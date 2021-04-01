@@ -6,12 +6,14 @@ use crate::{Error, FromValue, IntoValue, Value};
 fn test_basic_array() -> Result<(), Error> {
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
-        let mut a: ocaml::Array<&str> = ocaml::Array::alloc(gc, 2);
-        a.set(gc, 0, "testing")?;
-        a.set(gc, 1, "123")?;
-        let b: Vec<&str> = FromValue::from_value(a.into_value(gc));
-        assert!(b.as_slice() == &["testing", "123"]);
-        Ok(())
+        unsafe {
+            let mut a: ocaml::Array<&str> = ocaml::Array::alloc(gc, 2);
+            a.set(gc, 0, "testing")?;
+            a.set(gc, 1, "123")?;
+            let b: Vec<&str> = FromValue::from_value(a.into_value(gc));
+            assert!(b.as_slice() == &["testing", "123"]);
+            Ok(())
+        }
     })
 }
 
@@ -52,9 +54,12 @@ fn test_basic_list() {
         let a = 3i64.into_value(gc);
         let b = 2i64.into_value(gc);
         let c = 1i64.into_value(gc);
-        list = list.add(gc, a);
-        list = list.add(gc, b);
-        list = list.add(gc, c);
+
+        unsafe {
+            list = list.add(gc, a);
+            list = list.add(gc, b);
+            list = list.add(gc, c);
+        }
 
         assert!(list.len() == 3);
 

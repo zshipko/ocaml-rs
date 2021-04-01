@@ -120,26 +120,17 @@ impl Value {
 
     /// Allocate a new value with the given size and tag.
     pub unsafe fn alloc(rt: &Runtime, n: usize, tag: Tag) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_alloc(n, tag.into()));
-            x
-        })
+        Value::root(rt, sys::caml_alloc(n, tag.into()))
     }
 
     /// Allocate a new tuple value
     pub unsafe fn alloc_tuple(rt: &Runtime, n: usize) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_alloc_tuple(n));
-            x
-        })
+        Value::root(rt, sys::caml_alloc_tuple(n))
     }
 
     /// Allocate a new small value with the given size and tag
     pub unsafe fn alloc_small(rt: &Runtime, n: usize, tag: Tag) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_alloc_small(n, tag.into()));
-            x
-        })
+        Value::root(rt, sys::caml_alloc_small(n, tag.into()))
     }
 
     /// Allocate a new value with a finalizer
@@ -152,23 +143,29 @@ impl Value {
         cfg: Option<(usize, usize)>,
     ) -> Value {
         let (used, max) = cfg.unwrap_or((0, 1));
-        crate::frame!(rt: (x) {
-            Value::new(sys::caml_alloc_final(
+        Value::root(
+            rt,
+            sys::caml_alloc_final(
                 core::mem::size_of::<T>(),
                 core::mem::transmute(finalizer),
                 used,
-                max
-            ))
-        })
+                max,
+            ),
+        )
     }
 
     /// Allocate custom value
     pub unsafe fn alloc_custom<T: crate::Custom>(rt: &Runtime) -> Value {
         let size = core::mem::size_of::<T>();
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_alloc_custom(T::ops() as *const _ as *const sys::custom_operations, size, T::USED, T::MAX));
-            x
-        })
+        Value::root(
+            rt,
+            sys::caml_alloc_custom(
+                T::ops() as *const _ as *const sys::custom_operations,
+                size,
+                T::USED,
+                T::MAX,
+            ),
+        )
     }
 
     /// Allocate an abstract pointer value, it is best to ensure the value is
@@ -185,6 +182,14 @@ impl Value {
     #[inline]
     pub const unsafe fn new(v: sys::Value) -> Value {
         Value(v)
+    }
+
+    /// Create a new rooted Value from an existing OCaml `value`
+    #[inline]
+    pub unsafe fn root(rt: &Runtime, v: sys::Value) -> Value {
+        let v: OCaml<'_, Value> = OCaml::new(rt, v);
+        let mut x = v.root();
+        Value::new(x.keep(v).get_raw())
     }
 
     /// Get array length
@@ -214,12 +219,20 @@ impl Value {
 
     /// Allocate and copy a string value
     pub unsafe fn string<S: AsRef<str>>(rt: &Runtime, s: S) -> Value {
-        s.as_ref().into_value(rt)
+        let s = s.as_ref();
+        let value = Value::root(rt, crate::sys::caml_alloc_string(s.len()));
+        let ptr = crate::sys::string_val(value.0);
+        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+        value
     }
 
     /// Allocate and copy a byte array value
     pub unsafe fn bytes<S: AsRef<[u8]>>(rt: &Runtime, s: S) -> Value {
-        s.as_ref().into_value(rt)
+        let s = s.as_ref();
+        let value = Value::root(rt, crate::sys::caml_alloc_string(s.len()));
+        let ptr = crate::sys::string_val(value.0);
+        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+        value
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
@@ -240,11 +253,10 @@ impl Value {
 
     /// OCaml Some value
     pub unsafe fn some<V: IntoValue>(rt: &Runtime, v: V) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_alloc(1, 0));
-            x.store_field(rt, 0, v);
-            x
-        })
+        let v = v.into_value(rt);
+        let mut x = Value::root(rt, sys::caml_alloc(1, 0));
+        x.store_field(rt, 0, v);
+        x
     }
 
     /// OCaml None value
@@ -261,16 +273,14 @@ impl Value {
 
     /// Create a variant value
     pub unsafe fn variant(rt: &Runtime, tag: u8, value: Option<Value>) -> Value {
-        crate::frame!(rt: (x) {
-            match value {
-                Some(v) => {
-                    x = Value::new(sys::caml_alloc(1, tag));
-                    x.store_field(rt, 0, v)
-                },
-                None => x = Value::new(sys::caml_alloc(0, tag)),
+        match value {
+            Some(v) => {
+                let mut value = Value::root(rt, sys::caml_alloc(1, tag));
+                value.store_field(rt, 0, v);
+                value
             }
-            x
-        })
+            None => Value::root(rt, sys::caml_alloc(0, tag)),
+        }
     }
 
     /// Result.Ok value
@@ -295,34 +305,22 @@ impl Value {
 
     /// Create an OCaml `Int64` from `i64`
     pub unsafe fn int64(rt: &Runtime, i: i64) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_copy_int64(i));
-            x
-        })
+        Value::root(rt, sys::caml_copy_int64(i))
     }
 
     /// Create an OCaml `Int32` from `i32`
     pub unsafe fn int32(rt: &Runtime, i: i32) -> Value {
-        crate::frame!(rt: (x) {
-            x = Value::new(sys::caml_copy_int32(i));
-            x
-        })
+        Value::root(rt, sys::caml_copy_int32(i))
     }
 
     /// Create an OCaml `Nativeint` from `isize`
     pub unsafe fn nativeint(rt: &Runtime, i: isize) -> Value {
-        frame!(rt: (x) {
-            x = Value::new(sys::caml_copy_nativeint(i));
-            x
-        })
+        Value::root(rt, sys::caml_copy_nativeint(i))
     }
 
     /// Create an OCaml `Float` from `f64`
     pub unsafe fn float(rt: &Runtime, d: f64) -> Value {
-        frame!(rt: (x) {
-            x = Value::new(sys::caml_copy_double(d));
-            x
-        })
+        Value::root(rt, sys::caml_copy_double(d))
     }
 
     /// Check if a Value is an integer or block, returning true if
@@ -440,10 +438,7 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt: (res) {
-            res = Value::new(sys::caml_callback_exn(self.0, arg.into_value(rt).0));
-            res
-        });
+        let mut v: Value = Value::root(rt, sys::caml_callback_exn(self.0, arg.into_value(rt).0));
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
@@ -464,11 +459,10 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt: (res) {
-            res =
-                Value::new(sys::caml_callback2_exn(self.0, arg1.into_value(rt).0, arg2.into_value(rt).0));
-            res
-        });
+        let mut v: Value = Value::root(
+            rt,
+            sys::caml_callback2_exn(self.0, arg1.into_value(rt).0, arg2.into_value(rt).0),
+        );
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
@@ -490,16 +484,15 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let mut v = crate::frame!(rt: (res) {
-            res =
-                Value::new(sys::caml_callback3_exn(
-                    self.0,
-                    arg1.into_value(rt).0,
-                    arg2.into_value(rt).0,
-                    arg3.into_value(rt).0,
-                ));
-            res
-        });
+        let mut v: Value = Value::root(
+            rt,
+            sys::caml_callback3_exn(
+                self.0,
+                arg1.into_value(rt).0,
+                arg2.into_value(rt).0,
+                arg3.into_value(rt).0,
+            ),
+        );
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
@@ -518,15 +511,10 @@ impl Value {
         let n = args.as_ref().len();
         let x = args.as_ref();
 
-        let mut v = crate::frame!(rt: (res) {
-            res =
-                Value::new(sys::caml_callbackN_exn(
-                    self.0,
-                    n,
-                    x.as_ptr() as *mut sys::Value,
-                ));
-            res
-        });
+        let mut v: Value = Value::root(
+            rt,
+            sys::caml_callbackN_exn(self.0, n, x.as_ptr() as *mut sys::Value),
+        );
 
         if v.is_exception_result() {
             v = v.exception().unwrap();

@@ -1,6 +1,6 @@
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
-use crate::{sys, CamlError, Error, Runtime};
+use crate::{sys, CamlError, Error, Runtime, Tag};
 
 use core::{
     iter::{IntoIterator, Iterator},
@@ -175,11 +175,8 @@ impl Array<f64> {
 
 impl<T: IntoValue + FromValue> Array<T> {
     /// Allocate a new Array
-    pub fn alloc(rt: &Runtime, n: usize) -> Array<T> {
-        let x = crate::frame!(rt: (x) {
-            x = unsafe { Value::new(sys::caml_alloc(n, 0)) };
-            x
-        });
+    pub unsafe fn alloc(rt: &Runtime, n: usize) -> Array<T> {
+        let x = Value::alloc(rt, n, Tag(0));
         Array(x, PhantomData)
     }
 
@@ -200,11 +197,11 @@ impl<T: IntoValue + FromValue> Array<T> {
     }
 
     /// Set array index
-    pub fn set(&mut self, rt: &Runtime, i: usize, v: T) -> Result<(), Error> {
+    pub unsafe fn set(&mut self, rt: &Runtime, i: usize, v: T) -> Result<(), Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
-        unsafe { self.set_unchecked(rt, i, v) }
+        self.set_unchecked(rt, i, v);
         Ok(())
     }
 
@@ -297,16 +294,12 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     /// Add an element to the front of the list returning the new list
     #[must_use]
     #[allow(clippy::should_implement_trait)]
-    pub fn add(self, rt: &'a Runtime, v: T) -> List<T> {
-        frame!(rt: (x, tmp) {
-                x = v.into_value(rt);
-            unsafe {
-                tmp = Value::new(sys::caml_alloc(2, 0));
-                tmp.store_field(rt, 0, x);
-                tmp.store_field(rt, 1, self.0);
-            }
-            List(tmp, PhantomData)
-        })
+    pub unsafe fn add(self, rt: &'a Runtime, v: T) -> List<T> {
+        let item = v.into_value(rt);
+        let mut dest = Value::alloc(rt, 2, Tag(0));
+        dest.store_field(rt, 0, item);
+        dest.store_field(rt, 1, self.0);
+        List(dest, PhantomData)
     }
 
     /// List head
@@ -439,25 +432,23 @@ pub mod bigarray {
         /// the `data` parameter must outlive the resulting bigarray or there is
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
-        pub fn of_slice(rt: &Runtime, data: &mut [T]) -> Array1<T> {
-            let x = crate::frame!(rt: (x) {
-                x = unsafe {
-                    Value::new(bigarray::caml_ba_alloc_dims(
-                        T::kind() | bigarray::Managed::EXTERNAL as i32,
-                        1,
-                        data.as_mut_ptr() as bigarray::Data,
-                        data.len() as sys::Intnat,
-                    ))
-                };
-                x
-            });
+        pub unsafe fn of_slice(rt: &Runtime, data: &mut [T]) -> Array1<T> {
+            let x = Value::root(
+                rt,
+                bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    1,
+                    data.as_mut_ptr() as bigarray::Data,
+                    data.len() as sys::Intnat,
+                ),
+            );
             Array1(x, PhantomData)
         }
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
         /// used by `Array1::from` for slices to avoid any potential lifetime issues
         #[cfg(not(feature = "no-std"))]
-        pub fn from_slice(rt: &Runtime, data: impl AsRef<[T]>) -> Array1<T> {
+        pub unsafe fn from_slice(rt: &Runtime, data: impl AsRef<[T]>) -> Array1<T> {
             let x = data.as_ref();
             let mut arr = Array1::<T>::create(rt, x.len());
             let data = arr.data_mut();
@@ -466,19 +457,17 @@ pub mod bigarray {
         }
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
-        pub fn create(rt: &Runtime, n: Size) -> Array1<T> {
-            let x = crate::frame!(rt: (x) {
-                let data = unsafe { bigarray::malloc(n * mem::size_of::<T>()) };
-                x = unsafe {
-                    Value::new(bigarray::caml_ba_alloc_dims(
-                        T::kind() | bigarray::Managed::MANAGED as i32,
-                        1,
-                        data,
-                        n as sys::Intnat,
-                    ))
-                };
-                x
-            });
+        pub unsafe fn create(rt: &Runtime, n: Size) -> Array1<T> {
+            let data = { bigarray::malloc(n * mem::size_of::<T>()) };
+            let x = Value::root(
+                rt,
+                bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    1,
+                    data as bigarray::Data,
+                    n as sys::Intnat,
+                ),
+            );
             Array1(x, PhantomData)
         }
 
@@ -585,29 +574,27 @@ pub(crate) mod bigarray_ext {
 
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
-        pub fn create(rt: &Runtime, dim: ndarray::Ix2) -> Array2<T> {
-            let x = crate::frame!(rt: (x) {
-                let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
-                x = unsafe {
-                    Value::new(bigarray::caml_ba_alloc_dims(
-                        T::kind() | bigarray::Managed::MANAGED as i32,
-                        2,
-                        data,
-                        dim[0] as sys::Intnat,
-                        dim[1] as sys::Intnat,
-                    ))
-                };
-                x
-            });
+        pub unsafe fn create(rt: &Runtime, dim: ndarray::Ix2) -> Array2<T> {
+            let data = bigarray::malloc(dim.size() * mem::size_of::<T>());
+            let x = Value::root(
+                rt,
+                bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    2,
+                    data as bigarray::Data,
+                    dim[0] as sys::Intnat,
+                    dim[1] as sys::Intnat,
+                ),
+            );
             Array2(x, PhantomData)
         }
 
         /// Create Array2 from ndarray
-        pub fn from_ndarray(rt: &Runtime, data: ndarray::Array2<T>) -> Array2<T> {
+        pub unsafe fn from_ndarray(rt: &Runtime, data: ndarray::Array2<T>) -> Array2<T> {
             let dim = data.raw_dim();
             let array = Array2::create(rt, dim);
-            let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe {
+            let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
+            {
                 ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
             array
@@ -670,30 +657,28 @@ pub(crate) mod bigarray_ext {
 
     impl<T: Copy + Kind> Array3<T> {
         /// Create a new OCaml `Bigarray.Array3` with the given type and shape
-        pub fn create(rt: &Runtime, dim: ndarray::Ix3) -> Array3<T> {
-            let x = crate::frame!(rt: (x) {
-                let data = unsafe { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
-                x = unsafe {
-                    Value::new(bigarray::caml_ba_alloc_dims(
-                        T::kind() | bigarray::Managed::MANAGED as i32,
-                        3,
-                        data,
-                        dim[0] as sys::Intnat,
-                        dim[1] as sys::Intnat,
-                        dim[2] as sys::Intnat,
-                    ))
-                };
-                x
-            });
+        pub unsafe fn create(rt: &Runtime, dim: ndarray::Ix3) -> Array3<T> {
+            let data = { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
+            let x = Value::root(
+                rt,
+                bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::MANAGED as i32,
+                    3,
+                    data,
+                    dim[0] as sys::Intnat,
+                    dim[1] as sys::Intnat,
+                    dim[2] as sys::Intnat,
+                ),
+            );
             Array3(x, PhantomData)
         }
 
         /// Create Array3 from ndarray
-        pub fn from_ndarray(rt: &Runtime, data: ndarray::Array3<T>) -> Array3<T> {
+        pub unsafe fn from_ndarray(rt: &Runtime, data: ndarray::Array3<T>) -> Array3<T> {
             let dim = data.raw_dim();
             let array = Array3::create(rt, dim);
-            let ba = unsafe { array.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe {
+            let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
+            {
                 ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
             array

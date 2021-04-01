@@ -195,10 +195,7 @@ unsafe impl<'a, T: FromValue> FromValue for Option<T> {
 unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
     fn into_value(self, rt: &Runtime) -> Value {
         match self {
-            Some(y) => crate::frame!(rt: (x) {
-                x = y.into_value(rt);
-                unsafe { Value::some(rt, x) }
-            }),
+            Some(y) => unsafe { Value::some(rt, y) },
             None => Value::none(),
         }
     }
@@ -206,91 +203,67 @@ unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
 
 unsafe impl<'a> FromValue for &str {
     fn from_value(value: Value) -> Self {
-        let len = unsafe { crate::sys::caml_string_length(value.0) };
-        let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe {
-            let slice = ::core::slice::from_raw_parts(ptr, len);
-            ::core::str::from_utf8(slice).expect("Invalid UTF-8")
+            let len = crate::sys::caml_string_length(value.0);
+            let ptr = crate::sys::string_val(value.0);
+            let s = ::core::slice::from_raw_parts(ptr, len);
+            core::str::from_utf8_unchecked(s)
         }
     }
 }
 
 unsafe impl<'a> IntoValue for &str {
     fn into_value(self, rt: &Runtime) -> Value {
-        frame!(rt: (value) {
-            unsafe {
-                value.0 = crate::sys::caml_alloc_string(self.len());
-                let ptr = crate::sys::string_val(value.0);
-                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-                value
-            }
-        })
+        unsafe { Value::string(rt, self) }
     }
 }
 
 unsafe impl<'a> FromValue for &mut str {
     fn from_value(value: Value) -> Self {
-        let len = unsafe { crate::sys::caml_string_length(value.0) };
-        let ptr = unsafe { crate::sys::string_val(value.0) };
         unsafe {
-            let slice = ::core::slice::from_raw_parts_mut(ptr, len);
-            ::core::str::from_utf8_mut(slice).expect("Invalid UTF-8")
+            let len = crate::sys::caml_string_length(value.0);
+            let ptr = crate::sys::string_val(value.0);
+            let s = ::core::slice::from_raw_parts_mut(ptr, len);
+            core::str::from_utf8_unchecked_mut(s)
         }
     }
 }
 
 unsafe impl<'a> IntoValue for &mut str {
     fn into_value(self, rt: &Runtime) -> Value {
-        frame!(rt: (value) {
-            unsafe {
-                value.0 = crate::sys::caml_alloc_string(self.len());
-                let ptr = crate::sys::string_val(value.0);
-                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-                value
-            }
-        })
+        unsafe { Value::string(rt, self) }
     }
 }
 
 unsafe impl<'a> FromValue for &[u8] {
     fn from_value(value: Value) -> Self {
-        let len = unsafe { crate::sys::caml_string_length(value.0) };
-        let ptr = unsafe { crate::sys::string_val(value.0) };
-        unsafe { ::core::slice::from_raw_parts(ptr, len) }
+        unsafe {
+            let len = crate::sys::caml_string_length(value.0);
+            let ptr = crate::sys::string_val(value.0);
+            ::core::slice::from_raw_parts(ptr, len)
+        }
     }
 }
 
 unsafe impl<'a> IntoValue for &[u8] {
     fn into_value(self, rt: &Runtime) -> Value {
-        frame!(rt: (value) {
-            unsafe {
-                value.0 = crate::sys::caml_alloc_string(self.len());
-                let ptr = crate::sys::string_val(value.0);
-                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-                value
-            }
-        })
+        unsafe { Value::bytes(rt, self) }
     }
 }
 
 unsafe impl<'a> FromValue for &mut [u8] {
     fn from_value(value: Value) -> Self {
-        let len = unsafe { crate::sys::caml_string_length(value.0) };
-        let ptr = unsafe { crate::sys::string_val(value.0) };
-        unsafe { ::core::slice::from_raw_parts_mut(ptr, len) }
+        unsafe {
+            let len = crate::sys::caml_string_length(value.0);
+            let ptr = crate::sys::string_val(value.0);
+            ::core::slice::from_raw_parts_mut(ptr, len)
+        }
     }
 }
 
 unsafe impl<'a> IntoValue for &mut [u8] {
     fn into_value(self, rt: &Runtime) -> Value {
-        frame!(rt: (value) {
-            unsafe {
-                value.0 = crate::sys::caml_alloc_string(self.len());
-                let ptr = crate::sys::string_val(value.0);
-                core::ptr::copy_nonoverlapping(self.as_ptr(), ptr, self.len());
-                value
-            }
-        })
+        unsafe { Value::bytes(rt, self) }
     }
 }
 
@@ -368,16 +341,13 @@ unsafe impl<K: IntoValue, V: IntoValue> IntoValue for std::collections::BTreeMap
     fn into_value(self, rt: &Runtime) -> Value {
         let mut list = crate::List::empty();
 
-        crate::frame!(rt: (l, k_, v_) {
-            for (k, v) in self.into_iter().rev() {
-                k_ = k.into_value(rt);
-                v_ = v.into_value(rt);
-                list = list.add(rt, (k_, v_));
-            }
+        for (k, v) in self.into_iter().rev() {
+            let k_ = k.into_value(rt);
+            let v_ = v.into_value(rt);
+            list = unsafe { list.add(rt, (k_, v_)) };
+        }
 
-            l = list.into_value(rt);
-            l
-        })
+        list.into_value(rt)
     }
 }
 
@@ -404,14 +374,12 @@ unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
     fn into_value(self, rt: &Runtime) -> Value {
         let mut list = crate::List::empty();
 
-        frame!(rt: (l, x) {
-            for t in self.into_iter().rev() {
-                let v = t.into_value(rt);
-                list = list.add(rt, v);
-            }
-            l = list.into_value(rt);
-            l
-        })
+        for v in self.into_iter().rev() {
+            let v_ = v.into_value(rt);
+            list = unsafe { list.add(rt, v_) };
+        }
+
+        list.into_value(rt)
     }
 }
 
