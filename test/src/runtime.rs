@@ -83,3 +83,11 @@ pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::Float> {
         call_named(gc, x)
     })
 }
+
+#[ocaml::func]
+pub unsafe fn bench_func() {}
+
+#[ocaml::native_func]
+pub unsafe fn bench_native_func() -> ocaml::Value {
+    ocaml::Value::none()
+}

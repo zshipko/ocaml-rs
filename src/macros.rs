@@ -100,7 +100,7 @@ macro_rules! body {
         $crate::init_panic_handler();
 
         #[allow(unused_mut)]
-        let mut r = |$gc: &mut $crate::Runtime| $code;
+        let mut r = |#[allow(unused_variables)] $gc: &mut $crate::Runtime| $code;
         r($gc)
     }};
     ($gc:ident: ($($param:ident),+) $code:block) => {{
