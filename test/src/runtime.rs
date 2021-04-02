@@ -63,7 +63,7 @@ pub unsafe fn hash_variant_abc(i: ocaml::Int) -> Value {
 
 #[ocaml::func]
 pub unsafe fn hash_variant_def(i: ocaml::Float) -> Value {
-    let f = Some(Value::float(gc, i));
+    let f = Some(Value::float(i));
     Value::hash_variant(gc, "Def", f)
 }
 

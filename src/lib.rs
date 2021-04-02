@@ -112,7 +112,7 @@
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
 
-pub use ocaml_interop::{self as interop, BoxRoot, OCaml, OCamlRef, OCamlRuntime as Runtime};
+pub use ocaml_interop::{self as interop, OCaml, OCamlRef, OCamlRuntime as Runtime};
 
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
@@ -132,6 +132,9 @@ mod tag;
 mod types;
 mod util;
 mod value;
+
+/// Rooted values
+pub mod root;
 
 /// Functions for interacting with the OCaml runtime
 pub mod runtime;

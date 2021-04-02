@@ -136,7 +136,7 @@ impl Error {
     pub fn raise_failure(rt: &Runtime, s: &str) -> ! {
         let s = s.into_value(rt);
         unsafe {
-            crate::sys::caml_failwith_value(s.0);
+            crate::sys::caml_failwith_value(s.raw());
         }
         #[allow(clippy::empty_loop)]
         loop {}
@@ -146,7 +146,7 @@ impl Error {
     pub fn raise_value(rt: &Runtime, v: Value, s: &str) -> ! {
         let s = s.into_value(rt);
         unsafe {
-            crate::sys::caml_raise_with_arg(v.0, s.0);
+            crate::sys::caml_raise_with_arg(v.raw(), s.raw());
         }
         #[allow(clippy::empty_loop)]
         loop {}
@@ -176,7 +176,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
         match self {
             Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
-                crate::sys::caml_raise(e.0);
+                crate::sys::caml_raise(e.raw());
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
@@ -206,12 +206,12 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
-                crate::sys::caml_raise_with_arg(a.0, b.0)
+                crate::sys::caml_raise_with_arg(a.raw(), b.raw())
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
                 unsafe {
                     let s = s.into_value(rt);
-                    crate::sys::caml_raise_sys_error(s.0)
+                    crate::sys::caml_raise_sys_error(s.raw())
                 };
             }
             Err(Error::Message(s)) => {
