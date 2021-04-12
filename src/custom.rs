@@ -98,13 +98,13 @@ unsafe impl<T: 'static + Custom> IntoValue for T {
 ///     i: i32,
 /// }
 ///
-/// extern "C" fn mytype_finalizer(_: ocaml::Value) {
+/// extern "C" fn mytype_finalizer(_: ocaml::sys::Value) {
 ///     println!("This runs when the value gets garbage collected");
 /// }
 ///
-/// extern "C" fn mytype_compare(a: ocaml::Value, b: ocaml::Value) -> i32 {
-///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(a);
-///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(b);
+/// unsafe extern "C" fn mytype_compare(a: ocaml::sys::Value, b: ocaml::sys::Value) -> i32 {
+///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(ocaml::Value::new(a));
+///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(ocaml::Value::new(b));
 ///
 ///     let a_i = a.as_ref().i;
 ///     let b_i = b.as_ref().i;
@@ -146,7 +146,7 @@ unsafe impl<T: 'static + Custom> IntoValue for T {
 /// Additionally, `custom` can be used inside the `impl` block:
 ///
 /// ```rust
-/// extern "C" fn implexample_finalizer(_: ocaml::Value) {
+/// extern "C" fn implexample_finalizer(_: ocaml::sys::Value) {
 ///     println!("This runs when the value gets garbage collected");
 /// }
 ///
@@ -198,7 +198,7 @@ macro_rules! custom {
 /// }
 ///
 /// unsafe extern "C" fn mytype_finalizer(v: ocaml::sys::Value) {
-///     let value = Value::new(v);
+///     let v = ocaml::Value::new(v);
 ///     let p: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(v);
 ///     p.drop_in_place()
 /// }

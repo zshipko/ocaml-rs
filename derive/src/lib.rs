@@ -76,9 +76,9 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .map(|t| match t {
             Some(ident) => {
                 let ident = &ident.ident;
-                quote! { #ident: ocaml::Value }
+                quote! { #ident: ocaml::sys::Value }
             }
-            None => quote! { _: ocaml::Value },
+            None => quote! { _: ocaml::sys::Value },
         })
         .collect();
 
@@ -95,14 +95,14 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
+                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
             }
             None => None,
         })
         .collect();
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _: ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::sys::Value});
     }
 
     let body = &item_fn.block;
@@ -209,8 +209,8 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { #ident: ocaml::Value },
-            None => quote! { _: ocaml::Value },
+            Some(ident) => quote! { #ident: ocaml::sys::Value },
+            None => quote! { _: ocaml::sys::Value },
         })
         .collect();
 
@@ -223,7 +223,7 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
     .collect();*/
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _: ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::sys::Value});
     }
 
     let body = &item_fn.block;
@@ -307,9 +307,9 @@ fn ocaml_bytecode_func_impl(
         .iter()
         .map(|t| match t {
             Some(ident) => {
-                quote! { #ident: ocaml::Value }
+                quote! { #ident: ocaml::sys::Value }
             }
-            None => quote! { _: ocaml::Value },
+            None => quote! { _: ocaml::sys::Value },
         })
         .collect();
 
@@ -322,7 +322,7 @@ fn ocaml_bytecode_func_impl(
         .collect();
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _unit: ocaml::Value});
+        ocaml_args.push(quote! { _unit: ocaml::sys::Value});
         param_names.push(syn::Ident::new("__ocaml_unit", name.span()));
     }
 
@@ -402,7 +402,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
+                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
                 }
                 None => None,
             })

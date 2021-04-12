@@ -18,14 +18,14 @@
 //! // Automatically derive `IntoValue` and `FromValue`
 //! #[cfg(feature = "derive")]
 //! #[derive(ocaml::IntoValue, ocaml::FromValue)]
-//! struct Example<'a> {
-//!     name: &'a str,
+//! struct Example {
+//!     name: String,
 //!     i: ocaml::Int,
 //! }
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
-//! pub fn incr_example(mut e: Example<'static>) -> Example<'static> {
+//! pub fn incr_example(mut e: Example) -> Example {
 //!     e.i += 1;
 //!     e
 //! }
@@ -40,7 +40,7 @@
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func(my_gc_handle)]
 //! pub unsafe fn my_string() -> ocaml::Value {
-//!     ocaml::Value::string(my_gc_handle, "My string")
+//!     ocaml::Value::string("My string")
 //! }
 //!
 //! #[cfg(feature = "derive")]

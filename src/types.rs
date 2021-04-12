@@ -150,7 +150,7 @@ impl Array<f64> {
     }
 
     /// Get a value from a double array
-    pub fn get_double(self, i: usize) -> Result<f64, Error> {
+    pub fn get_double(&self, i: usize) -> Result<f64, Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
@@ -167,7 +167,7 @@ impl Array<f64> {
     ///
     /// This function does not perform bounds checking
     #[inline]
-    pub unsafe fn get_double_unchecked(self, i: usize) -> f64 {
+    pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
         *(self.0.raw() as *mut f64).add(i)
     }
 }

@@ -50,8 +50,8 @@ pub unsafe fn array_replace(
 }
 
 #[ocaml::func]
-pub unsafe fn array1_of_string(mut x: String) -> ocaml::bigarray::Array1<u8> {
-    ocaml::bigarray::Array1::of_slice(x.as_bytes_mut())
+pub unsafe fn array1_of_string(x: String) -> ocaml::bigarray::Array1<u8> {
+    ocaml::bigarray::Array1::from_slice(x.as_bytes())
 }
 
 #[ocaml::func]
