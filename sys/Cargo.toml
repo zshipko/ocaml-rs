@@ -10,7 +10,7 @@ documentation = "https://docs.rs/ocaml-sys"
 edition = "2018"
 
 [dependencies]
-cty = "0.2"
+chlorine = "1.0"
 
 [package.metadata.docs.rs]
 features = [ "without-ocamlopt", "caml-state" ]
