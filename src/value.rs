@@ -41,7 +41,7 @@ unsafe impl IntoValue for Value {
 }
 
 unsafe impl<'a> FromValue<'a> for Value {
-    #[inline]
+    #[allow(clippy::wrong_self_convention)]
     fn from_value(v: Value) -> Value {
         v
     }
