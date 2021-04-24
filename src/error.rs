@@ -36,6 +36,9 @@ pub enum CamlError {
     /// A pre-allocated OCaml exception
     Exception(Value),
 
+    /// A pre-allocated OCaml exception
+    SysException(crate::sys::Value),
+
     /// An exception type and argument
     WithArg(Value, Value),
 }
@@ -95,11 +98,7 @@ impl Error {
 
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
-    pub fn raise_with_arg<S: AsRef<str>, T: IntoValue>(
-        rt: &Runtime,
-        exc: S,
-        arg: T,
-    ) -> Result<(), Error> {
+    pub fn raise_with_arg<S: AsRef<str>>(exc: S, arg: Value) -> Result<(), Error> {
         let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
@@ -109,7 +108,7 @@ impl Error {
             }
         };
 
-        Err(CamlError::WithArg(value, arg.into_value(rt)).into())
+        Err(CamlError::WithArg(value, arg).into())
     }
 
     /// Raise `Not_found`
@@ -133,20 +132,24 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_failure(rt: &Runtime, s: &str) -> ! {
-        let s = s.into_value(rt);
+    pub fn raise_failure(s: &str) -> ! {
         unsafe {
-            crate::sys::caml_failwith_value(s.raw());
+            let value = crate::sys::caml_alloc_string(s.len());
+            let ptr = crate::sys::string_val(value);
+            core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+            crate::sys::caml_failwith_value(value);
         }
         #[allow(clippy::empty_loop)]
         loop {}
     }
 
     #[doc(hidden)]
-    pub fn raise_value(rt: &Runtime, v: Value, s: &str) -> ! {
-        let s = s.into_value(rt);
+    pub fn raise_value(v: Value, s: &str) -> ! {
         unsafe {
-            crate::sys::caml_raise_with_arg(v.raw(), s.raw());
+            let st = crate::sys::caml_alloc_string(s.len());
+            let ptr = crate::sys::string_val(st);
+            core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+            crate::sys::caml_raise_with_arg(v.raw(), st);
         }
         #[allow(clippy::empty_loop)]
         loop {}
@@ -177,6 +180,9 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
                 crate::sys::caml_raise(e.raw());
+            },
+            Err(Error::Caml(CamlError::SysException(e))) => unsafe {
+                crate::sys::caml_raise(e);
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
@@ -249,7 +255,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
-                return Err(CamlError::Exception(value.exception().unwrap()).into());
+                return Err(CamlError::SysException(value.raw()).into());
             }
 
             Ok(T::from_value(value))

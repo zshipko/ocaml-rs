@@ -7,8 +7,8 @@ pub unsafe fn apply1(f: Value, x: Value) -> Result<Value, Error> {
 
 #[ocaml::func]
 pub unsafe fn apply3(f: Value, x: Value) -> Result<Value, Error> {
-    let a = f.call(gc, x);
-    let b = f.call(gc, a);
+    let a = f.call(gc, x)?;
+    let b = f.call(gc, a)?;
     f.call(gc, b)
 }
 
