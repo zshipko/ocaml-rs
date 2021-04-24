@@ -14,7 +14,7 @@ edition = "2018"
 features = [ "without-ocamlopt", "derive", "link" ]
 
 [dependencies]
-ocaml-interop = "0.7"
+ocaml-interop = "0.8"
 ocaml-sys = {path = "./sys", version = "0.21"}
 ocaml-boxroot-sys = {version = "0.2"}
 ocaml-derive = {path = "./derive", optional = true, version = "0.21"}
