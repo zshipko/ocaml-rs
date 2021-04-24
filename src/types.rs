@@ -20,13 +20,13 @@ pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
 
 unsafe impl<'a, T> IntoValue for Pointer<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
-        self.0.clone()
+        self.0
     }
 }
 
 unsafe impl<'a, T> FromValue<'a> for Pointer<'a, T> {
     fn from_value(value: Value) -> Self {
-        Pointer(value.clone(), PhantomData)
+        Pointer(value, PhantomData)
     }
 }
 
@@ -117,7 +117,7 @@ unsafe impl<'a, T: IntoValue + FromValue<'a>> IntoValue for Array<'a, T> {
 
 unsafe impl<'a, T: IntoValue + FromValue<'a>> FromValue<'a> for Array<'a, T> {
     fn from_value(value: Value) -> Self {
-        Array(value.clone(), PhantomData)
+        Array(value, PhantomData)
     }
 }
 
@@ -276,7 +276,7 @@ unsafe impl<'a, T: IntoValue + FromValue<'a>> IntoValue for List<'a, T> {
 
 unsafe impl<'a, T: IntoValue + FromValue<'a>> FromValue<'a> for List<'a, T> {
     fn from_value(value: Value) -> Self {
-        List(value.clone(), PhantomData)
+        List(value, PhantomData)
     }
 }
 
@@ -338,8 +338,8 @@ impl<'a, T: IntoValue + FromValue<'a>> List<'a, T> {
 
     #[cfg(not(feature = "no-std"))]
     /// List as `Vec`
-    pub fn to_vec(self) -> Vec<T> {
-        self.into_iter().map(|x| T::from_value(x)).collect()
+    pub fn into_vec(self) -> Vec<T> {
+        self.into_iter().map(T::from_value).collect()
     }
 
     #[cfg(not(feature = "no-std"))]
@@ -349,6 +349,7 @@ impl<'a, T: IntoValue + FromValue<'a>> List<'a, T> {
     }
 
     /// List iterator
+    #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> ListIterator<'a> {
         ListIterator {
             inner: self.0,

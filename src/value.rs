@@ -630,7 +630,6 @@ impl Value {
             return Value::new(ptr1.offset(1) as isize);
         }
         let slice0 = self.slice();
-        core::mem::forget(slice0);
         Value::new(slice0.as_ptr().offset(1) as isize)
     }
 }
