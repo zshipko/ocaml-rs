@@ -1,10 +1,10 @@
 use ocaml::{interop::ToOCaml, FromValue, IntoValue};
 
 #[derive(IntoValue, FromValue)]
-enum Enum1 {
+enum Enum1<'a> {
     Empty,
     First(ocaml::Int),
-    Second(ocaml::Array<String>),
+    Second(ocaml::Array<'a, String>),
 }
 
 #[ocaml::func]
@@ -26,7 +26,7 @@ pub unsafe fn enum1_make_second(s: String) -> Enum1 {
 }
 
 #[ocaml::func]
-pub fn enum1_get_second_value(e: Enum1) -> Option<ocaml::Array<String>> {
+pub fn enum1_get_second_value(e: Enum1<'static>) -> Option<ocaml::Array<'static, String>> {
     match e {
         Enum1::Second(x) => Some(x),
         Enum1::Empty | Enum1::First(_) => None,
@@ -43,7 +43,7 @@ struct Struct1 {
     a: ocaml::Int,
     b: ocaml::Float,
     c: Option<String>,
-    d: Option<ocaml::Array<String>>,
+    d: Option<ocaml::Array<'static, String>>,
 }
 
 #[ocaml::func]
@@ -72,7 +72,7 @@ pub unsafe fn make_struct1(
     a: ocaml::Int,
     b: ocaml::Float,
     c: Option<String>,
-    d: Option<ocaml::Array<String>>,
+    d: Option<ocaml::Array<'static, String>>,
 ) -> Result<Struct1, ocaml::Error> {
     Ok(Struct1 { a, b, c, d })
 }
@@ -83,11 +83,10 @@ pub unsafe fn string_non_copying(s: ocaml::Value) -> ocaml::Value {
 }
 
 #[ocaml::func]
-pub unsafe fn direct_slice(data: &[ocaml::Value]) -> i64 {
+pub unsafe fn direct_slice(data: &[ocaml::Raw]) -> i64 {
     let mut total = 0;
     for i in data {
-        let x: i64 = i.int64_val();
-        total += x;
+        total += ocaml::Value::from_raw(*i).int64_val();
     }
     total
 }
@@ -101,4 +100,13 @@ pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
 #[ocaml::func]
 pub fn pair_vec() -> ocaml::Value {
     vec![("foo", 1), ("bar", 2isize)].into_value(gc)
+}
+
+#[ocaml::native_func]
+pub fn string_array() -> ocaml::Value {
+    let mut v = vec![];
+    for i in 1..10000000 {
+        v.push(format!("foo {}", i));
+    }
+    v.into_value(gc)
 }

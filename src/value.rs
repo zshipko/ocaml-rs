@@ -5,10 +5,14 @@ use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Runtime};
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
 
-/// Value wraps the native OCaml `value` type transparently, this means it has the
-/// same representation as an `ocaml_sys::Value`
+/// Value wraps the native OCaml `value` type
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Value(pub Root);
+
+/// Wrapper around sys::Value
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct Raw(sys::Value);
 
 /// `IntoValue` is used to convert from Rust types to OCaml values
 ///
@@ -25,7 +29,7 @@ pub unsafe trait IntoValue {
 /// NOTE: This should only be used after the OCaml runtime has been initialized, when calling
 /// Rust functions from OCaml, the runtime is already initialized otherwise `ocaml::Runtime::init`
 /// should be used
-pub unsafe trait FromValue {
+pub unsafe trait FromValue<'a> {
     /// Convert from OCaml value
     fn from_value(v: Value) -> Self;
 }
@@ -36,10 +40,23 @@ unsafe impl IntoValue for Value {
     }
 }
 
-unsafe impl FromValue for Value {
+unsafe impl<'a> FromValue<'a> for Value {
     #[inline]
     fn from_value(v: Value) -> Value {
         v
+    }
+}
+
+unsafe impl IntoValue for Raw {
+    fn into_value(self, _rt: &Runtime) -> Value {
+        unsafe { Value::new(self.0) }
+    }
+}
+
+unsafe impl<'a> FromValue<'a> for Raw {
+    #[inline]
+    fn from_value(v: Value) -> Raw {
+        Raw(v.raw())
     }
 }
 
@@ -61,15 +78,15 @@ unsafe impl<T> IntoValue for BoxRoot<T> {
     }
 }
 
-unsafe impl<T> FromValue for BoxRoot<T> {
+unsafe impl<'a, T> FromValue<'a> for BoxRoot<T> {
     fn from_value(v: Value) -> BoxRoot<T> {
-        let ocaml: OCaml<'_, T> = FromValue::from_value(v);
+        let ocaml: OCaml<'a, T> = FromValue::from_value(v);
         ocaml.root()
     }
 }
 
-unsafe impl<'a, T> FromValue for OCaml<'a, T> {
-    fn from_value(v: Value) -> OCaml<'a, T> {
+unsafe impl<'a, T> FromValue<'a> for OCaml<'a, T> {
+    fn from_value<'b>(v: Value) -> OCaml<'a, T> {
         // NOTE: this should only be used after the runtime is initialized
         let rt = unsafe { Runtime::recover_handle() };
         unsafe { OCaml::new(rt, v.raw()) }
@@ -95,7 +112,7 @@ impl Value {
     }
 
     /// Returns a named value registered by OCaml
-    pub unsafe fn named<T: FromValue>(name: &str) -> Option<T> {
+    pub unsafe fn named(name: &str) -> Option<Value> {
         let s = match util::CString::new(name) {
             Ok(s) => s,
             Err(_) => return None,
@@ -105,7 +122,7 @@ impl Value {
             return None;
         }
 
-        Some(FromValue::from_value(Value::new(*named)))
+        Some(Value::new(*named))
     }
 
     /// Allocate a new value with the given size and tag.
@@ -165,6 +182,12 @@ impl Value {
     #[inline]
     pub unsafe fn new(v: sys::Value) -> Value {
         Value(Root::new(v))
+    }
+
+    #[inline]
+    /// Create a new Value from Raw
+    pub unsafe fn from_raw(v: Raw) -> Value {
+        Value(Root::new(v.0))
     }
 
     /// Get array length
@@ -311,8 +334,8 @@ impl Value {
     }
 
     /// Get index of underlying OCaml block value
-    pub unsafe fn field<T: FromValue>(&self, i: Size) -> T {
-        T::from_value(Value::new(*sys::field(self.raw(), i)))
+    pub unsafe fn field(&self, i: Size) -> Value {
+        Value::new(*sys::field(self.raw(), i))
     }
 
     /// Set index of underlying OCaml block value
@@ -352,7 +375,7 @@ impl Value {
     }
 
     /// Get mutable pointer to data stored in an OCaml custom value
-    pub unsafe fn custom_ptr_val_mut<T>(&self) -> *mut T {
+    pub unsafe fn custom_ptr_val_mut<T>(&mut self) -> *mut T {
         sys::field(self.raw(), 1) as *mut T
     }
 
@@ -398,14 +421,12 @@ impl Value {
     }
 
     /// Extract OCaml exception
-    pub unsafe fn exception<A: FromValue>(&self) -> Option<A> {
+    pub unsafe fn exception(&self) -> Option<Value> {
         if !self.is_exception_result() {
             return None;
         }
 
-        Some(A::from_value(Value::new(sys::extract_exception(
-            self.raw(),
-        ))))
+        Some(Value::new(sys::extract_exception(self.raw())))
     }
 
     /// Call a closure with a single argument, returning an exception value
@@ -551,18 +572,18 @@ impl Value {
         sys::caml_initialize(&mut self.raw(), value.raw())
     }
 
-    /// Convert a value to a slice of values
-    pub unsafe fn slice<'a>(&self) -> &'a [Value] {
+    #[doc(hidden)]
+    pub unsafe fn slice<'a>(&self) -> &'a [sys::Value] {
         ::core::slice::from_raw_parts(
-            (self.raw() as *const Value).offset(-1),
+            (self.raw() as *const sys::Value).offset(-1),
             sys::wosize_val(self.raw()) + 1,
         )
     }
 
-    /// Convert a value to a mutable slice of values
-    pub unsafe fn slice_mut<'a>(&self) -> &'a mut [Value] {
+    #[doc(hidden)]
+    pub unsafe fn slice_mut<'a>(&self) -> &'a mut [sys::Value] {
         ::core::slice::from_raw_parts_mut(
-            (self.raw() as *mut Value).offset(-1),
+            (self.raw() as *mut sys::Value).offset(-1),
             sys::wosize_val(self.raw()) + 1,
         )
     }
@@ -609,19 +630,7 @@ impl Value {
             return Value::new(ptr1.offset(1) as isize);
         }
         let slice0 = self.slice();
-        let vec1: Vec<Value> = slice0
-            .iter()
-            .enumerate()
-            .map(|(i, v)| {
-                if i == 0 {
-                    v.clone()
-                } else {
-                    v.deep_clone_to_rust()
-                }
-            })
-            .collect();
-        let ptr1 = vec1.as_ptr();
-        core::mem::forget(vec1);
-        Value::new(ptr1.offset(1) as isize)
+        core::mem::forget(slice0);
+        Value::new(slice0.as_ptr().offset(1) as isize)
     }
 }

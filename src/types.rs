@@ -16,23 +16,23 @@ use crate::value::{FromValue, IntoValue, Size, Value};
 /// for abstract pointers see `Value::alloc_abstract_ptr` and `Value::abstract_ptr_val`
 #[derive(Clone, PartialEq)]
 #[repr(transparent)]
-pub struct Pointer<T>(pub Value, PhantomData<T>);
+pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
 
-unsafe impl<T> IntoValue for Pointer<T> {
+unsafe impl<'a, T> IntoValue for Pointer<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
-        self.0
+        self.0.clone()
     }
 }
 
-unsafe impl<T> FromValue for Pointer<T> {
+unsafe impl<'a, T> FromValue<'a> for Pointer<'a, T> {
     fn from_value(value: Value) -> Self {
-        Pointer(value, PhantomData)
+        Pointer(value.clone(), PhantomData)
     }
 }
 
 unsafe extern "C" fn ignore(_: sys::Value) {}
 
-impl<T> Pointer<T> {
+impl<'a, T> Pointer<'a, T> {
     /// Allocate a new value with an optional custom finalizer and used/max
     ///
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
@@ -41,25 +41,25 @@ impl<T> Pointer<T> {
         x: T,
         finalizer: Option<unsafe extern "C" fn(sys::Value)>,
         used_max: Option<(usize, usize)>,
-    ) -> Pointer<T> {
+    ) -> Pointer<'a, T> {
         unsafe {
             let value = match finalizer {
                 Some(f) => Value::alloc_final::<T>(f, used_max),
                 None => Value::alloc_final::<T>(ignore, used_max),
             };
-            let mut ptr = Pointer::from_value(value);
+            let mut ptr = Pointer(value, PhantomData);
             ptr.set(x);
             ptr
         }
     }
 
     /// Allocate a `Custom` value
-    pub fn alloc_custom(x: T) -> Pointer<T>
+    pub fn alloc_custom(x: T) -> Pointer<'a, T>
     where
         T: crate::Custom,
     {
         unsafe {
-            let mut ptr = Pointer::from_value(Value::alloc_custom::<T>());
+            let mut ptr = Pointer(Value::alloc_custom::<T>(), PhantomData);
             ptr.set(x);
             ptr
         }
@@ -92,13 +92,13 @@ impl<T> Pointer<T> {
     }
 }
 
-impl<'a, T> AsRef<T> for Pointer<T> {
+impl<'a, T> AsRef<T> for Pointer<'a, T> {
     fn as_ref(&self) -> &T {
         unsafe { &*self.as_ptr() }
     }
 }
 
-impl<'a, T> AsMut<T> for Pointer<T> {
+impl<'a, T> AsMut<T> for Pointer<'a, T> {
     fn as_mut(&mut self) -> &mut T {
         unsafe { &mut *self.as_mut_ptr() }
     }
@@ -107,21 +107,21 @@ impl<'a, T> AsMut<T> for Pointer<T> {
 /// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, PartialEq)]
 #[repr(transparent)]
-pub struct Array<T: IntoValue + FromValue>(Value, PhantomData<T>);
+pub struct Array<'a, T: IntoValue + FromValue<'a>>(Value, PhantomData<&'a T>);
 
-unsafe impl<T: IntoValue + FromValue> IntoValue for Array<T> {
+unsafe impl<'a, T: IntoValue + FromValue<'a>> IntoValue for Array<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
         self.0
     }
 }
 
-unsafe impl<T: IntoValue + FromValue> FromValue for Array<T> {
+unsafe impl<'a, T: IntoValue + FromValue<'a>> FromValue<'a> for Array<'a, T> {
     fn from_value(value: Value) -> Self {
-        Array(value, PhantomData)
+        Array(value.clone(), PhantomData)
     }
 }
 
-impl Array<f64> {
+impl<'a> Array<'a, f64> {
     /// Set value to double array
     pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {
@@ -172,9 +172,9 @@ impl Array<f64> {
     }
 }
 
-impl<T: IntoValue + FromValue> Array<T> {
+impl<'a, T: IntoValue + FromValue<'a>> Array<'a, T> {
     /// Allocate a new Array
-    pub unsafe fn alloc(n: usize) -> Array<T> {
+    pub unsafe fn alloc(n: usize) -> Array<'a, T> {
         let x = Value::alloc(n, Tag(0));
         Array(x, PhantomData)
     }
@@ -215,7 +215,7 @@ impl<T: IntoValue + FromValue> Array<T> {
     }
 
     /// Get array index
-    pub fn get(&self, i: usize) -> Result<T, Error> {
+    pub fn get(&'a self, i: usize) -> Result<T, Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
@@ -228,17 +228,17 @@ impl<T: IntoValue + FromValue> Array<T> {
     ///
     /// This function does not perform bounds checking
     #[inline]
-    pub unsafe fn get_unchecked(&self, i: usize) -> T {
-        T::from_value(self.0.field(i))
+    pub unsafe fn get_unchecked(&'a self, i: usize) -> T {
+        FromValue::from_value(self.0.field(i))
     }
 
-    /// Array as slice
-    pub fn as_slice(&self) -> &[Value] {
+    #[doc(hidden)]
+    pub fn as_slice(&self) -> &[sys::Value] {
         unsafe { self.0.slice() }
     }
 
-    /// Array as mutable slice
-    pub fn as_mut_slice(&mut self) -> &mut [Value] {
+    #[doc(hidden)]
+    pub fn as_mut_slice(&mut self) -> &mut [sys::Value] {
         unsafe { self.0.slice_mut() }
     }
 
@@ -247,30 +247,43 @@ impl<T: IntoValue + FromValue> Array<T> {
     pub fn into_vec(self) -> Vec<T> {
         FromValue::from_value(self.0)
     }
+
+    /// Array as `Vec`
+    #[cfg(not(feature = "no-std"))]
+    pub fn as_vec(&'a self) -> Vec<T> {
+        let mut dest = Vec::new();
+        let len = self.len();
+
+        for i in 0..len {
+            unsafe { dest.push(self.get_unchecked(i)) }
+        }
+
+        dest
+    }
 }
 
 /// `List<A>` wraps an OCaml `'a list` without converting it to Rust, this introduces no
 /// additional overhead compared to a `Value` type
 #[derive(Clone, PartialEq)]
 #[repr(transparent)]
-pub struct List<T: IntoValue + FromValue>(Value, PhantomData<T>);
+pub struct List<'a, T: 'a + IntoValue + FromValue<'a>>(Value, PhantomData<&'a T>);
 
-unsafe impl<T: IntoValue + FromValue> IntoValue for List<T> {
+unsafe impl<'a, T: IntoValue + FromValue<'a>> IntoValue for List<'a, T> {
     fn into_value(self, _rt: &Runtime) -> Value {
         self.0
     }
 }
 
-unsafe impl<'a, T: IntoValue + FromValue> FromValue for List<T> {
+unsafe impl<'a, T: IntoValue + FromValue<'a>> FromValue<'a> for List<'a, T> {
     fn from_value(value: Value) -> Self {
-        List(value, PhantomData)
+        List(value.clone(), PhantomData)
     }
 }
 
-impl<'a, T: IntoValue + FromValue> List<T> {
+impl<'a, T: IntoValue + FromValue<'a>> List<'a, T> {
     /// An empty list
     #[inline(always)]
-    pub fn empty() -> List<T> {
+    pub fn empty() -> List<'a, T> {
         List(Value::unit(), PhantomData)
     }
 
@@ -297,7 +310,7 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     /// Add an element to the front of the list returning the new list
     #[must_use]
     #[allow(clippy::should_implement_trait)]
-    pub unsafe fn add(self, rt: &'a Runtime, v: T) -> List<T> {
+    pub unsafe fn add(self, rt: &Runtime, v: T) -> List<'a, T> {
         let item = v.into_value(rt);
         let mut dest = Value::alloc(2, Tag(0));
         dest.store_field(rt, 0, item);
@@ -306,7 +319,7 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     }
 
     /// List head
-    pub fn hd(&self) -> Option<T> {
+    pub fn hd(&self) -> Option<Value> {
         if self.is_empty() {
             return None;
         }
@@ -315,18 +328,18 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     }
 
     /// List tail
-    pub fn tl(&self) -> List<T> {
+    pub fn tl(&self) -> List<'a, T> {
         if self.is_empty() {
             return Self::empty();
         }
 
-        unsafe { self.0.field(1) }
+        unsafe { List(self.0.field(1), PhantomData) }
     }
 
     #[cfg(not(feature = "no-std"))]
     /// List as `Vec`
-    pub fn into_vec(self) -> Vec<T> {
-        self.into_iter().collect()
+    pub fn to_vec(self) -> Vec<T> {
+        self.into_iter().map(|x| T::from_value(x)).collect()
     }
 
     #[cfg(not(feature = "no-std"))]
@@ -336,7 +349,7 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     }
 
     /// List iterator
-    pub fn into_iter(self) -> ListIterator<T> {
+    pub fn into_iter(self) -> ListIterator<'a> {
         ListIterator {
             inner: self.0,
             _marker: PhantomData,
@@ -344,9 +357,9 @@ impl<'a, T: IntoValue + FromValue> List<T> {
     }
 }
 
-impl<T: IntoValue + FromValue> IntoIterator for List<T> {
-    type Item = T;
-    type IntoIter = ListIterator<T>;
+impl<'a, T: IntoValue + FromValue<'a>> IntoIterator for List<'a, T> {
+    type Item = Value;
+    type IntoIter = ListIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
         List::into_iter(self)
@@ -354,13 +367,13 @@ impl<T: IntoValue + FromValue> IntoIterator for List<T> {
 }
 
 /// List iterator.
-pub struct ListIterator<T: IntoValue + FromValue> {
+pub struct ListIterator<'a> {
     inner: Value,
-    _marker: PhantomData<T>,
+    _marker: PhantomData<&'a Value>,
 }
 
-impl<'a, T: IntoValue + FromValue> Iterator for ListIterator<T> {
-    type Item = T;
+impl<'a> Iterator for ListIterator<'a> {
+    type Item = Value;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.inner.raw() != sys::UNIT {
@@ -418,7 +431,7 @@ pub mod bigarray {
     #[derive(Clone, PartialEq)]
     pub struct Array1<T>(Value, PhantomData<T>);
 
-    unsafe impl<T> crate::FromValue for Array1<T> {
+    unsafe impl<'a, T> crate::FromValue<'a> for Array1<T> {
         fn from_value(value: Value) -> Array1<T> {
             Array1(value, PhantomData)
         }
@@ -557,7 +570,7 @@ pub(crate) mod bigarray_ext {
         }
     }
 
-    unsafe impl<T> FromValue for Array2<T> {
+    unsafe impl<'a, T> FromValue<'a> for Array2<T> {
         fn from_value(value: Value) -> Array2<T> {
             Array2(value, PhantomData)
         }
@@ -637,7 +650,7 @@ pub(crate) mod bigarray_ext {
         }
     }
 
-    unsafe impl<T> FromValue for Array3<T> {
+    unsafe impl<'a, T> FromValue<'a> for Array3<T> {
         fn from_value(value: Value) -> Array3<T> {
             Array3(value, PhantomData)
         }

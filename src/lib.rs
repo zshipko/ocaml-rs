@@ -147,7 +147,7 @@ pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
-pub use crate::value::{FromValue, IntoValue, Value};
+pub use crate::value::{FromValue, IntoValue, Raw, Value};
 
 #[cfg(not(feature = "no-std"))]
 pub use crate::macros::inital_setup;

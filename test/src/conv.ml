@@ -110,3 +110,10 @@ external get_pair_vec: unit -> (string * int) array = "pair_vec"
 let%test "get-pair-vec" = Util.check_leaks (fun () -> (
   get_pair_vec () = [| "foo", 1; "bar", 2 |]
 ))
+
+external get_string_array: unit -> string array = "string_array"
+
+let%test "get-string-array" = Util.check_leaks (fun () -> (
+  let _foo = get_string_array () in
+  true
+))

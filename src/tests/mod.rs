@@ -7,7 +7,7 @@ fn test_basic_array() -> Result<(), Error> {
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         unsafe {
-            let mut a: ocaml::Array<&str> = ocaml::Array::alloc(gc, 2);
+            let mut a: ocaml::Array<&str> = ocaml::Array::alloc(2);
             a.set(gc, 0, "testing")?;
             a.set(gc, 1, "123")?;
             let b: Vec<&str> = FromValue::from_value(a.into_value(gc));
@@ -31,7 +31,7 @@ fn test_tuple_of_tuples() {
         let ((a, b, c, d, e, f, g, h, i), (j, k, l, m, n, o, p, q, r)): (
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
-        ) = unsafe { FromValue::from_value(Value::new(make_tuple(x, y))) };
+        ) = unsafe { FromValue::from_value(Value::new(make_tuple(x.raw(), y.raw()))) };
 
         println!("a: {}, r: {}", a, r);
         assert!(a == r);
@@ -61,7 +61,7 @@ fn test_basic_list() {
             list = list.add(gc, c);
         }
 
-        assert!(list.len() == 3);
+        unsafe { assert!(list.len() == 3); }
 
         let ll: std::collections::LinkedList<i64> = FromValue::from_value(list.into_value(gc));
 
