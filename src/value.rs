@@ -61,7 +61,7 @@ unsafe impl IntoValue for Value {
 unsafe impl<'a> FromValue<'a> for Value {
     #[allow(clippy::wrong_self_convention)]
     fn from_value(v: Value) -> Value {
-        v.clone()
+        v
     }
 }
 
@@ -525,18 +525,17 @@ impl Value {
     }
 
     /// Call a closure with `n` arguments, returning an exception value
-    pub unsafe fn call_n<A: AsRef<[Value]>>(&self, args: A) -> Result<Value, Error> {
+    pub unsafe fn call_n<A: AsRef<[Raw]>>(&self, args: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
 
         let n = args.as_ref().len();
-        let x: Vec<_> = args.as_ref().iter().map(|x| x.raw()).collect();
 
         let mut v: Value = Value::new(sys::caml_callbackN_exn(
             self.raw().0,
             n,
-            x.as_ptr() as *mut sys::Value,
+            args.as_ref().as_ptr() as *mut sys::Value,
         ));
 
         if v.is_exception_result() {
