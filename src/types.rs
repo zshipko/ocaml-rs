@@ -1,6 +1,6 @@
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
-use crate::{sys, CamlError, Error, Runtime, Tag};
+use crate::{sys, CamlError, Error, Raw, Runtime, Tag};
 
 use core::{
     iter::{IntoIterator, Iterator},
@@ -30,7 +30,7 @@ unsafe impl<'a, T> FromValue<'a> for Pointer<'a, T> {
     }
 }
 
-unsafe extern "C" fn ignore(_: sys::Value) {}
+unsafe extern "C" fn ignore(_: Raw) {}
 
 impl<'a, T> Pointer<'a, T> {
     /// Allocate a new value with an optional custom finalizer and used/max
@@ -39,7 +39,7 @@ impl<'a, T> Pointer<'a, T> {
     /// behavior. In most cases you should prefer `Poiner::alloc_custom` when possible.
     pub fn alloc_final(
         x: T,
-        finalizer: Option<unsafe extern "C" fn(sys::Value)>,
+        finalizer: Option<unsafe extern "C" fn(Raw)>,
         used_max: Option<(usize, usize)>,
     ) -> Pointer<'a, T> {
         unsafe {
@@ -145,7 +145,7 @@ impl<'a> Array<'a, f64> {
     /// This function performs no bounds checking
     #[inline]
     pub unsafe fn set_double_unchecked(&mut self, i: usize, f: f64) {
-        let ptr = ((self.0).raw() as *mut f64).add(i);
+        let ptr = ((self.0).raw().0 as *mut f64).add(i);
         *ptr = f;
     }
 
@@ -168,7 +168,7 @@ impl<'a> Array<'a, f64> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
-        *(self.0.raw() as *mut f64).add(i)
+        *(self.0.raw().0 as *mut f64).add(i)
     }
 }
 
@@ -182,12 +182,12 @@ impl<'a, T: IntoValue + FromValue<'a>> Array<'a, T> {
     /// Check if Array contains only doubles, if so `get_double` and `set_double` should be used
     /// to access values
     pub fn is_double_array(&self) -> bool {
-        unsafe { sys::caml_is_double_array(self.0.raw()) == 1 }
+        unsafe { sys::caml_is_double_array(self.0.raw().0) == 1 }
     }
 
     /// Array length
     pub fn len(&self) -> usize {
-        unsafe { sys::caml_array_length(self.0.raw()) }
+        unsafe { sys::caml_array_length(self.0.raw().0) }
     }
 
     /// Returns true when the array is empty
@@ -233,12 +233,12 @@ impl<'a, T: IntoValue + FromValue<'a>> Array<'a, T> {
     }
 
     #[doc(hidden)]
-    pub fn as_slice(&self) -> &[sys::Value] {
+    pub fn as_slice(&self) -> &[Raw] {
         unsafe { self.0.slice() }
     }
 
     #[doc(hidden)]
-    pub fn as_mut_slice(&mut self) -> &mut [sys::Value] {
+    pub fn as_mut_slice(&mut self) -> &mut [Raw] {
         unsafe { self.0.slice_mut() }
     }
 
@@ -291,12 +291,12 @@ impl<'a, T: IntoValue + FromValue<'a>> List<'a, T> {
     pub unsafe fn len(&self) -> usize {
         let mut length = 0;
         let mut tmp = self.0.raw();
-        while tmp != sys::EMPTY_LIST {
-            let p = sys::field(tmp, 1);
+        while tmp.0 != sys::EMPTY_LIST {
+            let p = sys::field(tmp.0, 1);
             if p.is_null() {
                 break;
             }
-            tmp = *p;
+            tmp = (*p).into();
             length += 1;
         }
         length
@@ -377,7 +377,7 @@ impl<'a> Iterator for ListIterator<'a> {
     type Item = Value;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.inner.raw() != sys::UNIT {
+        if self.inner.raw().0 != sys::UNIT {
             unsafe {
                 let val = self.inner.field(0);
                 self.inner = self.inner.field(1);

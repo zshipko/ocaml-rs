@@ -185,7 +185,7 @@ unsafe impl IntoValue for () {
 
 unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Option<T> {
     fn from_value(value: Value) -> Option<T> {
-        if value.raw() == sys::NONE {
+        if value.raw().0 == sys::NONE {
             return None;
         }
 
@@ -205,8 +205,8 @@ unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
 unsafe impl<'a> FromValue<'a> for &'a str {
     fn from_value(value: Value) -> &'a str {
         unsafe {
-            let len = sys::caml_string_length(value.raw());
-            let ptr = sys::string_val(value.raw());
+            let len = sys::caml_string_length(value.raw().0);
+            let ptr = sys::string_val(value.raw().0);
             let slice = ::core::slice::from_raw_parts(ptr, len);
             ::core::str::from_utf8(slice).expect("Invalid UTF-8")
         }
@@ -222,8 +222,8 @@ unsafe impl<'a> IntoValue for &str {
 unsafe impl<'a> FromValue<'a> for &'a mut str {
     fn from_value(value: Value) -> &'a mut str {
         unsafe {
-            let len = sys::caml_string_length(value.raw());
-            let ptr = sys::string_val(value.raw());
+            let len = sys::caml_string_length(value.raw().0);
+            let ptr = sys::string_val(value.raw().0);
             let slice = ::core::slice::from_raw_parts_mut(ptr, len);
             ::core::str::from_utf8_mut(slice).expect("Invalid UTF-8")
         }
@@ -239,8 +239,8 @@ unsafe impl<'a> IntoValue for &mut str {
 unsafe impl<'a> FromValue<'a> for &'a [u8] {
     fn from_value(value: Value) -> &'a [u8] {
         unsafe {
-            let len = sys::caml_string_length(value.raw());
-            let ptr = sys::string_val(value.raw());
+            let len = sys::caml_string_length(value.raw().0);
+            let ptr = sys::string_val(value.raw().0);
             ::core::slice::from_raw_parts(ptr, len)
         }
     }
@@ -255,8 +255,8 @@ unsafe impl<'a> IntoValue for &[u8] {
 unsafe impl<'a> FromValue<'a> for &'a mut [u8] {
     fn from_value(value: Value) -> &'a mut [u8] {
         unsafe {
-            let len = sys::caml_string_length(value.raw());
-            let ptr = sys::string_val(value.raw());
+            let len = sys::caml_string_length(value.raw().0);
+            let ptr = sys::string_val(value.raw().0);
             ::core::slice::from_raw_parts_mut(ptr, len)
         }
     }
@@ -288,10 +288,10 @@ unsafe impl<'a, V: IntoValue> IntoValue for Vec<V> {
 unsafe impl<'a, V: FromValue<'a>> FromValue<'a> for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
         unsafe {
-            let len = crate::sys::caml_array_length(v.raw());
+            let len = crate::sys::caml_array_length(v.raw().0);
             let mut dst = Vec::with_capacity(len);
             for i in 0..len {
-                dst.push(V::from_value(Value::new(*crate::sys::field(v.raw(), i))))
+                dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
             }
             dst
         }
@@ -302,8 +302,8 @@ unsafe impl<'a> FromValue<'a> for &'a [Raw] {
     fn from_value(value: Value) -> &'a [Raw] {
         unsafe {
             ::core::slice::from_raw_parts(
-                crate::sys::field(value.raw(), 0) as *mut Raw,
-                crate::sys::wosize_val(value.raw()),
+                crate::sys::field(value.raw().0, 0) as *mut Raw,
+                crate::sys::wosize_val(value.raw().0),
             )
         }
     }
@@ -313,8 +313,8 @@ unsafe impl<'a> FromValue<'a> for &'a mut [Raw] {
     fn from_value(value: Value) -> &'a mut [Raw] {
         unsafe {
             ::core::slice::from_raw_parts_mut(
-                crate::sys::field(value.raw(), 0) as *mut Raw,
-                crate::sys::wosize_val(value.raw()),
+                crate::sys::field(value.raw().0, 0) as *mut Raw,
+                crate::sys::wosize_val(value.raw().0),
             )
         }
     }
@@ -328,7 +328,7 @@ unsafe impl<'a, K: Ord + FromValue<'a>, V: FromValue<'a>> FromValue<'a>
         let mut dest = std::collections::BTreeMap::new();
         unsafe {
             let mut tmp = v;
-            while tmp.raw() != crate::sys::EMPTY_LIST {
+            while tmp.raw().0 != crate::sys::EMPTY_LIST {
                 let (k, v) = FromValue::from_value(tmp.field(0));
                 dest.insert(k, v);
                 tmp = tmp.field(1);
@@ -361,7 +361,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for std::collections::LinkedList
 
         unsafe {
             let mut tmp = v;
-            while tmp.raw() != crate::sys::EMPTY_LIST {
+            while tmp.raw().0 != crate::sys::EMPTY_LIST {
                 let t = T::from_value(tmp.field(0));
                 dest.push_back(t);
                 tmp = tmp.field(1);
@@ -388,6 +388,6 @@ unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
 
 unsafe impl<'a> IntoValue for &Value {
     fn into_value(self, _rt: &Runtime) -> Value {
-        unsafe { Value::new(self.raw()) }
+        unsafe { Value::from_raw(self.raw()) }
     }
 }

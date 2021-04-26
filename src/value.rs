@@ -12,7 +12,25 @@ pub struct Value(pub Root);
 /// Wrapper around sys::Value
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
-pub struct Raw(sys::Value);
+pub struct Raw(pub sys::Value);
+
+impl AsRef<sys::Value> for Raw {
+    fn as_ref(&self) -> &sys::Value {
+        &self.0
+    }
+}
+
+impl From<sys::Value> for Raw {
+    fn from(x: sys::Value) -> Raw {
+        Raw(x)
+    }
+}
+
+impl From<Raw> for sys::Value {
+    fn from(x: Raw) -> sys::Value {
+        x.0
+    }
+}
 
 /// `IntoValue` is used to convert from Rust types to OCaml values
 ///
@@ -43,7 +61,7 @@ unsafe impl IntoValue for Value {
 unsafe impl<'a> FromValue<'a> for Value {
     #[allow(clippy::wrong_self_convention)]
     fn from_value(v: Value) -> Value {
-        v
+        v.clone()
     }
 }
 
@@ -56,7 +74,7 @@ unsafe impl IntoValue for Raw {
 unsafe impl<'a> FromValue<'a> for Raw {
     #[inline]
     fn from_value(v: Value) -> Raw {
-        Raw(v.raw())
+        v.raw()
     }
 }
 
@@ -89,13 +107,13 @@ unsafe impl<'a, T> FromValue<'a> for OCaml<'a, T> {
     fn from_value<'b>(v: Value) -> OCaml<'a, T> {
         // NOTE: this should only be used after the runtime is initialized
         let rt = unsafe { Runtime::recover_handle() };
-        unsafe { OCaml::new(rt, v.raw()) }
+        unsafe { OCaml::new(rt, v.raw().into()) }
     }
 }
 
 unsafe impl<T> crate::interop::ToOCaml<T> for Value {
     fn to_ocaml<'a>(&self, gc: &'a mut Runtime) -> OCaml<'a, T> {
-        unsafe { OCaml::new(gc, self.raw()) }
+        unsafe { OCaml::new(gc, self.raw().into()) }
     }
 }
 
@@ -107,8 +125,8 @@ unsafe impl<'a, T> crate::interop::FromOCaml<T> for Value {
 
 impl Value {
     /// Get raw OCaml value
-    pub fn raw(&self) -> sys::Value {
-        unsafe { self.0.get() }
+    pub fn raw(&self) -> Raw {
+        unsafe { Raw(self.0.get()) }
     }
 
     /// Returns a named value registered by OCaml
@@ -145,7 +163,7 @@ impl Value {
     /// This calls `caml_alloc_final` under-the-hood, which can has less than ideal performance
     /// behavior. In most cases you should prefer `Pointer::alloc_custom` when possible.
     pub unsafe fn alloc_final<T>(
-        finalizer: unsafe extern "C" fn(sys::Value),
+        finalizer: unsafe extern "C" fn(Raw),
         cfg: Option<(usize, usize)>,
     ) -> Value {
         let (used, max) = cfg.unwrap_or((0, 1));
@@ -173,41 +191,41 @@ impl Value {
     /// and `Box::from_raw` to free it
     pub unsafe fn alloc_abstract_ptr<T>(ptr: *mut T) -> Value {
         let x = Self::alloc(1, Tag::ABSTRACT);
-        let dest = x.raw() as *mut *mut T;
+        let dest = x.raw().0 as *mut *mut T;
         *dest = ptr;
         x
     }
 
-    /// Create a new Value from an existing OCaml `value`
     #[inline]
-    pub unsafe fn new(v: sys::Value) -> Value {
+    /// Create a new Value from an existing OCaml `value`
+    pub(crate) unsafe fn new(v: sys::Value) -> Value {
         Value(Root::new(v))
     }
 
     #[inline]
-    /// Create a new Value from Raw
+    /// Create a new Value from `Raw`
     pub unsafe fn from_raw(v: Raw) -> Value {
         Value(Root::new(v.0))
     }
 
     /// Get array length
     pub unsafe fn array_length(&self) -> usize {
-        sys::caml_array_length(self.raw())
+        sys::caml_array_length(self.raw().into())
     }
 
     /// See caml_register_global_root
     pub unsafe fn register_global_root(&mut self) {
-        sys::caml_register_global_root(&mut self.raw())
+        sys::caml_register_global_root(&mut self.raw().0)
     }
 
     /// Set caml_remove_global_root
     pub unsafe fn remove_global_root(&mut self) {
-        sys::caml_remove_global_root(&mut self.raw())
+        sys::caml_remove_global_root(&mut self.raw().0)
     }
 
     /// Get the tag for the underlying OCaml `value`
     pub unsafe fn tag(&self) -> Tag {
-        sys::tag_val(self.raw()).into()
+        sys::tag_val(self.raw().0).into()
     }
 
     /// Convert a boolean to OCaml value
@@ -219,7 +237,7 @@ impl Value {
     pub unsafe fn string<S: AsRef<str>>(s: S) -> Value {
         let s = s.as_ref();
         let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw());
+        let ptr = sys::string_val(value.raw().0);
         core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
         value
     }
@@ -228,7 +246,7 @@ impl Value {
     pub unsafe fn bytes<S: AsRef<[u8]>>(s: S) -> Value {
         let s = s.as_ref();
         let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw());
+        let ptr = sys::string_val(value.raw().0);
         core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
         value
     }
@@ -324,34 +342,34 @@ impl Value {
     /// Check if a Value is an integer or block, returning true if
     /// the underlying value is a block
     pub unsafe fn is_block(&self) -> bool {
-        sys::is_block(self.raw())
+        sys::is_block(self.raw().0)
     }
 
     /// Check if a Value is an integer or block, returning true if
     /// the underlying value is an integer
     pub unsafe fn is_long(&self) -> bool {
-        sys::is_long(self.raw())
+        sys::is_long(self.raw().0)
     }
 
     /// Get index of underlying OCaml block value
     pub unsafe fn field(&self, i: Size) -> Value {
-        Value::new(*sys::field(self.raw(), i))
+        Value::new(*sys::field(self.raw().0, i))
     }
 
     /// Set index of underlying OCaml block value
     pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &Runtime, i: Size, val: V) {
         let v = val.into_value(rt);
-        sys::store_field(self.raw(), i, v.raw())
+        sys::store_field(self.raw().0, i, v.raw().0)
     }
 
     /// Convert an OCaml `int` to `isize`
     pub unsafe fn int_val(&self) -> isize {
-        sys::int_val(self.raw())
+        sys::int_val(self.raw().0)
     }
 
     /// Convert an OCaml `Float` to `f64`
     pub unsafe fn float_val(&self) -> f64 {
-        *(self.raw() as *const f64)
+        *(self.raw().0 as *const f64)
     }
 
     /// Convert an OCaml `Int32` to `i32`
@@ -371,43 +389,43 @@ impl Value {
 
     /// Get pointer to data stored in an OCaml custom value
     pub unsafe fn custom_ptr_val<T>(&self) -> *const T {
-        sys::field(self.raw(), 1) as *const T
+        sys::field(self.raw().0, 1) as *const T
     }
 
     /// Get mutable pointer to data stored in an OCaml custom value
     pub unsafe fn custom_ptr_val_mut<T>(&mut self) -> *mut T {
-        sys::field(self.raw(), 1) as *mut T
+        sys::field(self.raw().0, 1) as *mut T
     }
 
     /// Get pointer to the pointer contained by Value
     pub unsafe fn abstract_ptr_val<T>(&self) -> *const T {
-        *(self.raw() as *const *const T)
+        *(self.raw().0 as *const *const T)
     }
 
     /// Get mutable pointer to the pointer contained by Value
     pub unsafe fn abstract_ptr_val_mut<T>(&self) -> *mut T {
-        *(self.raw() as *mut *mut T)
+        *(self.raw().0 as *mut *mut T)
     }
 
     /// Get underlying string pointer
     pub unsafe fn string_val(&self) -> &str {
-        let len = sys::caml_string_length(self.raw());
-        let ptr = sys::string_val(self.raw());
+        let len = sys::caml_string_length(self.raw().0);
+        let ptr = sys::string_val(self.raw().0);
         let slice = ::core::slice::from_raw_parts(ptr, len);
         ::core::str::from_utf8(slice).expect("Invalid UTF-8")
     }
 
     /// Get underlying bytes pointer
     pub unsafe fn bytes_val(&self) -> &[u8] {
-        let len = sys::caml_string_length(self.raw());
-        let ptr = sys::string_val(self.raw());
+        let len = sys::caml_string_length(self.raw().0);
+        let ptr = sys::string_val(self.raw().0);
         ::core::slice::from_raw_parts(ptr, len)
     }
 
     /// Get mutable string pointer
     pub unsafe fn string_val_mut(&mut self) -> &mut str {
-        let len = sys::caml_string_length(self.raw());
-        let ptr = sys::string_val(self.raw());
+        let len = sys::caml_string_length(self.raw().0);
+        let ptr = sys::string_val(self.raw().0);
 
         let slice = ::core::slice::from_raw_parts_mut(ptr, len);
         ::core::str::from_utf8_mut(slice).expect("Invalid UTF-8")
@@ -415,8 +433,8 @@ impl Value {
 
     /// Get mutable bytes pointer
     pub unsafe fn bytes_val_mut(&mut self) -> &mut [u8] {
-        let len = sys::caml_string_length(self.raw());
-        let ptr = sys::string_val(self.raw());
+        let len = sys::caml_string_length(self.raw().0);
+        let ptr = sys::string_val(self.raw().0);
         ::core::slice::from_raw_parts_mut(ptr, len)
     }
 
@@ -426,7 +444,7 @@ impl Value {
             return None;
         }
 
-        Some(Value::new(sys::extract_exception(self.raw())))
+        Some(Value::new(sys::extract_exception(self.raw().0)))
     }
 
     /// Call a closure with a single argument, returning an exception value
@@ -437,7 +455,7 @@ impl Value {
 
         let arg1 = arg1.into_value(rt);
 
-        let mut v: Value = Value::new(sys::caml_callback_exn(self.raw(), arg1.raw()));
+        let mut v: Value = Value::new(sys::caml_callback_exn(self.raw().0, arg1.raw().0));
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
@@ -461,7 +479,11 @@ impl Value {
         let arg1 = arg1.into_value(rt);
         let arg2 = arg2.into_value(rt);
 
-        let mut v: Value = Value::new(sys::caml_callback2_exn(self.raw(), arg1.raw(), arg2.raw()));
+        let mut v: Value = Value::new(sys::caml_callback2_exn(
+            self.raw().0,
+            arg1.raw().0,
+            arg2.raw().0,
+        ));
 
         if v.is_exception_result() {
             v = v.exception().unwrap();
@@ -488,10 +510,10 @@ impl Value {
         let arg3 = arg3.into_value(rt);
 
         let mut v: Value = Value::new(sys::caml_callback3_exn(
-            self.raw(),
-            arg1.raw(),
-            arg2.raw(),
-            arg3.raw(),
+            self.raw().0,
+            arg1.raw().0,
+            arg2.raw().0,
+            arg3.raw().0,
         ));
 
         if v.is_exception_result() {
@@ -512,7 +534,7 @@ impl Value {
         let x: Vec<_> = args.as_ref().iter().map(|x| x.raw()).collect();
 
         let mut v: Value = Value::new(sys::caml_callbackN_exn(
-            self.raw(),
+            self.raw().0,
             n,
             x.as_ptr() as *mut sys::Value,
         ));
@@ -528,12 +550,12 @@ impl Value {
     /// Modify an OCaml value in place
     pub unsafe fn modify<V: IntoValue>(&mut self, rt: &Runtime, v: V) {
         let v = v.into_value(rt);
-        self.0.modify(v.raw());
+        self.0.modify(v.raw().0);
     }
 
     /// Determines if the current value is an exception
     pub unsafe fn is_exception_result(&self) -> bool {
-        sys::is_exception_result(self.raw())
+        sys::is_exception_result(self.raw().0)
     }
 
     /// Get hash variant as OCaml value
@@ -558,7 +580,7 @@ impl Value {
         }
 
         let variant = Self::hash_variant(rt, name, None);
-        let v = sys::caml_get_public_method(self.raw(), variant.raw());
+        let v = sys::caml_get_public_method(self.raw().0, variant.raw().0);
 
         if v == 0 {
             return None;
@@ -569,22 +591,22 @@ impl Value {
 
     /// Initialize OCaml value using `caml_initialize`
     pub unsafe fn initialize(&mut self, value: Value) {
-        sys::caml_initialize(&mut self.raw(), value.raw())
+        sys::caml_initialize(&mut self.raw().0, value.raw().0)
     }
 
     #[doc(hidden)]
-    pub unsafe fn slice<'a>(&self) -> &'a [sys::Value] {
+    pub unsafe fn slice<'a>(&self) -> &'a [Raw] {
         ::core::slice::from_raw_parts(
-            (self.raw() as *const sys::Value).offset(-1),
-            sys::wosize_val(self.raw()) + 1,
+            (self.raw().0 as *const Raw).offset(-1),
+            sys::wosize_val(self.raw().0) + 1,
         )
     }
 
     #[doc(hidden)]
-    pub unsafe fn slice_mut<'a>(&self) -> &'a mut [sys::Value] {
+    pub unsafe fn slice_mut<'a>(&self) -> &'a mut [Raw] {
         ::core::slice::from_raw_parts_mut(
-            (self.raw() as *mut sys::Value).offset(-1),
-            sys::wosize_val(self.raw()) + 1,
+            (self.raw().0 as *mut Raw).offset(-1),
+            sys::wosize_val(self.raw().0) + 1,
         )
     }
 
@@ -595,10 +617,10 @@ impl Value {
         if self.is_long() {
             return self;
         }
-        let wosize = sys::wosize_val(self.raw());
+        let wosize = sys::wosize_val(self.raw().0);
         let val1 = Self::alloc(wosize, self.tag());
-        let ptr0 = self.raw() as *const sys::Value;
-        let ptr1 = val1.raw() as *mut sys::Value;
+        let ptr0 = self.raw().0 as *const sys::Value;
+        let ptr1 = val1.raw().0 as *mut sys::Value;
         if self.tag() >= Tag::NO_SCAN {
             ptr0.copy_to_nonoverlapping(ptr1, wosize);
             return val1;
@@ -608,7 +630,8 @@ impl Value {
                 ptr1.offset(i),
                 Value::new(ptr0.offset(i).read())
                     .deep_clone_to_ocaml()
-                    .raw(),
+                    .raw()
+                    .0,
             );
         }
         val1

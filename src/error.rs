@@ -37,7 +37,7 @@ pub enum CamlError {
     Exception(Value),
 
     /// A pre-allocated OCaml exception
-    SysException(crate::sys::Value),
+    SysException(crate::Raw),
 
     /// An exception type and argument
     WithArg(Value, Value),
@@ -149,7 +149,7 @@ impl Error {
             let st = crate::sys::caml_alloc_string(s.len());
             let ptr = crate::sys::string_val(st);
             core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-            crate::sys::caml_raise_with_arg(v.raw(), st);
+            crate::sys::caml_raise_with_arg(v.raw().0, st);
         }
         #[allow(clippy::empty_loop)]
         loop {}
@@ -179,10 +179,10 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
         match self {
             Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
-                crate::sys::caml_raise(e.raw());
+                crate::sys::caml_raise(e.raw().0);
             },
             Err(Error::Caml(CamlError::SysException(e))) => unsafe {
-                crate::sys::caml_raise(e);
+                crate::sys::caml_raise(e.0);
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
@@ -212,12 +212,12 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
-                crate::sys::caml_raise_with_arg(a.raw(), b.raw())
+                crate::sys::caml_raise_with_arg(a.raw().0, b.raw().0)
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
                 unsafe {
                     let s = s.into_value(rt);
-                    crate::sys::caml_raise_sys_error(s.raw())
+                    crate::sys::caml_raise_sys_error(s.raw().0)
                 };
             }
             Err(Error::Message(s)) => {

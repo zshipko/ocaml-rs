@@ -31,7 +31,7 @@ fn test_tuple_of_tuples() {
         let ((a, b, c, d, e, f, g, h, i), (j, k, l, m, n, o, p, q, r)): (
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
             (f64, f64, f64, f64, f64, f64, f64, f64, f64),
-        ) = unsafe { FromValue::from_value(Value::new(make_tuple(x.raw(), y.raw()))) };
+        ) = unsafe { FromValue::from_value(Value::from_raw(make_tuple(x.raw(), y.raw()))) };
 
         println!("a: {}, r: {}", a, r);
         assert!(a == r);
