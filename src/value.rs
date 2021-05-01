@@ -198,14 +198,8 @@ impl Value {
 
     #[inline]
     /// Create a new Value from an existing OCaml `value`
-    pub(crate) unsafe fn new(v: sys::Value) -> Value {
-        Value(Root::new(v))
-    }
-
-    #[inline]
-    /// Create a new Value from `Raw`
-    pub unsafe fn from_raw(v: Raw) -> Value {
-        Value(Root::new(v.0))
+    pub unsafe fn new(v: impl Into<sys::Value>) -> Value {
+        Value(Root::new(v.into()))
     }
 
     /// Get array length

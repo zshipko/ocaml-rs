@@ -388,6 +388,6 @@ unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
 
 unsafe impl<'a> IntoValue for &Value {
     fn into_value(self, _rt: &Runtime) -> Value {
-        unsafe { Value::from_raw(self.raw()) }
+        unsafe { Value::new(self.raw()) }
     }
 }

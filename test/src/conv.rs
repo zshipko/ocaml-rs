@@ -86,7 +86,7 @@ pub unsafe fn string_non_copying(s: ocaml::Value) -> ocaml::Value {
 pub unsafe fn direct_slice(data: &[ocaml::Raw]) -> i64 {
     let mut total = 0;
     for i in data {
-        total += ocaml::Value::from_raw(*i).int64_val();
+        total += ocaml::Value::new(*i).int64_val();
     }
     total
 }

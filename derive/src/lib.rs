@@ -97,7 +97,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::from_raw(#ident) }); })
+                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
             }
             None => None,
         })
@@ -399,7 +399,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::from_raw(#ident) }); })
+                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
                 }
                 None => None,
             })
