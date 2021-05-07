@@ -36,9 +36,6 @@ pub enum CamlError {
     /// A pre-allocated OCaml exception
     Exception(Value),
 
-    /// A pre-allocated OCaml exception
-    SysException(Value),
-
     /// An exception type and argument
     WithArg(Value, Value),
 }
@@ -181,9 +178,6 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
                 crate::sys::caml_raise(e.raw().0);
             },
-            Err(Error::Caml(CamlError::SysException(e))) => unsafe {
-                crate::sys::caml_raise(e.raw().0);
-            },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
             },
@@ -252,7 +246,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
-                return Err(CamlError::SysException(value).into());
+                return Err(CamlError::Exception(value).into());
             }
 
             Ok(T::from_value(value))

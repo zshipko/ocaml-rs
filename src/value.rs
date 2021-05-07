@@ -457,9 +457,10 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let arg1 = arg1.into_value(rt);
-
-        let v: Value = Value::new(sys::caml_callback_exn(self.raw().0, arg1.raw().0));
+        let v = {
+            let arg1 = arg1.into_value(rt);
+            Value::new(sys::caml_callback_exn(self.raw().0, arg1.raw().0))
+        };
         v.check_result()
     }
 
@@ -474,14 +475,16 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let arg1 = arg1.into_value(rt);
-        let arg2 = arg2.into_value(rt);
+        let v = {
+            let arg1 = arg1.into_value(rt);
+            let arg2 = arg2.into_value(rt);
 
-        let v: Value = Value::new(sys::caml_callback2_exn(
-            self.raw().0,
-            arg1.raw().0,
-            arg2.raw().0,
-        ));
+            Value::new(sys::caml_callback2_exn(
+                self.raw().0,
+                arg1.raw().0,
+                arg2.raw().0,
+            ))
+        };
 
         v.check_result()
     }
@@ -498,16 +501,18 @@ impl Value {
             return Err(Error::NotCallable);
         }
 
-        let arg1 = arg1.into_value(rt);
-        let arg2 = arg2.into_value(rt);
-        let arg3 = arg3.into_value(rt);
+        let v = {
+            let arg1 = arg1.into_value(rt);
+            let arg2 = arg2.into_value(rt);
+            let arg3 = arg3.into_value(rt);
 
-        let v: Value = Value::new(sys::caml_callback3_exn(
-            self.raw().0,
-            arg1.raw().0,
-            arg2.raw().0,
-            arg3.raw().0,
-        ));
+            Value::new(sys::caml_callback3_exn(
+                self.raw().0,
+                arg1.raw().0,
+                arg2.raw().0,
+                arg3.raw().0,
+            ))
+        };
 
         v.check_result()
     }
