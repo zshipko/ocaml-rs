@@ -63,7 +63,9 @@ macro_rules! body {
         #[cfg(not(feature = "no-std"))]
         $crate::inital_setup();
 
-        $code
+        {
+            $code
+        }
     }};
 }
 

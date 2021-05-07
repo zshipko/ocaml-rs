@@ -441,6 +441,16 @@ impl Value {
         Some(Value::new(sys::extract_exception(self.raw().0)))
     }
 
+    /// Convert value to Rust Result type depending on if the value is an exception or not
+    pub unsafe fn check_result(mut self) -> Result<Value, Error> {
+        if !self.is_exception_result() {
+            return Ok(self);
+        }
+
+        self.0.modify(sys::extract_exception(self.raw().into()));
+        Err(CamlError::Exception(self).into())
+    }
+
     /// Call a closure with a single argument, returning an exception value
     pub unsafe fn call<A: IntoValue>(&self, rt: &Runtime, arg1: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
@@ -449,14 +459,8 @@ impl Value {
 
         let arg1 = arg1.into_value(rt);
 
-        let mut v: Value = Value::new(sys::caml_callback_exn(self.raw().0, arg1.raw().0));
-
-        if v.is_exception_result() {
-            v = v.exception().unwrap();
-            Err(CamlError::Exception(v).into())
-        } else {
-            Ok(v)
-        }
+        let v: Value = Value::new(sys::caml_callback_exn(self.raw().0, arg1.raw().0));
+        v.check_result()
     }
 
     /// Call a closure with two arguments, returning an exception value
@@ -473,18 +477,13 @@ impl Value {
         let arg1 = arg1.into_value(rt);
         let arg2 = arg2.into_value(rt);
 
-        let mut v: Value = Value::new(sys::caml_callback2_exn(
+        let v: Value = Value::new(sys::caml_callback2_exn(
             self.raw().0,
             arg1.raw().0,
             arg2.raw().0,
         ));
 
-        if v.is_exception_result() {
-            v = v.exception().unwrap();
-            Err(CamlError::Exception(v).into())
-        } else {
-            Ok(v)
-        }
+        v.check_result()
     }
 
     /// Call a closure with three arguments, returning an exception value
@@ -503,19 +502,14 @@ impl Value {
         let arg2 = arg2.into_value(rt);
         let arg3 = arg3.into_value(rt);
 
-        let mut v: Value = Value::new(sys::caml_callback3_exn(
+        let v: Value = Value::new(sys::caml_callback3_exn(
             self.raw().0,
             arg1.raw().0,
             arg2.raw().0,
             arg3.raw().0,
         ));
 
-        if v.is_exception_result() {
-            v = v.exception().unwrap();
-            Err(CamlError::Exception(v).into())
-        } else {
-            Ok(v)
-        }
+        v.check_result()
     }
 
     /// Call a closure with `n` arguments, returning an exception value
@@ -526,18 +520,13 @@ impl Value {
 
         let n = args.as_ref().len();
 
-        let mut v: Value = Value::new(sys::caml_callbackN_exn(
+        let v: Value = Value::new(sys::caml_callbackN_exn(
             self.raw().0,
             n,
             args.as_ref().as_ptr() as *mut sys::Value,
         ));
 
-        if v.is_exception_result() {
-            v = v.exception().unwrap();
-            Err(CamlError::Exception(v).into())
-        } else {
-            Ok(v)
-        }
+        v.check_result()
     }
 
     /// Modify an OCaml value in place

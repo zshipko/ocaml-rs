@@ -15,8 +15,8 @@ let%test "apply1 failure" =
     )
 
 let%test "apply3 invalid_arg" =
-  (*TODO: figure out why this is failing leak check
-  Util.check_leaks (fun () -> *)
+  (*TODO: figure out why this is failing leak check*)
+  (*Util.check_leaks (fun () ->*)
     try apply3 (fun _ -> invalid_arg "Testing") true
     with
       | Invalid_argument x -> let () = Util.gc () in x = "Testing"

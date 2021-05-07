@@ -19,7 +19,7 @@ pub enum CamlError {
     StackOverflow,
 
     /// Sys_error
-    SysError(&'static str),
+    SysError(Value),
 
     /// End_of_file
     EndOfFile,
@@ -37,7 +37,7 @@ pub enum CamlError {
     Exception(Value),
 
     /// A pre-allocated OCaml exception
-    SysException(crate::Raw),
+    SysException(Value),
 
     /// An exception type and argument
     WithArg(Value, Value),
@@ -182,7 +182,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 crate::sys::caml_raise(e.raw().0);
             },
             Err(Error::Caml(CamlError::SysException(e))) => unsafe {
-                crate::sys::caml_raise(e.0);
+                crate::sys::caml_raise(e.raw().0);
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
@@ -215,10 +215,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 crate::sys::caml_raise_with_arg(a.raw().0, b.raw().0)
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
-                unsafe {
-                    let s = s.into_value(rt);
-                    crate::sys::caml_raise_sys_error(s.raw().0)
-                };
+                unsafe { crate::sys::caml_raise_sys_error(s.raw().0) };
             }
             Err(Error::Message(s)) => {
                 unsafe {
@@ -247,7 +244,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             }
         };
 
-        Value::unit()
+        unreachable!()
     }
 }
 
@@ -255,7 +252,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
-                return Err(CamlError::SysException(value.raw()).into());
+                return Err(CamlError::SysException(value).into());
             }
 
             Ok(T::from_value(value))
