@@ -79,12 +79,12 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
         } else if attrs.floats {
             let mut idx = 0usize;
             let init = quote!(
-                value = unsafe { ocaml::Value::alloc(gc, #arity, ocaml::Tag::DOUBLE_ARRAY) };
+                value = unsafe { ocaml::Value::alloc(#arity, ocaml::Tag::DOUBLE_ARRAY) };
             );
             variant.fold(init, |acc, b| {
                 let i = idx;
                 idx += 1;
-                quote!(#acc; ocaml::array::set_double(gc, value, #i, *#b as f64).unwrap();)
+                quote!(#acc; ocaml::array::set_double(value, #i, *#b as f64).unwrap();)
             })
         } else if attrs.unboxed {
             if variant.bindings().len() > 1 {
@@ -96,7 +96,7 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
             let ghost = (0..arity)
                 .map(|idx| quote!(unsafe { value.store_field(gc, #idx, ocaml::Value::unit()) }));
             let init = quote!(
-                value = unsafe { ocaml::Value::alloc(gc, #arity, ocaml::Tag(#tag)) };
+                value = unsafe { ocaml::Value::alloc(#arity, ocaml::Tag(#tag)) };
                 #(#ghost);*;
             );
             variant.fold(init, |acc, b| {
@@ -166,7 +166,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     });
     if attrs.unboxed {
         s.gen_impl(quote! {
-            gen unsafe impl ocaml::FromValue for @Self {
+            gen unsafe impl<'from_value_lifetime> ocaml::FromValue<'from_value_lifetime> for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     #(#body),*
                 }
@@ -185,7 +185,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             })
         };
         s.gen_impl(quote! {
-            gen unsafe impl ocaml::FromValue for @Self {
+            gen unsafe impl<'from_value_lifetime> ocaml::FromValue<'from_value_lifetime> for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         let is_block = value.is_block();

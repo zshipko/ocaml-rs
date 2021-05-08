@@ -47,8 +47,10 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let unsafety = &item_fn.sig.unsafety;
     let constness = &item_fn.sig.constness;
     let mut gc_name = syn::Ident::new("gc", name.span());
+    let mut use_gc = quote!({let _ = &#gc_name;});
     if let Ok(ident) = syn::parse::<syn::Ident>(attribute) {
         gc_name = ident;
+        use_gc = quote!();
     }
 
     let (returns, rust_return_type) = match &item_fn.sig.output {
@@ -76,9 +78,9 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .map(|t| match t {
             Some(ident) => {
                 let ident = &ident.ident;
-                quote! { #ident: ocaml::Value }
+                quote! { #ident: ocaml::Raw }
             }
-            None => quote! { _: ocaml::Value },
+            None => quote! { _: ocaml::Raw },
         })
         .collect();
 
@@ -95,14 +97,14 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
+                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
             }
             None => None,
         })
         .collect();
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _: ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::Raw});
     }
 
     let body = &item_fn.block;
@@ -111,9 +113,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             #[inline(always)]
             #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
-                {
-                    let _ = #gc_name;
-                }
+                #use_gc
                 #body
             }
         }
@@ -121,9 +121,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             #[inline(always)]
             #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*)  {
-                {
-                    let _ = #gc_name;
-                }
+                #use_gc
                 #body
             }
         }
@@ -137,16 +135,15 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         #(
             #attr
         )*
-        pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+        pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Raw #where_clause {
             #inner
 
-            ocaml::body!(#gc_name: (#param_names) {
+            ocaml::body!(#gc_name: {
                 #(#convert_params);*
                 let res = inner(#gc_name, #param_names);
-
                 #[allow(unused_unsafe)]
                 let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
-                ocaml::IntoValue::into_value(res, &gc_)
+                unsafe { ocaml::IntoValue::into_value(res, &gc_).raw() }
             })
         }
     };
@@ -155,7 +152,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         let bytecode = {
             let mut bc = item_fn.clone();
             bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
-            ocaml_bytecode_func_impl(bc, gc_name, Some(name))
+            ocaml_bytecode_func_impl(bc, gc_name, use_gc, Some(name))
         };
 
         let r = quote! {
@@ -184,8 +181,10 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
     let constness = &item_fn.sig.constness;
 
     let mut gc_name = syn::Ident::new("gc", name.span());
+    let mut use_gc = quote!({let _ = &#gc_name;});
     if let Ok(ident) = syn::parse::<syn::Ident>(attribute) {
         gc_name = ident;
+        use_gc = quote!();
     }
 
     let where_clause = &item_fn.sig.generics.where_clause;
@@ -209,28 +208,20 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
     let mut ocaml_args: Vec<_> = args
         .iter()
         .map(|t| match t {
-            Some(ident) => quote! { #ident: ocaml::Value },
-            None => quote! { _: ocaml::Value },
-        })
-        .collect();
-
-    let param_names: syn::punctuated::Punctuated<syn::Ident, syn::token::Comma> = args
-        .iter()
-        .filter_map(|arg| match arg {
-            Some(ident) => Some(ident.ident.clone()),
-            None => None,
+            Some(ident) => quote! { #ident: ocaml::Raw },
+            None => quote! { _: ocaml::Raw },
         })
         .collect();
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _: ocaml::Value});
+        ocaml_args.push(quote! { _: ocaml::Raw});
     }
 
     let body = &item_fn.block;
 
     let (_, rust_return_type) = match &item_fn.sig.output {
         syn::ReturnType::Default => (false, None),
-        syn::ReturnType::Type(_, t) => (true, Some(t)),
+        syn::ReturnType::Type(_, _t) => (true, Some(quote! {ocaml::Raw})),
     };
 
     let gen = quote! {
@@ -239,9 +230,11 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
             #attr
         )*
         pub #constness #unsafety extern "C" fn #name (#rust_args) -> #rust_return_type #where_clause {
-            ocaml::body!(#gc_name: (#param_names) {
+            let r = ocaml::body!(#gc_name: {
+                #use_gc
                 #body
-            })
+            });
+            r.raw()
         }
     };
     gen.into()
@@ -261,15 +254,18 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
 pub fn ocaml_bytecode_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let item_fn: syn::ItemFn = syn::parse(item).unwrap();
     let mut gc_name = syn::Ident::new("gc", item_fn.sig.ident.span());
+    let mut use_gc = quote!({let _ = &#gc_name;});
     if let Ok(ident) = syn::parse::<syn::Ident>(attribute) {
         gc_name = ident;
+        use_gc = quote!();
     }
-    ocaml_bytecode_func_impl(item_fn, gc_name, None).into()
+    ocaml_bytecode_func_impl(item_fn, gc_name, use_gc, None).into()
 }
 
 fn ocaml_bytecode_func_impl(
     mut item_fn: syn::ItemFn,
     gc_name: syn::Ident,
+    use_gc: impl quote::ToTokens,
     original: Option<&proc_macro2::Ident>,
 ) -> proc_macro2::TokenStream {
     check_func(&mut item_fn);
@@ -306,9 +302,9 @@ fn ocaml_bytecode_func_impl(
         .iter()
         .map(|t| match t {
             Some(ident) => {
-                quote! { #ident: ocaml::Value }
+                quote! { #ident: ocaml::Raw }
             }
-            None => quote! { _: ocaml::Value },
+            None => quote! { _: ocaml::Raw },
         })
         .collect();
 
@@ -321,7 +317,7 @@ fn ocaml_bytecode_func_impl(
         .collect();
 
     if ocaml_args.is_empty() {
-        ocaml_args.push(quote! { _unit: ocaml::Value});
+        ocaml_args.push(quote! { _unit: ocaml::Raw});
         param_names.push(syn::Ident::new("__ocaml_unit", name.span()));
     }
 
@@ -342,6 +338,7 @@ fn ocaml_bytecode_func_impl(
                     #constness #unsafety fn inner(#(#rust_args),*) -> #rust_return_type {
                         #[allow(unused_variables)]
                         let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
+                        #use_gc
                         #body
                     }
                 }
@@ -351,6 +348,7 @@ fn ocaml_bytecode_func_impl(
                     #constness #unsafety fn inner(#(#rust_args),*)  {
                         #[allow(unused_variables)]
                         let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
+                        #use_gc
                         #body
                     }
                 }
@@ -382,7 +380,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Value #where_clause {
+            pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Raw #where_clause {
                 assert!(#len <= __ocaml_argc as usize, "len: {}, argc: {}", #len, __ocaml_argc);
 
                 let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
@@ -392,7 +390,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name)
+                ocaml::IntoValue::into_value(res, &#gc_name).raw()
             }
         }
     } else {
@@ -401,7 +399,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let #ident = ocaml::FromValue::from_value(#ident); })
+                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
                 }
                 None => None,
             })
@@ -411,14 +409,15 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Value #where_clause {
+            pub #constness #unsafety extern "C" fn #name(#(#ocaml_args),*) -> ocaml::Raw #where_clause {
+                #[allow(unused_variables)]
                 let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
 
                 #inner
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name)
+                ocaml::IntoValue::into_value(res, &#gc_name).raw()
             }
         }
     }

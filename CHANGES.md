@@ -1,3 +1,10 @@
+## 0.21.0
+
+- New `Value` implementation to use `ocaml-boxroot-sys`
+  * `Value` no longer implements `Copy`
+- `ocaml::Raw` was added to wrap `ocaml::sys::Value` in macros
+- Update `ocaml-interop` version
+
 ## 0.20.1
 
 - Fix issue with OCaml runtime initialization: https://github.com/zshipko/ocaml-rs/pull/59

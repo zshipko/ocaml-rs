@@ -1,5 +1,5 @@
-use ocaml::interop::{ocaml_frame, to_ocaml, OCaml, ToOCaml};
-use ocaml::Value;
+use ocaml::interop::{BoxRoot, OCamlFloat};
+use ocaml::{IntoValue, Value};
 
 #[no_mangle]
 pub extern "C" fn unboxed_float_avg(a: f64, b: f64) -> f64 {
@@ -48,7 +48,7 @@ pub fn mutable_parameter_with_more_than_five_arguments(
 
 #[ocaml::func]
 pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
-    ocaml::Error::raise_with_arg(gc, "Exc", x)
+    ocaml::Error::raise_with_arg("Exc", x.into_value(gc))
 }
 
 #[ocaml::func]
@@ -63,7 +63,7 @@ pub unsafe fn hash_variant_abc(i: ocaml::Int) -> Value {
 
 #[ocaml::func]
 pub unsafe fn hash_variant_def(i: ocaml::Float) -> Value {
-    let f = Some(Value::float(gc, i));
+    let f = Some(Value::float(i));
     Value::hash_variant(gc, "Def", f)
 }
 
@@ -73,15 +73,12 @@ pub fn test_panic() -> ocaml::Int {
 }
 
 ocaml::interop::ocaml! {
-    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::Float;
+    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::interop::OCamlFloat;
 }
 
 #[ocaml::func]
-pub unsafe fn test_call_named(g: ocaml::Float) -> OCaml<'_, ocaml::Float> {
-    ocaml_frame!(gc, (a), {
-        let x = to_ocaml!(gc, g, a);
-        call_named(gc, x)
-    })
+pub unsafe fn test_call_named(g: BoxRoot<OCamlFloat>) -> BoxRoot<OCamlFloat> {
+    call_named(gc, &g)
 }
 
 #[ocaml::func]

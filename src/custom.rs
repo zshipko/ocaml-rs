@@ -14,13 +14,13 @@ use crate::*;
 #[allow(missing_docs)]
 pub struct CustomOps {
     pub identifier: *const ocaml_sys::Char,
-    pub finalize: Option<unsafe extern "C" fn(v: Value)>,
-    pub compare: Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
-    pub hash: Option<unsafe extern "C" fn(v: Value) -> Int>,
+    pub finalize: Option<unsafe extern "C" fn(v: Raw)>,
+    pub compare: Option<unsafe extern "C" fn(v1: Raw, v2: Raw) -> i32>,
+    pub hash: Option<unsafe extern "C" fn(v: Raw) -> Int>,
 
-    pub serialize: Option<unsafe extern "C" fn(v: Value, bsize_32: *mut Uint, bsize_64: *mut Uint)>,
+    pub serialize: Option<unsafe extern "C" fn(v: Raw, bsize_32: *mut Uint, bsize_64: *mut Uint)>,
     pub deserialize: Option<unsafe extern "C" fn(dst: *mut core::ffi::c_void) -> Uint>,
-    pub compare_ext: Option<unsafe extern "C" fn(v1: Value, v2: Value) -> i32>,
+    pub compare_ext: Option<unsafe extern "C" fn(v1: Raw, v2: Raw) -> i32>,
     pub fixed_length: *const sys::custom_fixed_length,
 }
 
@@ -80,7 +80,7 @@ pub trait Custom {
 
 unsafe impl<T: 'static + Custom> IntoValue for T {
     fn into_value(self, rt: &Runtime) -> Value {
-        let val: crate::Pointer<T> = Pointer::alloc_custom(rt, self);
+        let val: crate::Pointer<T> = Pointer::alloc_custom(self);
         val.into_value(rt)
     }
 }
@@ -97,13 +97,13 @@ unsafe impl<T: 'static + Custom> IntoValue for T {
 ///     i: i32,
 /// }
 ///
-/// extern "C" fn mytype_finalizer(_: ocaml::Value) {
+/// extern "C" fn mytype_finalizer(_: ocaml::Raw) {
 ///     println!("This runs when the value gets garbage collected");
 /// }
 ///
-/// extern "C" fn mytype_compare(a: ocaml::Value, b: ocaml::Value) -> i32 {
-///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(a);
-///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(b);
+/// unsafe extern "C" fn mytype_compare(a: ocaml::Raw, b: ocaml::Raw) -> i32 {
+///     let a: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(ocaml::Value::new(a));
+///     let b: ocaml::Pointer::<MyType> = ocaml::FromValue::from_value(ocaml::Value::new(b));
 ///
 ///     let a_i = a.as_ref().i;
 ///     let b_i = b.as_ref().i;
@@ -145,7 +145,7 @@ unsafe impl<T: 'static + Custom> IntoValue for T {
 /// Additionally, `custom` can be used inside the `impl` block:
 ///
 /// ```rust
-/// extern "C" fn implexample_finalizer(_: ocaml::Value) {
+/// extern "C" fn implexample_finalizer(_: ocaml::Raw) {
 ///     println!("This runs when the value gets garbage collected");
 /// }
 ///
@@ -196,7 +196,8 @@ macro_rules! custom {
 ///     name: String
 /// }
 ///
-/// unsafe extern "C" fn mytype_finalizer(v: ocaml::Value) {
+/// unsafe extern "C" fn mytype_finalizer(v: ocaml::Raw) {
+///     let v = ocaml::Value::new(v);
 ///     let p: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(v);
 ///     p.drop_in_place()
 /// }

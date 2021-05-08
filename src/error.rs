@@ -19,7 +19,7 @@ pub enum CamlError {
     StackOverflow,
 
     /// Sys_error
-    SysError(&'static str),
+    SysError(Value),
 
     /// End_of_file
     EndOfFile,
@@ -95,11 +95,7 @@ impl Error {
 
     /// Raise an exception that has been registered using `Callback.register_exception` with an
     /// argument
-    pub fn raise_with_arg<S: AsRef<str>, T: IntoValue>(
-        rt: &Runtime,
-        exc: S,
-        arg: T,
-    ) -> Result<(), Error> {
+    pub fn raise_with_arg<S: AsRef<str>>(exc: S, arg: Value) -> Result<(), Error> {
         let value = match unsafe { Value::named(exc.as_ref()) } {
             Some(v) => v,
             None => {
@@ -109,7 +105,7 @@ impl Error {
             }
         };
 
-        Err(CamlError::WithArg(value, arg.into_value(rt)).into())
+        Err(CamlError::WithArg(value, arg).into())
     }
 
     /// Raise `Not_found`
@@ -133,20 +129,24 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_failure(rt: &Runtime, s: &str) -> ! {
-        let s = s.into_value(rt);
+    pub fn raise_failure(s: &str) -> ! {
         unsafe {
-            crate::sys::caml_failwith_value(s.0);
+            let value = crate::sys::caml_alloc_string(s.len());
+            let ptr = crate::sys::string_val(value);
+            core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+            crate::sys::caml_failwith_value(value);
         }
         #[allow(clippy::empty_loop)]
         loop {}
     }
 
     #[doc(hidden)]
-    pub fn raise_value(rt: &Runtime, v: Value, s: &str) -> ! {
-        let s = s.into_value(rt);
+    pub fn raise_value(v: Value, s: &str) -> ! {
         unsafe {
-            crate::sys::caml_raise_with_arg(v.0, s.0);
+            let st = crate::sys::caml_alloc_string(s.len());
+            let ptr = crate::sys::string_val(st);
+            core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
+            crate::sys::caml_raise_with_arg(v.raw().0, st);
         }
         #[allow(clippy::empty_loop)]
         loop {}
@@ -176,7 +176,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
         match self {
             Ok(x) => return x.into_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
-                crate::sys::caml_raise(e.0);
+                crate::sys::caml_raise(e.raw().0);
             },
             Err(Error::Caml(CamlError::NotFound)) => unsafe {
                 crate::sys::caml_raise_not_found();
@@ -206,13 +206,10 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 };
             }
             Err(Error::Caml(CamlError::WithArg(a, b))) => unsafe {
-                crate::sys::caml_raise_with_arg(a.0, b.0)
+                crate::sys::caml_raise_with_arg(a.raw().0, b.raw().0)
             },
             Err(Error::Caml(CamlError::SysError(s))) => {
-                unsafe {
-                    let s = s.into_value(rt);
-                    crate::sys::caml_raise_sys_error(s.0)
-                };
+                unsafe { crate::sys::caml_raise_sys_error(s.raw().0) };
             }
             Err(Error::Message(s)) => {
                 unsafe {
@@ -241,15 +238,15 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             }
         };
 
-        Value::unit()
+        unreachable!()
     }
 }
 
-unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
+unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
-                return Err(CamlError::Exception(value.exception().unwrap()).into());
+                return Err(CamlError::Exception(value).into());
             }
 
             Ok(T::from_value(value))

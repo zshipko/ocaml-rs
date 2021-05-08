@@ -18,14 +18,14 @@
 //! // Automatically derive `IntoValue` and `FromValue`
 //! #[cfg(feature = "derive")]
 //! #[derive(ocaml::IntoValue, ocaml::FromValue)]
-//! struct Example<'a> {
-//!     name: &'a str,
+//! struct Example {
+//!     name: String,
 //!     i: ocaml::Int,
 //! }
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
-//! pub fn incr_example(mut e: Example<'static>) -> Example<'static> {
+//! pub fn incr_example(mut e: Example) -> Example {
 //!     e.i += 1;
 //!     e
 //! }
@@ -40,7 +40,7 @@
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func(my_gc_handle)]
 //! pub unsafe fn my_string() -> ocaml::Value {
-//!     ocaml::Value::string(my_gc_handle, "My string")
+//!     ocaml::Value::string("My string")
 //! }
 //!
 //! #[cfg(feature = "derive")]
@@ -68,7 +68,7 @@
 //! // This is equivalent to:
 //! #[no_mangle]
 //! pub unsafe extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
-//!     ocaml::body!(gc: (value) {
+//!     ocaml::body!(gc: {
 //!         let i = value.int_val();
 //!         ocaml::Value::int( i + 1)
 //!     })
@@ -133,6 +133,9 @@ mod types;
 mod util;
 mod value;
 
+/// Rooted values
+pub mod root;
+
 /// Functions for interacting with the OCaml runtime
 pub mod runtime;
 
@@ -144,10 +147,10 @@ pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
-pub use crate::value::{FromValue, IntoValue, Value};
+pub use crate::value::{FromValue, IntoValue, Raw, Value};
 
 #[cfg(not(feature = "no-std"))]
-pub use crate::macros::init_panic_handler;
+pub use crate::macros::inital_setup;
 
 /// OCaml `float`
 pub type Float = f64;

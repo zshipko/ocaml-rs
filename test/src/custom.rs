@@ -1,4 +1,4 @@
-use ocaml::{FromValue, Value};
+use ocaml::{FromValue, Raw, Value};
 
 struct Testing {
     a: ocaml::Float,
@@ -6,7 +6,9 @@ struct Testing {
     c: String,
 }
 
-extern "C" fn testing_compare(a: Value, b: Value) -> i32 {
+unsafe extern "C" fn testing_compare(a: Raw, b: Raw) -> i32 {
+    let a = Value::new(a);
+    let b = Value::new(b);
     let t0 = ocaml::Pointer::<Testing>::from_value(a);
     let t1 = ocaml::Pointer::<Testing>::from_value(b);
     match (t0.as_ref().b, t1.as_ref().b) {
@@ -16,7 +18,8 @@ extern "C" fn testing_compare(a: Value, b: Value) -> i32 {
     }
 }
 
-unsafe extern "C" fn testing_finalize(a: Value) {
+unsafe extern "C" fn testing_finalize(a: Raw) {
+    let a = Value::new(a);
     let t0 = ocaml::Pointer::<Testing>::from_value(a);
     t0.drop_in_place();
 }
@@ -55,7 +58,8 @@ struct TestingCallback {
     func: ocaml::Value,
 }
 
-unsafe extern "C" fn testing_callback_finalize(a: Value) {
+unsafe extern "C" fn testing_callback_finalize(a: ocaml::Raw) {
+    let a = Value::new(a);
     let t0 = ocaml::Pointer::<TestingCallback>::from_value(a);
     t0.drop_in_place();
 }

@@ -11,5 +11,5 @@ let check_leaks f =
   let stat1 = (Gc.stat ()).live_blocks in
   if stat1 > stat then
     Printf.printf "Potential GC leak detected: %d, %d\n" stat stat1;
-    assert (stat >= stat1);
+  assert (stat >= stat1);
   r
