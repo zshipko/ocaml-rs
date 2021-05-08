@@ -540,6 +540,11 @@ impl Value {
         self.0.modify(v.raw().0);
     }
 
+    /// Modify an OCaml value in place using a raw OCaml value as the new value
+    pub unsafe fn modify_raw<V: IntoValue>(&mut self, v: impl Into<Raw>) {
+        self.0.modify(v.into().0);
+    }
+
     /// Determines if the current value is an exception
     pub unsafe fn is_exception_result(&self) -> bool {
         sys::is_exception_result(self.raw().0)
