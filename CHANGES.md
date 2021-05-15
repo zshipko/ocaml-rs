@@ -1,3 +1,8 @@
+## 0.22.0
+
+- Allow `Value` to hold boxroot or raw value
+- Add `Raw::as_value` and `Raw::as_pointer`
+
 ## 0.21.0
 
 - New `Value` implementation to use `ocaml-boxroot-sys`
