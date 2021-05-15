@@ -205,7 +205,7 @@ use ocaml::FromValue;
 struct MyType;
 
 unsafe extern "C" fn mytype_finalizer(v: ocaml::Raw) {
-    let ptr: ocaml::Pointer<MyType> = ocaml::Pointer::from_value(ocaml::Value::new(v));
+    let ptr = v.as_pointer::<MyType>();
     ptr.drop_in_place()
 }
 
