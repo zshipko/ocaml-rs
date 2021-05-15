@@ -1,18 +1,38 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Runtime};
+use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Pointer, Runtime};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
 
 /// Value wraps the native OCaml `value` type
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct Value(pub Root);
+pub enum Value {
+    /// Rooted value
+    Root(Root),
+
+    /// Reference to a rooted value
+    /// NOTE: `Value::Raw` should NOT be used to convert arbitrary `sys::Value` into `Value`
+    Raw(sys::Value),
+}
 
 /// Wrapper around sys::Value
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
 pub struct Raw(pub sys::Value);
+
+impl Raw {
+    /// Convert a `Raw` value to `Value`, this should only be used in custom value destructors
+    /// and other cases where you know the underlying `sys::Value` was created using `Value::new`
+    pub unsafe fn as_value(&self) -> Value {
+        Value::Raw(self.0)
+    }
+
+    /// Convenience function to access a custom pointer value
+    pub unsafe fn as_pointer<T>(&self) -> Pointer<T> {
+        Pointer::from_value(self.as_value())
+    }
+}
 
 impl AsRef<sys::Value> for Raw {
     fn as_ref(&self) -> &sys::Value {
@@ -74,7 +94,7 @@ unsafe impl IntoValue for Raw {
 unsafe impl<'a> FromValue<'a> for Raw {
     #[inline]
     fn from_value(v: Value) -> Raw {
-        v.raw()
+        v.raw().0.into()
     }
 }
 
@@ -126,7 +146,10 @@ unsafe impl<'a, T> crate::interop::FromOCaml<T> for Value {
 impl Value {
     /// Get raw OCaml value
     pub fn raw(&self) -> Raw {
-        unsafe { Raw(self.0.get()) }
+        match self {
+            Value::Root(r) => unsafe { r.get().into() },
+            Value::Raw(r) => Raw(*r),
+        }
     }
 
     /// Returns a named value registered by OCaml
@@ -199,7 +222,7 @@ impl Value {
     #[inline]
     /// Create a new Value from an existing OCaml `value`
     pub unsafe fn new(v: impl Into<sys::Value>) -> Value {
-        Value(Root::new(v.into()))
+        Value::Root(Root::new(v.into()))
     }
 
     /// Get array length
@@ -447,7 +470,13 @@ impl Value {
             return Ok(self);
         }
 
-        self.0.modify(sys::extract_exception(self.raw().into()));
+        match &mut self {
+            Value::Root(r) => {
+                r.modify(sys::extract_exception(r.get()));
+            }
+            Value::Raw(mut r) => sys::caml_modify(&mut r, sys::extract_exception(r)),
+        }
+
         Err(CamlError::Exception(self).into())
     }
 
@@ -537,12 +566,20 @@ impl Value {
     /// Modify an OCaml value in place
     pub unsafe fn modify<V: IntoValue>(&mut self, rt: &Runtime, v: V) {
         let v = v.into_value(rt);
-        self.0.modify(v.raw().0);
+        match self {
+            Value::Root(r) => {
+                r.modify(v.raw().into());
+            }
+            Value::Raw(r) => sys::caml_modify(r, v.raw().into()),
+        }
     }
 
     /// Modify an OCaml value in place using a raw OCaml value as the new value
     pub unsafe fn modify_raw<V: IntoValue>(&mut self, v: impl Into<Raw>) {
-        self.0.modify(v.into().0);
+        match self {
+            Value::Root(r) => r.modify(v.into().into()),
+            Value::Raw(r) => sys::caml_modify(r, v.into().into()),
+        }
     }
 
     /// Determines if the current value is an exception
