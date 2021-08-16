@@ -69,7 +69,7 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
         };
         let tag = *tag_ref;
         *tag_ref += 1;
-        let attrs = variant_attrs(&variant.ast().attrs);
+        let attrs = variant_attrs(variant.ast().attrs);
         if (attrs.floats || attrs.unboxed) && !is_record_like {
             panic!("ocaml cannot derive unboxed or float arrays for enums")
         }
@@ -137,7 +137,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
         } else {
             &mut unit_tag
         };
-        let attrs = variant_attrs(&variant.ast().attrs);
+        let attrs = variant_attrs(variant.ast().attrs);
         if (attrs.floats || attrs.unboxed) && !is_record_like {
             panic!("ocaml cannot derive unboxed records or float arrays for enums")
         }
