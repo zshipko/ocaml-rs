@@ -1,3 +1,8 @@
+## 0.22.1
+
+- Add `no-caml-startup` feature to allow `ocaml-rs` libraries to link
+  correctly when using `dune utop`
+
 ## 0.22.0
 
 - Allow `Value` to hold boxroot or raw value
