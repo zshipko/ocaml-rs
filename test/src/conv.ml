@@ -117,3 +117,11 @@ let%test "get-string-array" = Util.check_leaks (fun () -> (
   let _foo = get_string_array () in
   true
 ))
+
+external get_array_conv: bytes -> bytes = "array_conv"
+
+let%test "get-array-conv" = Util.check_leaks (fun () -> (
+  let a = Bytes.of_string "\x01\x02\x03\x04\x05" in
+  let expected_b = Bytes.of_string "\x01\x02\x03\x04\x05\x0f\xff" in
+  get_array_conv a = expected_b
+))
