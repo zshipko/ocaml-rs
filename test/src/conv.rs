@@ -112,6 +112,7 @@ pub fn string_array() -> ocaml::Value {
 }
 
 #[ocaml::func]
+#[allow(clippy::manual_memcpy)]
 pub fn array_conv(a: [u8; 5]) -> [u8; 7] {
     let mut b = [0u8; 7];
     for i in 0..5 {
