@@ -110,3 +110,14 @@ pub fn string_array() -> ocaml::Value {
     }
     v.into_value(gc)
 }
+
+#[ocaml::func]
+pub fn array_conv(a: [u8; 5]) -> [u8; 7] {
+    let mut b = [0u8; 7];
+    for i in 0..5 {
+        b[i] = a[i];
+        b[5] += a[i];
+    }
+    b[6] = 255;
+    b
+}

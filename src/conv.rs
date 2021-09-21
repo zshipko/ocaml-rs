@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::{
     sys,
     value::{FromValue, IntoValue, Value},
@@ -267,6 +269,60 @@ unsafe impl<'a> IntoValue for &mut [u8] {
         unsafe { Value::bytes(self) }
     }
 }
+
+macro_rules! array_impl {
+    ($n:tt) => {
+        unsafe impl FromValue<'static> for [u8; $n] {
+            fn from_value(value: Value) -> Self {
+                unsafe {
+                    let len = sys::caml_string_length(value.raw().0);
+                    assert!(len == $n);
+                    let ptr = sys::string_val(value.raw().0);
+                    ::core::slice::from_raw_parts(ptr, len).try_into().unwrap()
+                }
+            }
+        }
+
+        unsafe impl IntoValue for [u8; $n] {
+            fn into_value(self, _rt: &Runtime) -> Value {
+                unsafe { Value::bytes(self) }
+            }
+        }
+    };
+}
+
+array_impl!(1);
+array_impl!(2);
+array_impl!(3);
+array_impl!(4);
+array_impl!(5);
+array_impl!(6);
+array_impl!(7);
+array_impl!(8);
+array_impl!(9);
+array_impl!(10);
+array_impl!(11);
+array_impl!(12);
+array_impl!(13);
+array_impl!(14);
+array_impl!(15);
+array_impl!(16);
+array_impl!(17);
+array_impl!(18);
+array_impl!(19);
+array_impl!(20);
+array_impl!(21);
+array_impl!(22);
+array_impl!(23);
+array_impl!(24);
+array_impl!(25);
+array_impl!(26);
+array_impl!(27);
+array_impl!(28);
+array_impl!(29);
+array_impl!(30);
+array_impl!(31);
+array_impl!(32);
 
 #[cfg(not(feature = "no-std"))]
 unsafe impl<'a, V: IntoValue> IntoValue for Vec<V> {
