@@ -2,7 +2,7 @@
 #![allow(clippy::upper_case_acronyms)]
 #![no_std]
 
-pub type Char = chlorine::c_char;
+pub type Char = cty::c_char;
 
 #[cfg(not(feature = "without-ocamlopt"))]
 pub const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_version"));
