@@ -7,7 +7,7 @@ repository = "https://github.com/zshipko/ocaml-rs"
 license = "ISC"
 description = "Low-level OCaml bindings for Rust"
 documentation = "https://docs.rs/ocaml-sys"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 cty = "0.2"
