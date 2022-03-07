@@ -96,7 +96,7 @@ pub fn array2_get(
 
 #[ocaml::func]
 pub fn array2_format(arr: ocaml::bigarray::Array2<f32>) -> String {
-    format!("{}", arr.view()).replace("\n", "")
+    format!("{}", arr.view()).replace('\n', "")
 }
 
 #[derive(Debug)]

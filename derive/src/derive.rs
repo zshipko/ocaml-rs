@@ -57,6 +57,7 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
     let mut unit_tag = 0u8;
     let mut non_unit_tag = 0u8;
     let is_record_like = s.variants().len() == 1;
+    #[allow(clippy::unnecessary_to_owned)]
     let body = s.variants_mut().to_vec().into_iter().map(|mut variant| {
         let arity = variant.bindings().len();
         for b in variant.bindings_mut() {

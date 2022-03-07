@@ -1,3 +1,6 @@
+## Unreleased
+- Updated to the 2021 edition of Rust
+
 ## 0.22.1
 
 - Add `no-caml-startup` feature to allow `ocaml-rs` libraries to link
