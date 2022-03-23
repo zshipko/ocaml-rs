@@ -17,6 +17,6 @@ jobs:
 
     - name: Run clippy
       env:
-        OCAML_VERSION: 4.09.1
+        OCAML_VERSION: 4.13.1
         OCAML_WHERE_PATH: /ignored
       run: sudo apt install ocaml && cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings

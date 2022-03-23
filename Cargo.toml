@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "0.22.2"
+version = "0.22.3"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -8,13 +8,13 @@ repository = "https://github.com/zshipko/ocaml-rs"
 license = "ISC"
 description = "OCaml bindings for Rust"
 documentation = "https://docs.rs/ocaml"
-edition = "2021"
+edition = "2018"
 
 [package.metadata.docs.rs]
 features = [ "without-ocamlopt", "derive", "link" ]
 
 [dependencies]
-ocaml-interop = "^0.8.5"
+ocaml-interop = "0.8.8"
 ocaml-sys = {path = "./sys", version = "0.22"}
 ocaml-boxroot-sys = {version = "0.2"}
 ocaml-derive = {path = "./derive", optional = true, version = "0.22"}

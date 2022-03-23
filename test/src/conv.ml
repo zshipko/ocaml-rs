@@ -39,16 +39,16 @@ type struct1 = {
 
 external struct1_empty: unit -> struct1 = "struct1_empty"
 external struct1_get_c: struct1 -> string option = "struct1_get_c"
-external struct1_set_c: struct1 -> string -> unit = "struct1_set_c"
+external struct1_set_c: struct1 -> string -> struct1 = "struct1_set_c"
 external struct1_get_d: struct1 -> string array option = "struct1_get_d"
 external make_struct1: int -> float -> string option -> string array option -> struct1 = "make_struct1"
 
 let%test "struct1 c" = Util.check_leaks (fun () ->
   let s = struct1_empty () in
   let () = Util.gc () in
-  struct1_set_c s "testing";
+  let s = struct1_set_c s "testing" in
   Util.gc ();
-  struct1_get_c s = s.c
+  struct1_get_c s = Some "testing" && s.c = Some "testing"
 )
 
 let%test "struct1 c (make)" = Util.check_leaks (fun () ->

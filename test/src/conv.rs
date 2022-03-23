@@ -62,8 +62,9 @@ pub fn struct1_get_d(s: Struct1) -> Option<ocaml::Array<String>> {
 }
 
 #[ocaml::func]
-pub fn struct1_set_c(mut s: Struct1, v: String) {
+pub fn struct1_set_c(mut s: Struct1, v: String) -> Struct1 {
     s.c = Some(v);
+    s
 }
 
 #[ocaml::func]
