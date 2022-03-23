@@ -2,13 +2,13 @@
 name = "ocaml-derive"
 version = "0.22.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
-edition = "2021"
 license = "ISC"
 keywords = ["ocaml-rs", "proc-macro"]
 repository = "https://github.com/zshipko/ocaml-rs"
 description = "OCaml procedural macros"
 documentation = "https://docs.rs/ocaml-derive"
 readme = "./README.md"
+edition = "2018"
 
 [lib]
 proc-macro = true

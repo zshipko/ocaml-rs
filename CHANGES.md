@@ -1,5 +1,10 @@
-## Unreleased
-- Updated to the 2021 edition of Rust
+## 0.22.3
+
+- Use latest `ocaml-interop`
+
+## 0.22.2
+
+- Adds `FromValue`/`ToValue` for `[u8]`
 
 ## 0.22.1
 
