@@ -88,3 +88,11 @@ pub unsafe fn bench_func() {}
 pub unsafe fn bench_native_func() -> ocaml::Value {
     ocaml::Value::none()
 }
+
+#[ocaml::func]
+pub fn exn_to_string(exn: ocaml::Value) -> String {
+    let ptr = unsafe { ocaml_sys::caml_format_exception(exn.raw().0) };
+    unsafe { std::ffi::CStr::from_ptr(ptr).to_str() }
+        .unwrap()
+        .to_owned()
+}

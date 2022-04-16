@@ -76,3 +76,10 @@ let%test "test call named" = Util.check_leaks (fun () ->
 
 external func : unit -> unit = "bench_func"
 external native_func : unit -> unit = "bench_native_func"
+
+external exn_to_string: exn -> string = "exn_to_string"
+
+let%test "exn" = Util.check_leaks (fun () -> (
+  let str = exn_to_string (Invalid_argument "test") in
+  str = "Invalid_argument(\"test\")"
+))
