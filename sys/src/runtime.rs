@@ -7,7 +7,7 @@ extern "C" {
     pub fn caml_named_value(name: *const Char) -> *const Value;
 }
 
-/// GC control
+// GC control
 extern "C" {
     pub fn caml_gc_minor(v: Value);
     pub fn caml_gc_major(v: Value);
