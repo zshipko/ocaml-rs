@@ -1,3 +1,9 @@
+## 0.22.4
+
+- Added `Value::exn_to_string` to convert OCaml exception values to their string representation
+- Added `gc_minor`, `gc_major`, `gc_full_major` and `gc_compact` functions for interacting with
+  the OCaml garbage collector
+
 ## 0.22.3
 
 - Use latest `ocaml-interop`
