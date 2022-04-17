@@ -618,6 +618,12 @@ impl Value {
         Some(Value::new(v))
     }
 
+    /// Convert an OCaml exception value to the string representation
+    pub unsafe fn exn_to_string(&self) -> Result<String, std::str::Utf8Error> {
+        let ptr = ocaml_sys::caml_format_exception(self.raw().0);
+        std::ffi::CStr::from_ptr(ptr).to_str().map(|x| x.to_owned())
+    }
+
     /// Initialize OCaml value using `caml_initialize`
     pub unsafe fn initialize(&mut self, value: Value) {
         sys::caml_initialize(&mut self.raw().0, value.raw().0)

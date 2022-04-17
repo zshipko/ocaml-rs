@@ -90,37 +90,26 @@ pub unsafe fn bench_native_func() -> ocaml::Value {
 }
 
 #[ocaml::func]
-pub fn exn_to_string(exn: ocaml::Value) -> String {
-    let ptr = unsafe { ocaml_sys::caml_format_exception(exn.raw().0) };
-    unsafe { std::ffi::CStr::from_ptr(ptr).to_str() }
-        .unwrap()
-        .to_owned()
+pub unsafe fn exn_to_string(exn: ocaml::Value) -> String {
+    exn.exn_to_string().unwrap()
 }
 
 #[ocaml::func]
-pub fn gc_minor() {
-    unsafe {
-        ocaml_sys::caml_gc_minor(ocaml_sys::UNIT);
-    }
+pub unsafe fn gc_minor() {
+    ocaml::runtime::gc_minor();
 }
 
 #[ocaml::func]
-pub fn gc_major() {
-    unsafe {
-        ocaml_sys::caml_gc_major(ocaml_sys::UNIT);
-    }
+pub unsafe fn gc_major() {
+    ocaml::runtime::gc_major();
 }
 
 #[ocaml::func]
-pub fn gc_full_major() {
-    unsafe {
-        ocaml_sys::caml_gc_full_major(ocaml_sys::UNIT);
-    }
+pub unsafe fn gc_full_major() {
+    ocaml::runtime::gc_full_major();
 }
 
 #[ocaml::func]
-pub fn gc_compact() {
-    unsafe {
-        ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
-    }
+pub unsafe fn gc_compact() {
+    ocaml::runtime::gc_compact();
 }
