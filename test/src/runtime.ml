@@ -93,8 +93,8 @@ let%test "GC" =
   Random.init 0;
   let test f =
     let i = Random.int 1337 in
-    let s = Int.to_string i in
+    let s = string_of_int i in
     f();
-    s = Int.to_string i
+    s = string_of_int i
   in
   List.for_all test [gc_minor; gc_major; gc_full_major; gc_compact]
