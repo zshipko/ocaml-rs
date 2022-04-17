@@ -96,3 +96,31 @@ pub fn exn_to_string(exn: ocaml::Value) -> String {
         .unwrap()
         .to_owned()
 }
+
+#[ocaml::func]
+pub fn gc_minor() {
+    unsafe {
+        ocaml_sys::caml_gc_minor(ocaml_sys::UNIT);
+    }
+}
+
+#[ocaml::func]
+pub fn gc_major() {
+    unsafe {
+        ocaml_sys::caml_gc_major(ocaml_sys::UNIT);
+    }
+}
+
+#[ocaml::func]
+pub fn gc_full_major() {
+    unsafe {
+        ocaml_sys::caml_gc_full_major(ocaml_sys::UNIT);
+    }
+}
+
+#[ocaml::func]
+pub fn gc_compact() {
+    unsafe {
+        ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
+    }
+}

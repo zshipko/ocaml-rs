@@ -83,3 +83,18 @@ let%test "exn" = Util.check_leaks (fun () -> (
   let str = exn_to_string (Invalid_argument "test") in
   str = "Invalid_argument(\"test\")"
 ))
+ 
+external gc_minor: unit -> unit = "gc_minor"
+external gc_major: unit -> unit = "gc_major"
+external gc_full_major: unit -> unit = "gc_full_major"
+external gc_compact: unit -> unit = "gc_compact"
+
+let%test "GC" =
+  Random.init 0;
+  let test f =
+    let i = Random.int 1337 in
+    let s = Int.to_string i in
+    f();
+    s = Int.to_string i
+  in
+  List.for_all test [gc_minor; gc_major; gc_full_major; gc_compact]
