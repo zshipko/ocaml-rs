@@ -91,7 +91,7 @@ pub unsafe fn bench_native_func() -> ocaml::Value {
 
 #[ocaml::func]
 pub unsafe fn exn_to_string(exn: ocaml::Value) -> String {
-    exn.exn_to_string().unwrap()
+    exn.exception_to_string().unwrap()
 }
 
 #[ocaml::func]
