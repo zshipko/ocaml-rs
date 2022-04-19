@@ -14,7 +14,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-latest, ubuntu-latest]
-        ocaml-version: ["4.14.0", "4.13.1", "4.12.1", "4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
+        ocaml-compiler: ["4.14.0", "4.13.1", "4.12.1", "4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -23,11 +23,11 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "~/.opam"
-          key: ocaml-rs-opam-${{ matrix.ocaml-version }}-${{ matrix.os }}
-      - name: Use OCaml ${{ matrix.ocaml-version }}
-        uses: avsm/setup-ocaml@v1
+          key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: avsm/setup-ocaml@v2
         with:
-          ocaml-version: ${{ matrix.ocaml-version }}
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
       - name: Set Opam env
         run: opam env >> $GITHUB_ENV
       - name: Add Opam switch to PATH
