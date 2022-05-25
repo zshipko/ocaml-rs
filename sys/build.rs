@@ -1,32 +1,47 @@
 #[allow(unused)]
 use std::io::{BufRead, Write};
 
-#[cfg(feature = "link")]
 const CC_LIB_PREFIX: &str = "NATIVECCLIBS=";
 
-#[cfg(feature = "link")]
+const FLAT_FLOAT_ARRAY: &str = "FLAT_FLOAT_ARRAY=";
+
+#[allow(unused)]
 fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     let path = format!("{}/Makefile.config", ocaml_path);
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
+    let mut output = Vec::new();
 
-    for line in f.lines() {
-        if let Ok(line) = line {
-            if line.starts_with(CC_LIB_PREFIX) {
-                let line: Vec<_> = line.split("=").collect();
-                let line = line[1].split(" ");
-                return Ok(line
-                    .filter_map(|x| {
-                        if x == "" {
-                            None
-                        } else {
-                            Some(x.replace("-l", ""))
-                        }
-                    })
-                    .collect());
-            }
+    for line in f.lines().flatten() {
+        if line.starts_with(CC_LIB_PREFIX) {
+            let line: Vec<_> = line.split('=').collect();
+            let line = line[1].split(' ');
+            output = line
+                .filter_map(|x| {
+                    if x.is_empty() {
+                        None
+                    } else {
+                        Some(x.replace("-l", ""))
+                    }
+                })
+                .collect();
         }
     }
-    Ok(vec![])
+    Ok(output)
+}
+
+#[allow(unused)]
+fn flat_float_array(ocaml_path: &str) -> std::io::Result<String> {
+    let path = format!("{}/Makefile.config", ocaml_path);
+    let f = std::io::BufReader::new(std::fs::File::open(path)?);
+    let mut flat_float_array = String::new();
+
+    for line in f.lines().flatten() {
+        if line.starts_with(FLAT_FLOAT_ARRAY) {
+            let line: Vec<_> = line.split('=').collect();
+            flat_float_array = line[1].to_string();
+        }
+    }
+    Ok(flat_float_array)
 }
 
 #[allow(unused)]
@@ -49,7 +64,6 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
         .status()?
         .success());
 
-    #[cfg(feature = "link")]
     for lib in cc_libs(ocaml_path)? {
         println!("cargo:rustc-link-lib={}", lib);
     }
@@ -66,10 +80,10 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
 
 #[allow(unused)]
 fn run() -> std::io::Result<()> {
+    println!("cargo:rerun-if-file-changed=sys/ocaml-sys.c");
     println!("cargo:rerun-if-env-changed=OCAMLOPT");
     println!("cargo:rerun-if-env-changed=OCAML_VERSION");
     println!("cargo:rerun-if-env-changed=OCAML_WHERE_PATH");
-
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
     let ocaml_version = std::env::var("OCAML_VERSION");
@@ -121,6 +135,9 @@ fn run() -> std::io::Result<()> {
     let mut f = std::fs::File::create(out_dir.join("ocaml_path")).unwrap();
     std::io::Write::write_all(&mut f, ocaml_path.as_bytes()).unwrap();
 
+    let mut f = std::fs::File::create(out_dir.join("flat_float_array")).unwrap();
+    std::io::Write::write_all(&mut f, flat_float_array(&ocaml_path)?.as_bytes()).unwrap();
+
     let split: Vec<&str> = version.split('.').collect();
 
     let major = split[0].parse::<usize>().unwrap();
@@ -134,6 +151,14 @@ fn run() -> std::io::Result<()> {
 
     #[cfg(feature = "link")]
     link(out_dir, bin_path, ocaml_path.as_ref())?;
+
+    // Build C bindings
+    cc::Build::new()
+        .static_flag(true)
+        .file("src/ocaml-sys.c")
+        .include(&ocaml_path)
+        .compile("ocaml-sys");
+    println!("cargo:rustc-link-lib=static=ocaml-sys");
 
     Ok(())
 }

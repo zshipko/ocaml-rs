@@ -352,7 +352,7 @@ impl Value {
     }
 
     /// Create an OCaml `Float` from `f64`
-    pub unsafe fn float(d: f64) -> Value {
+    pub unsafe fn f64(d: f64) -> Value {
         Value::new(sys::caml_copy_double(d))
     }
 
@@ -373,10 +373,20 @@ impl Value {
         Value::new(*sys::field(self.raw().0, i))
     }
 
+    /// Get index of underlying OCaml double array value
+    pub unsafe fn f64_field(&self, i: Size) -> f64 {
+        sys::caml_sys_double_field(self.raw().0, i)
+    }
+
     /// Set index of underlying OCaml block value
     pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &Runtime, i: Size, val: V) {
         let v = val.into_value(rt);
         sys::store_field(self.raw().0, i, v.raw().0)
+    }
+
+    /// Set index of underlying OCaml double array value
+    pub unsafe fn store_f64_field<V: IntoValue>(&mut self, i: Size, val: f64) {
+        sys::caml_sys_store_double_field(self.raw().0, i, val)
     }
 
     /// Convert an OCaml `int` to `isize`
@@ -385,8 +395,13 @@ impl Value {
     }
 
     /// Convert an OCaml `Float` to `f64`
-    pub unsafe fn float_val(&self) -> f64 {
-        *(self.raw().0 as *const f64)
+    pub unsafe fn f64_val(&self) -> f64 {
+        sys::caml_sys_double_val(self.raw().0)
+    }
+
+    /// Store `f64` in OCaml `Float`
+    pub unsafe fn store_f64_val(&self, val: f64) {
+        sys::caml_sys_store_double_val(self.raw().0, val)
     }
 
     /// Convert an OCaml `Int32` to `i32`

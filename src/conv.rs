@@ -29,13 +29,13 @@ macro_rules! value_f {
     ($t:ty) => {
         unsafe impl IntoValue for $t {
             fn into_value(self, _rt: &Runtime) -> $crate::Value {
-                unsafe { $crate::Value::float(self as crate::Float) }
+                unsafe { $crate::Value::f64(self as crate::Float) }
             }
         }
 
         unsafe impl<'a> FromValue<'a> for $t {
             fn from_value(v: $crate::Value) -> $t {
-                unsafe { v.float_val() as $t }
+                unsafe { v.f64_val () as $t }
             }
         }
     };

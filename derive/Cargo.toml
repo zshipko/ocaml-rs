@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-derive"
-version = "0.22.0"
+version = "0.23.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 license = "ISC"
 keywords = ["ocaml-rs", "proc-macro"]
