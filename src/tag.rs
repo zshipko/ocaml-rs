@@ -8,7 +8,7 @@ use crate::sys;
 /// let _ = ocaml::Tag(0);
 /// ```
 #[repr(transparent)]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Default, Eq)]
 pub struct Tag(pub sys::Tag);
 
 impl From<Tag> for u8 {

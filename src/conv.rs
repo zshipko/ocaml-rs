@@ -195,7 +195,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Option<T> {
     }
 }
 
-unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
+unsafe impl<T: IntoValue> IntoValue for Option<T> {
     fn into_value(self, rt: &Runtime) -> Value {
         match self {
             Some(y) => unsafe { Value::some(rt, y) },
@@ -215,7 +215,7 @@ unsafe impl<'a> FromValue<'a> for &'a str {
     }
 }
 
-unsafe impl<'a> IntoValue for &str {
+unsafe impl IntoValue for &str {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::string(self) }
     }
@@ -232,7 +232,7 @@ unsafe impl<'a> FromValue<'a> for &'a mut str {
     }
 }
 
-unsafe impl<'a> IntoValue for &mut str {
+unsafe impl IntoValue for &mut str {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::string(self) }
     }
@@ -248,7 +248,7 @@ unsafe impl<'a> FromValue<'a> for &'a [u8] {
     }
 }
 
-unsafe impl<'a> IntoValue for &[u8] {
+unsafe impl IntoValue for &[u8] {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::bytes(self) }
     }
@@ -264,7 +264,7 @@ unsafe impl<'a> FromValue<'a> for &'a mut [u8] {
     }
 }
 
-unsafe impl<'a> IntoValue for &mut [u8] {
+unsafe impl IntoValue for &mut [u8] {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::bytes(self) }
     }
@@ -325,7 +325,7 @@ array_impl!(31);
 array_impl!(32);
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<'a, V: IntoValue> IntoValue for Vec<V> {
+unsafe impl<V: IntoValue> IntoValue for Vec<V> {
     fn into_value(self, rt: &Runtime) -> Value {
         let len = self.len();
         let mut arr = unsafe { Value::alloc(len, Tag(0)) };
@@ -442,7 +442,7 @@ unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
     }
 }
 
-unsafe impl<'a> IntoValue for &Value {
+unsafe impl IntoValue for &Value {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.raw()) }
     }

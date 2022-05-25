@@ -6,7 +6,7 @@ use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Pointer, R
 pub type Size = sys::Size;
 
 /// Value wraps the native OCaml `value` type
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq)]
 pub enum Value {
     /// Rooted value
     Root(Root),
@@ -17,7 +17,7 @@ pub enum Value {
 }
 
 /// Wrapper around sys::Value
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq)]
 #[repr(transparent)]
 pub struct Raw(pub sys::Value);
 
@@ -137,7 +137,7 @@ unsafe impl<T> crate::interop::ToOCaml<T> for Value {
     }
 }
 
-unsafe impl<'a, T> crate::interop::FromOCaml<T> for Value {
+unsafe impl<T> crate::interop::FromOCaml<T> for Value {
     fn from_ocaml(v: OCaml<T>) -> Value {
         unsafe { Value::new(v.raw()) }
     }

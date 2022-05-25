@@ -1,3 +1,6 @@
+#![allow(unknown_lints)]
+#![allow(clippy::derive_partial_eq_without_eq)]
+
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
 use crate::{sys, CamlError, Error, Raw, Runtime, Tag};
@@ -14,7 +17,7 @@ use crate::value::{FromValue, IntoValue, Size, Value};
 ///
 /// This should only be used with values allocated with `alloc_final` or `alloc_custom`,
 /// for abstract pointers see `Value::alloc_abstract_ptr` and `Value::abstract_ptr_val`
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, PartialOrd, Eq)]
 #[repr(transparent)]
 pub struct Pointer<'a, T>(pub Value, PhantomData<&'a T>);
 
@@ -105,7 +108,7 @@ impl<'a, T> AsMut<T> for Pointer<'a, T> {
 }
 
 /// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct Array<'a, T: IntoValue + FromValue<'a>>(Value, PhantomData<&'a T>);
 
@@ -264,7 +267,7 @@ impl<'a, T: IntoValue + FromValue<'a>> Array<'a, T> {
 
 /// `List<A>` wraps an OCaml `'a list` without converting it to Rust, this introduces no
 /// additional overhead compared to a `Value` type
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct List<'a, T: 'a + IntoValue + FromValue<'a>>(Value, PhantomData<&'a T>);
 
@@ -429,7 +432,7 @@ pub mod bigarray {
     /// OCaml Bigarray.Array1 type, this introduces no
     /// additional overhead compared to a `Value` type
     #[repr(transparent)]
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, PartialEq, Eq)]
     pub struct Array1<T>(Value, PhantomData<T>);
 
     unsafe impl<'a, T> crate::FromValue<'a> for Array1<T> {
@@ -532,7 +535,7 @@ pub(crate) mod bigarray_ext {
     /// OCaml Bigarray.Array2 type, this introduces no
     /// additional overhead compared to a `Value` type
     #[repr(transparent)]
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, PartialEq, Eq)]
     pub struct Array2<T>(Value, PhantomData<T>);
 
     impl<T: Copy + Kind> Array2<T> {
@@ -612,7 +615,7 @@ pub(crate) mod bigarray_ext {
     /// OCaml Bigarray.Array3 type, this introduces no
     /// additional overhead compared to a `Value` type
     #[repr(transparent)]
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, PartialEq, Eq)]
     pub struct Array3<T>(Value, PhantomData<T>);
 
     impl<T: Copy + Kind> Array3<T> {
