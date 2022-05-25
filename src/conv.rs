@@ -325,18 +325,27 @@ array_impl!(31);
 array_impl!(32);
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<V: IntoValue> IntoValue for Vec<V> {
+unsafe impl<V: 'static + IntoValue> IntoValue for Vec<V> {
     fn into_value(self, rt: &Runtime) -> Value {
         let len = self.len();
-        let mut arr = unsafe { Value::alloc(len, Tag(0)) };
 
-        for (i, v) in self.into_iter().enumerate() {
-            unsafe {
-                arr.store_field(rt, i, v);
+        if core::any::TypeId::of::<f64>() == core::any::TypeId::of::<V>() && sys::FLAT_FLOAT_ARRAY {
+            let mut arr = unsafe { Value::alloc_f64_array(len) };
+            for (i, v) in self.into_iter().enumerate() {
+                unsafe {
+                    arr.store_f64_field(i, v.into_value(rt).f64_val());
+                }
             }
+            arr
+        } else {
+            let mut arr = unsafe { Value::alloc(len, 0.into()) };
+            for (i, v) in self.into_iter().enumerate() {
+                unsafe {
+                    arr.store_field(rt, i, v);
+                }
+            }
+            arr
         }
-
-        arr
     }
 }
 
@@ -345,9 +354,14 @@ unsafe impl<'a, V: FromValue<'a>> FromValue<'a> for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
         unsafe {
             let len = crate::sys::caml_array_length(v.raw().0);
+            let is_double = sys::caml_is_double_array(v.raw().0) == 1 && sys::FLAT_FLOAT_ARRAY;
             let mut dst = Vec::with_capacity(len);
             for i in 0..len {
-                dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
+                if is_double {
+                    dst.push(V::from_value(Value::f64(v.f64_field(i))));
+                } else {
+                    dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
+                }
             }
             dst
         }

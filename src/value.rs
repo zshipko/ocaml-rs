@@ -390,7 +390,7 @@ impl Value {
     }
 
     /// Set index of underlying OCaml double array value
-    pub unsafe fn store_f64_field<V: IntoValue>(&mut self, i: Size, val: f64) {
+    pub unsafe fn store_f64_field(&mut self, i: Size, val: f64) {
         sys::caml_sys_store_double_field(self.raw().0, i, val)
     }
 
@@ -405,7 +405,7 @@ impl Value {
     }
 
     /// Store `f64` in OCaml `Float`
-    pub unsafe fn store_f64_val(&self, val: f64) {
+    pub unsafe fn store_f64_val(&mut self, val: f64) {
         sys::caml_sys_store_double_val(self.raw().0, val)
     }
 
