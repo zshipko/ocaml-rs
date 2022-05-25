@@ -171,6 +171,11 @@ impl Value {
         Value::new(sys::caml_alloc(n, tag.into()))
     }
 
+    /// Allocate a new float array
+    pub unsafe fn alloc_f64_array(n: usize) -> Value {
+        Value::new(sys::caml_alloc_float_array(n))
+    }
+
     /// Allocate a new tuple value
     pub unsafe fn alloc_tuple(n: usize) -> Value {
         Value::new(sys::caml_alloc_tuple(n))
@@ -253,19 +258,19 @@ impl Value {
     /// Allocate and copy a string value
     pub unsafe fn string<S: AsRef<str>>(s: S) -> Value {
         let s = s.as_ref();
-        let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw().0);
-        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-        value
+        Value::new(sys::caml_alloc_initialized_string(
+            s.len(),
+            s.as_ptr() as *const _,
+        ))
     }
 
     /// Allocate and copy a byte array value
     pub unsafe fn bytes<S: AsRef<[u8]>>(s: S) -> Value {
         let s = s.as_ref();
-        let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw().0);
-        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-        value
+        Value::new(sys::caml_alloc_initialized_string(
+            s.len(),
+            s.as_ptr() as *const _,
+        ))
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
