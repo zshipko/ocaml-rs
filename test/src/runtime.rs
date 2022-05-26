@@ -1,4 +1,3 @@
-use ocaml::interop::{BoxRoot, OCamlFloat};
 use ocaml::{IntoValue, Value};
 
 #[no_mangle]
@@ -47,6 +46,7 @@ pub fn mutable_parameter_with_more_than_five_arguments(
 }
 
 #[ocaml::func]
+#[ocaml::sig("float -> unit")]
 pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
     ocaml::Error::raise_with_arg("Exc", x.into_value(gc))
 }
@@ -72,12 +72,12 @@ pub fn test_panic() -> ocaml::Int {
     panic!("XXX")
 }
 
-ocaml::interop::ocaml! {
-    fn call_named(g: ocaml::interop::OCamlFloat) -> ocaml::interop::OCamlFloat;
+ocaml::import! {
+    fn call_named(g: ocaml::Float) -> ocaml::Float;
 }
 
 #[ocaml::func]
-pub unsafe fn test_call_named(g: BoxRoot<OCamlFloat>) -> BoxRoot<OCamlFloat> {
+pub unsafe fn test_call_named(g: f64) -> Result<f64, ocaml::Error> {
     call_named(gc, &g)
 }
 

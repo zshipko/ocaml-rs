@@ -185,6 +185,10 @@ unsafe impl IntoValue for () {
     }
 }
 
+unsafe impl<'a> FromValue<'a> for () {
+    fn from_value(_value: Value) {}
+}
+
 unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Option<T> {
     fn from_value(value: Value) -> Option<T> {
         if value.raw().0 == sys::NONE {

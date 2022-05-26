@@ -1,7 +1,4 @@
-type enum1 =
-  | Empty
-  | First of int
-  | Second of string array
+open Rust
 
 external enum1_empty: unit -> enum1 = "enum1_empty"
 external enum1_first: int -> enum1 = "enum1_first"
@@ -29,13 +26,6 @@ external enum1_is_empty: enum1 -> bool = "enum1_is_empty"
 
 let%test "enum1 is empty 0" =  Util.check_leaks (fun () -> (enum1_is_empty Empty = true))
 let%test "enum1 is empty 1" = Util.check_leaks (fun () -> enum1_is_empty (First 1) = false)
-
-type struct1 = {
-  a: int;
-  b: float;
-  mutable c: string option;
-  d: string array option;
-}
 
 external struct1_empty: unit -> struct1 = "struct1_empty"
 external struct1_get_c: struct1 -> string option = "struct1_get_c"

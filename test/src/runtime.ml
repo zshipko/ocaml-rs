@@ -1,5 +1,7 @@
 (* Unboxed / more than 5 arguments *)
 
+open Rust
+
 external unboxed_float_avg: float -> float -> float = "unboxed_float_avg_bytecode" "unboxed_float_avg" [@@unboxed] [@@noalloc]
 external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
 
@@ -22,15 +24,14 @@ exception Rust of string
 
 let () = Callback.register_exception "Exc" (Exc 0.0)
 
-external raise_exc: float -> bool = "raise_exc"
-external raise_failure: unit -> bool = "raise_failure"
+external raise_failure: unit -> unit = "raise_failure"
 
 let%test "raise exc" = try
-  raise_exc 10.
+  raise_exc 10.; true
 with Exc x -> x = 10.
 
 let%test "raise failure" = try
-  raise_failure ()
+  raise_failure (); true
 with Failure e -> let () = Util.gc () in e = "An error"
 
 (* Hash variant *)
@@ -83,7 +84,7 @@ let%test "exn" = Util.check_leaks (fun () -> (
   let str = exn_to_string (Invalid_argument "test") in
   str = "Invalid_argument(\"test\")"
 ))
- 
+
 external gc_minor: unit -> unit = "gc_minor"
 external gc_major: unit -> unit = "gc_major"
 external gc_full_major: unit -> unit = "gc_full_major"

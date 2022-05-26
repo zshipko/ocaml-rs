@@ -30,6 +30,68 @@ fn check_func(item_fn: &mut syn::ItemFn) {
     });
 }
 
+enum Mode {
+    Func,
+    Struct,
+    Enum,
+}
+
+#[proc_macro_attribute]
+pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
+    let (name, mode, n) = if let Ok(item) = syn::parse::<syn::ItemStruct>(item.clone()) {
+        let name = &item.ident;
+        let n_fields = match item.fields {
+            syn::Fields::Named(x) => x.named.iter().count(),
+            syn::Fields::Unit => 0,
+            syn::Fields::Unnamed(x) => x.unnamed.iter().count(),
+        };
+        (name.to_string().to_lowercase(), Mode::Struct, n_fields)
+    } else if let Ok(item) = syn::parse::<syn::ItemEnum>(item.clone()) {
+        let name = &item.ident;
+        let n = item.variants.iter().count();
+        (name.to_string().to_lowercase(), Mode::Enum, n)
+    } else if let Ok(item_fn) = syn::parse::<syn::ItemFn>(item.clone()) {
+        let name = &item_fn.sig.ident;
+        let n_args = item_fn.sig.inputs.iter().count();
+        (name.to_string(), Mode::Func, n_args)
+    } else {
+        panic!("Invalid use of ocaml::sig macro")
+    };
+
+    if let Ok(sig) = syn::parse::<syn::LitStr>(attribute) {
+        let s = sig.value();
+        match mode {
+            Mode::Func => {
+                let n_args = s.matches("->").count();
+                if n != n_args {
+                    panic!(
+                        "{name}: Signature and function do not have the same number of arguments"
+                    )
+                }
+            }
+            Mode::Enum => {
+                let mut n_variants = s.matches('|').count() + 1;
+                if s.starts_with('|') {
+                    n_variants -= 1;
+                }
+                if n != n_variants {
+                    panic!("{name}: Signature and enum do not have the same number of variants")
+                }
+            }
+            Mode::Struct => {
+                let n_fields = s.matches(':').count();
+                if n != n_fields {
+                    panic!("{name} Signature and struct do not have the same number of fields")
+                }
+            }
+        }
+    } else {
+        panic!("OCaml sig accepts a str literal");
+    }
+
+    item
+}
+
 /// `func` is used export Rust functions to OCaml, performing the necessary wrapping/unwrapping
 /// automatically.
 ///
@@ -48,6 +110,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let constness = &item_fn.sig.constness;
     let mut gc_name = syn::Ident::new("gc", name.span());
     let mut use_gc = quote!({let _ = &#gc_name;});
+
     if let Ok(ident) = syn::parse::<syn::Ident>(attribute) {
         gc_name = ident;
         use_gc = quote!();

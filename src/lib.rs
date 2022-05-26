@@ -120,7 +120,7 @@ pub use ocaml_sys as sys;
 #[cfg(feature = "derive")]
 pub use ocaml_derive::{
     ocaml_bytecode_func as bytecode_func, ocaml_func as func, ocaml_native_func as native_func,
-    FromValue, IntoValue,
+    ocaml_sig as sig, FromValue, IntoValue,
 };
 
 #[macro_use]
@@ -170,3 +170,31 @@ pub fn ocamlopt() -> std::process::Command {
 #[cfg(feature = "link")]
 #[cfg(test)]
 mod tests;
+
+#[macro_export]
+/// Import OCaml functions
+macro_rules! import {
+    ($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?) => {
+        $vis unsafe fn $name(rt: &$crate::Runtime, $($arg: &$t),*) -> Result<$crate::interop::default_to_unit!($($r)?), $crate::Error> {
+            use $crate::{IntoValue, FromValue};
+            type R = $crate::interop::default_to_unit!($($r)?);
+            let ocaml_rs_named_func = match $crate::Value::named(stringify!($name)) {
+                Some(x) => x,
+                None => return Err($crate::Error::Message("Invalid named function")),
+            };
+
+            let args_ = &[$($arg.into_value(rt)),*];
+            let mut args: Vec<_> = args_.iter().map(|x| x.raw()).collect();
+            if args.is_empty() {
+                args.push($crate::Value::unit().raw());
+            }
+            let x = ocaml_rs_named_func.call_n(args)?;
+            Ok(R::from_value(x))
+        }
+    };
+    ($($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?;)+) => {
+        $(
+            $crate::import!($vis fn $name($($arg: $t),*) $(-> $r)?);
+        )*
+    }
+}

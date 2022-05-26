@@ -77,6 +77,7 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ```rust
 // Automatically derive `IntoValue` and `FromValue`
 #[derive(ocaml::IntoValue, ocaml::FromValue)]
+#[ocaml::sig("{name: string; i: int}")]
 struct Example<'a> {
     name: &'a str,
     i: ocaml::Int,
@@ -84,12 +85,14 @@ struct Example<'a> {
 
 
 #[ocaml::func]
+#[ocaml::sig("example -> example")]
 pub fn incr_example(mut e: Example) -> Example {
     e.i += 1;
     e
 }
 
 #[ocaml::func]
+#[ocaml::sig("int -> int * int * int")]
 pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
     (i + 1, i + 2, i + 3)
 }
@@ -239,6 +242,26 @@ let () = Callback.register_exception "Rust_error" (Rust "")
 ```
 
 It must take a single `string` argument.
+
+#### Using `import!` macro
+
+The `ocaml::import!` macro can be used to call OCaml functions that have been registered using `Callback.register` from Rust:
+
+```rust
+ocaml::import! {
+  fn my_function(i: ocaml::Int) -> ocaml::Int;
+}
+```
+
+Which can then be called directly:
+
+```rust
+my_function(&rt, 123)
+```
+
+### `ocaml::sig` macro
+
+The `ocaml::sig` macro can be used to write signatures for OCaml functions and types in-line
 
 ## Upgrading
 

@@ -1,6 +1,7 @@
 use ocaml::{interop::ToOCaml, FromValue, IntoValue};
 
 #[derive(IntoValue, FromValue)]
+#[ocaml::sig("Empty | First of int | Second of string array")]
 enum Enum1<'a> {
     Empty,
     First(ocaml::Int),
@@ -39,6 +40,7 @@ pub fn enum1_is_empty(e: Enum1) -> bool {
 }
 
 #[derive(IntoValue, FromValue, Default)]
+#[ocaml::sig("{a: int; b: float; mutable c: string option; d: string array option;}")]
 struct Struct1 {
     a: ocaml::Int,
     b: ocaml::Float,
