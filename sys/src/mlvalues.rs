@@ -140,4 +140,8 @@ extern "C" {
     pub fn caml_array_length(value: Value) -> Size;
     pub fn caml_hash_variant(tag: *const u8) -> Value;
     pub fn caml_get_public_method(obj: Value, tag: Value) -> Value;
+    pub fn caml_sys_store_double_val(x: Value, f: f64);
+    pub fn caml_sys_double_val(x: Value) -> f64;
+    pub fn caml_sys_double_field(x: Value, i: Size) -> f64;
+    pub fn caml_sys_store_double_field(x: Value, index: Size, d: f64);
 }

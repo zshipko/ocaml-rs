@@ -1,3 +1,9 @@
+## Unreleased
+
+- Added support for float arrays in ocaml-sys
+- Renamed `Value::float` to `Value::f64` and `Value::float_val` to `Value::f64_val`
+- Added `Value::alloc_f64_array`, `Value::f64_field` and `Value::store_f64_field`
+
 ## 0.22.4
 
 - Added `Value::exn_to_string` to convert OCaml exception values to their string representation

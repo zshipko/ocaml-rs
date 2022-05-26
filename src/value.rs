@@ -6,7 +6,7 @@ use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Pointer, R
 pub type Size = sys::Size;
 
 /// Value wraps the native OCaml `value` type
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq)]
 pub enum Value {
     /// Rooted value
     Root(Root),
@@ -17,7 +17,7 @@ pub enum Value {
 }
 
 /// Wrapper around sys::Value
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq)]
 #[repr(transparent)]
 pub struct Raw(pub sys::Value);
 
@@ -137,7 +137,7 @@ unsafe impl<T> crate::interop::ToOCaml<T> for Value {
     }
 }
 
-unsafe impl<'a, T> crate::interop::FromOCaml<T> for Value {
+unsafe impl<T> crate::interop::FromOCaml<T> for Value {
     fn from_ocaml(v: OCaml<T>) -> Value {
         unsafe { Value::new(v.raw()) }
     }
@@ -169,6 +169,11 @@ impl Value {
     /// Allocate a new value with the given size and tag.
     pub unsafe fn alloc(n: usize, tag: Tag) -> Value {
         Value::new(sys::caml_alloc(n, tag.into()))
+    }
+
+    /// Allocate a new float array
+    pub unsafe fn alloc_f64_array(n: usize) -> Value {
+        Value::new(sys::caml_alloc_float_array(n))
     }
 
     /// Allocate a new tuple value
@@ -253,19 +258,19 @@ impl Value {
     /// Allocate and copy a string value
     pub unsafe fn string<S: AsRef<str>>(s: S) -> Value {
         let s = s.as_ref();
-        let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw().0);
-        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-        value
+        Value::new(sys::caml_alloc_initialized_string(
+            s.len(),
+            s.as_ptr() as *const _,
+        ))
     }
 
     /// Allocate and copy a byte array value
     pub unsafe fn bytes<S: AsRef<[u8]>>(s: S) -> Value {
         let s = s.as_ref();
-        let value = Value::new(sys::caml_alloc_string(s.len()));
-        let ptr = sys::string_val(value.raw().0);
-        core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-        value
+        Value::new(sys::caml_alloc_initialized_string(
+            s.len(),
+            s.as_ptr() as *const _,
+        ))
     }
 
     /// Convert from a pointer to an OCaml string back to an OCaml value
@@ -352,7 +357,7 @@ impl Value {
     }
 
     /// Create an OCaml `Float` from `f64`
-    pub unsafe fn float(d: f64) -> Value {
+    pub unsafe fn f64(d: f64) -> Value {
         Value::new(sys::caml_copy_double(d))
     }
 
@@ -373,10 +378,20 @@ impl Value {
         Value::new(*sys::field(self.raw().0, i))
     }
 
+    /// Get index of underlying OCaml double array value
+    pub unsafe fn f64_field(&self, i: Size) -> f64 {
+        sys::caml_sys_double_field(self.raw().0, i)
+    }
+
     /// Set index of underlying OCaml block value
     pub unsafe fn store_field<V: IntoValue>(&mut self, rt: &Runtime, i: Size, val: V) {
         let v = val.into_value(rt);
         sys::store_field(self.raw().0, i, v.raw().0)
+    }
+
+    /// Set index of underlying OCaml double array value
+    pub unsafe fn store_f64_field(&mut self, i: Size, val: f64) {
+        sys::caml_sys_store_double_field(self.raw().0, i, val)
     }
 
     /// Convert an OCaml `int` to `isize`
@@ -385,8 +400,13 @@ impl Value {
     }
 
     /// Convert an OCaml `Float` to `f64`
-    pub unsafe fn float_val(&self) -> f64 {
-        *(self.raw().0 as *const f64)
+    pub unsafe fn f64_val(&self) -> f64 {
+        sys::caml_sys_double_val(self.raw().0)
+    }
+
+    /// Store `f64` in OCaml `Float`
+    pub unsafe fn store_f64_val(&mut self, val: f64) {
+        sys::caml_sys_store_double_val(self.raw().0, val)
     }
 
     /// Convert an OCaml `Int32` to `i32`

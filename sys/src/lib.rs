@@ -22,6 +22,12 @@ pub const COMPILER: &str = include_str!(concat!(env!("OUT_DIR"), "/ocaml_compile
 #[cfg(feature = "without-ocamlopt")]
 pub const COMPILER: &str = "";
 
+#[cfg(not(feature = "without-ocamlopt"))]
+pub const FLAT_FLOAT_ARRAY: bool = include!(concat!(env!("OUT_DIR"), "/flat_float_array"));
+
+#[cfg(feature = "without-ocamlopt")]
+pub const FLAT_FLOAT_ARRAY: bool = true;
+
 mod mlvalues;
 #[macro_use]
 mod memory;

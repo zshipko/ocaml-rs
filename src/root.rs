@@ -1,6 +1,6 @@
 use crate::sys;
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Eq)]
 /// Wraps rooted values
 pub struct Root(pub ocaml_boxroot_sys::BoxRoot);
 

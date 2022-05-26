@@ -29,13 +29,13 @@ macro_rules! value_f {
     ($t:ty) => {
         unsafe impl IntoValue for $t {
             fn into_value(self, _rt: &Runtime) -> $crate::Value {
-                unsafe { $crate::Value::float(self as crate::Float) }
+                unsafe { $crate::Value::f64(self as crate::Float) }
             }
         }
 
         unsafe impl<'a> FromValue<'a> for $t {
             fn from_value(v: $crate::Value) -> $t {
-                unsafe { v.float_val() as $t }
+                unsafe { v.f64_val () as $t }
             }
         }
     };
@@ -195,7 +195,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Option<T> {
     }
 }
 
-unsafe impl<'a, T: IntoValue> IntoValue for Option<T> {
+unsafe impl<T: IntoValue> IntoValue for Option<T> {
     fn into_value(self, rt: &Runtime) -> Value {
         match self {
             Some(y) => unsafe { Value::some(rt, y) },
@@ -215,7 +215,7 @@ unsafe impl<'a> FromValue<'a> for &'a str {
     }
 }
 
-unsafe impl<'a> IntoValue for &str {
+unsafe impl IntoValue for &str {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::string(self) }
     }
@@ -232,7 +232,7 @@ unsafe impl<'a> FromValue<'a> for &'a mut str {
     }
 }
 
-unsafe impl<'a> IntoValue for &mut str {
+unsafe impl IntoValue for &mut str {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::string(self) }
     }
@@ -248,7 +248,7 @@ unsafe impl<'a> FromValue<'a> for &'a [u8] {
     }
 }
 
-unsafe impl<'a> IntoValue for &[u8] {
+unsafe impl IntoValue for &[u8] {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::bytes(self) }
     }
@@ -264,7 +264,7 @@ unsafe impl<'a> FromValue<'a> for &'a mut [u8] {
     }
 }
 
-unsafe impl<'a> IntoValue for &mut [u8] {
+unsafe impl IntoValue for &mut [u8] {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::bytes(self) }
     }
@@ -325,18 +325,27 @@ array_impl!(31);
 array_impl!(32);
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<'a, V: IntoValue> IntoValue for Vec<V> {
+unsafe impl<V: 'static + IntoValue> IntoValue for Vec<V> {
     fn into_value(self, rt: &Runtime) -> Value {
         let len = self.len();
-        let mut arr = unsafe { Value::alloc(len, Tag(0)) };
 
-        for (i, v) in self.into_iter().enumerate() {
-            unsafe {
-                arr.store_field(rt, i, v);
+        if core::any::TypeId::of::<f64>() == core::any::TypeId::of::<V>() && sys::FLAT_FLOAT_ARRAY {
+            let mut arr = unsafe { Value::alloc_f64_array(len) };
+            for (i, v) in self.into_iter().enumerate() {
+                unsafe {
+                    arr.store_f64_field(i, v.into_value(rt).f64_val());
+                }
             }
+            arr
+        } else {
+            let mut arr = unsafe { Value::alloc(len, 0.into()) };
+            for (i, v) in self.into_iter().enumerate() {
+                unsafe {
+                    arr.store_field(rt, i, v);
+                }
+            }
+            arr
         }
-
-        arr
     }
 }
 
@@ -345,9 +354,16 @@ unsafe impl<'a, V: FromValue<'a>> FromValue<'a> for Vec<V> {
     fn from_value(v: Value) -> Vec<V> {
         unsafe {
             let len = crate::sys::caml_array_length(v.raw().0);
+            let is_double = sys::caml_is_double_array(v.raw().0) == 1 && sys::FLAT_FLOAT_ARRAY;
             let mut dst = Vec::with_capacity(len);
+            let mut tmp = Value::f64(0.0);
             for i in 0..len {
-                dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
+                if is_double {
+                    tmp.store_f64_val(v.f64_field(i));
+                    dst.push(V::from_value(Value::new(tmp.raw().0)));
+                } else {
+                    dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
+                }
             }
             dst
         }
@@ -442,7 +458,7 @@ unsafe impl<T: IntoValue> IntoValue for std::collections::LinkedList<T> {
     }
 }
 
-unsafe impl<'a> IntoValue for &Value {
+unsafe impl IntoValue for &Value {
     fn into_value(self, _rt: &Runtime) -> Value {
         unsafe { Value::new(self.raw()) }
     }
