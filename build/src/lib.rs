@@ -103,7 +103,11 @@ impl Sigs {
                     syn::Item::Fn(item_fn) => {
                         let name = &item_fn.sig.ident;
                         handle(item_fn.attrs, |ty| {
-                            let def = format!("external {name}: {ty} = \"{name}\"");
+                            let def = if item_fn.sig.inputs.len() > 5 {
+                                format!("external {name}: {ty} = \"{name}_bytecode\" \"{name}\"")
+                            } else {
+                                format!("external {name}: {ty} = \"{name}\"")
+                            };
                             src.functions.push(def);
                         });
                     }

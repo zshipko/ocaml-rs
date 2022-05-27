@@ -22,8 +22,21 @@ external array1_from_rust_vec: unit -> (float, float32_elt, c_layout) Array1.t =
 
 (* file: /mnt/devel/ocaml-rs/test/src/runtime.rs *)
 
+external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
+external mutable_parameter_with_more_than_five_arguments: bool -> bool -> int64 -> int64 -> int64 option -> int32 option -> unit = "mutable_parameter_with_more_than_five_arguments_bytecode" "mutable_parameter_with_more_than_five_arguments"
 external raise_exc: float -> unit = "raise_exc"
 external raise_failure: unit -> unit = "raise_failure"
+external hash_variant_abc: int -> [`Abc of int] = "hash_variant_abc"
+external hash_variant_def: float -> [`Def of float] = "hash_variant_def"
+external test_panic: unit -> int = "test_panic"
+external test_call_named: float -> float = "test_call_named"
+external bench_func: unit -> unit = "bench_func"
+external bench_native_func: unit -> unit = "bench_native_func"
+external exn_to_string: exn -> string = "exn_to_string"
+external gc_minor: unit -> unit = "gc_minor"
+external gc_major: unit -> unit = "gc_major"
+external gc_full_major: unit -> unit = "gc_full_major"
+external gc_compact: unit -> unit = "gc_compact"
 
 (* file: /mnt/devel/ocaml-rs/test/src/custom.rs *)
 
