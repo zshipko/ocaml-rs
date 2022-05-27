@@ -143,19 +143,19 @@ pub fn array_conv(a: [u8; 5]) -> [u8; 7] {
 }
 
 #[ocaml::func]
-#[ocaml::sig("'a -> ('a, 'b) Result.t")]
+#[ocaml::sig("'a -> ('a, 'b) result")]
 pub fn result_ok(x: ocaml::Value) -> Result<ocaml::Value, ocaml::Value> {
     Ok(x)
 }
 
 #[ocaml::func]
-#[ocaml::sig("'a -> ('b, 'a) Result.t")]
+#[ocaml::sig("'a -> ('b, 'a) result")]
 pub fn result_error(x: ocaml::Value) -> Result<ocaml::Value, ocaml::Value> {
     Err(x)
 }
 
 #[ocaml::func]
-#[ocaml::sig("('a, 'b) Result.t -> 'a option")]
+#[ocaml::sig("('a, 'b) result -> 'a option")]
 pub fn result_get_ok(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::Value> {
     match x {
         Ok(x) => Some(x),
@@ -164,7 +164,7 @@ pub fn result_get_ok(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::Val
 }
 
 #[ocaml::func]
-#[ocaml::sig("('a, 'b) Result.t -> 'b option")]
+#[ocaml::sig("('a, 'b) result -> 'b option")]
 pub fn result_get_error(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::Value> {
     match x {
         Ok(_) => None,
