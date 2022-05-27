@@ -25,3 +25,5 @@ The following code will be generated in `src/rust.ml`:
 ```ocaml
 external greater_than_zero: int -> bool = "greater_than_zero"
 ```
+
+And a matching `mli` file will be created.
