@@ -18,6 +18,7 @@
 //! // Automatically derive `IntoValue` and `FromValue`
 //! #[cfg(feature = "derive")]
 //! #[derive(ocaml::IntoValue, ocaml::FromValue)]
+//! #[ocaml::sig("{name: string; i: int}")]
 //! struct Example {
 //!     name: String,
 //!     i: ocaml::Int,

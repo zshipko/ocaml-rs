@@ -70,18 +70,22 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
             Mode::Enum => {
-                let mut n_variants = s.matches('|').count() + 1;
-                if s.starts_with('|') {
-                    n_variants -= 1;
-                }
-                if n != n_variants {
-                    panic!("{name}: Signature and enum do not have the same number of variants")
+                if !s.is_empty() {
+                    let mut n_variants = s.matches('|').count() + 1;
+                    if s.starts_with('|') {
+                        n_variants -= 1;
+                    }
+                    if n != n_variants {
+                        panic!("{name}: Signature and enum do not have the same number of variants")
+                    }
                 }
             }
             Mode::Struct => {
-                let n_fields = s.matches(':').count();
-                if n != n_fields {
-                    panic!("{name} Signature and struct do not have the same number of fields")
+                if !s.is_empty() {
+                    let n_fields = s.matches(':').count();
+                    if n != n_fields {
+                        panic!("{name} Signature and struct do not have the same number of fields")
+                    }
                 }
             }
         }

@@ -261,7 +261,9 @@ my_function(&rt, 123)
 
 ### `ocaml::sig` macro
 
-The `ocaml::sig` macro can be used to write signatures for OCaml functions and types in-line
+The `ocaml::sig` macro in combination with `ocaml-build` can be used to write signatures for OCaml functions and types in-line.
+
+See [build/README.md](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
 
 ## Upgrading
 

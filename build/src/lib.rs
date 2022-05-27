@@ -36,9 +36,8 @@ fn handle(attrs: Vec<syn::Attribute>, mut f: impl FnMut(&str)) {
             if let [proc_macro2::TokenTree::Group(g)] =
                 &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..]
             {
-                if let [proc_macro2::TokenTree::Literal(ref sig)] =
-                    g.stream().into_iter().collect::<Vec<_>>()[..]
-                {
+                let v = g.stream().into_iter().collect::<Vec<_>>();
+                if let [proc_macro2::TokenTree::Literal(ref sig)] = v[..] {
                     let s = sig.to_string();
                     let ty = strip_quotes(&s);
                     f(ty)
@@ -82,21 +81,29 @@ impl Sigs {
                         syn::Item::Fn(item_fn) => {
                             let name = &item_fn.sig.ident;
                             handle(item_fn.attrs, |ty| {
-                                let def = format!("external {name}: {ty} = \"{name}\"\n");
+                                let def = format!("external {name}: {ty} = \"{name}\"");
                                 self.functions.push(def);
                             });
                         }
                         syn::Item::Struct(item) => {
                             let name = snake_case(&item.ident.to_string());
                             handle(item.attrs, |ty| {
-                                let def = format!("type {name} = {ty}\n");
+                                let def = if ty.is_empty() {
+                                    format!("type {name}")
+                                } else {
+                                    format!("type {name} = {ty}")
+                                };
                                 self.types.push(def);
                             });
                         }
                         syn::Item::Enum(item) => {
                             let name = snake_case(&item.ident.to_string());
                             handle(item.attrs, |ty| {
-                                let def = format!("type {name} = {ty}\n");
+                                let def = if ty.is_empty() {
+                                    format!("type {name}")
+                                } else {
+                                    format!("type {name} = {ty}")
+                                };
                                 self.types.push(def);
                             });
                         }
