@@ -34,6 +34,7 @@ enum Mode {
     Func,
     Struct,
     Enum,
+    Type,
 }
 
 #[proc_macro_attribute]
@@ -57,8 +58,11 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
             n_args += 1;
         }
         (name.to_string(), Mode::Func, n_args)
+    } else if let Ok(item) = syn::parse::<syn::ItemType>(item.clone()) {
+        let name = &item.ident;
+        (name.to_string(), Mode::Type, 0)
     } else {
-        panic!("Invalid use of ocaml::sig macro")
+        panic!("Invalid use of ocaml::sig macro: {item}")
     };
 
     if let Ok(sig) = syn::parse::<syn::LitStr>(attribute) {
@@ -92,6 +96,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                     }
                 }
             }
+            Mode::Type => {}
         }
     } else {
         panic!("OCaml sig accepts a str literal");

@@ -129,6 +129,10 @@ impl Sigs {
                             src.types.push(def);
                         });
                     }
+                    syn::Item::Type(item) => {
+                        let name = snake_case(&item.ident.to_string());
+                        handle(item.attrs, |_ty| src.types.push(format!("type {name}")));
+                    }
                     _ => (),
                 }
             }
