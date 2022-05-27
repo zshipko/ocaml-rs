@@ -26,6 +26,7 @@
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("example -> example")]
 //! pub fn incr_example(mut e: Example) -> Example {
 //!     e.i += 1;
 //!     e
@@ -33,6 +34,7 @@
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("int -> int * int * int")]
 //! pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 //!     (i + 1, i + 2, i + 3)
 //! }
@@ -40,17 +42,19 @@
 //! /// A name for the garbage collector handle can also be specified:
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func(my_gc_handle)]
+//! #[ocaml::sig("unit -> string")]
 //! pub unsafe fn my_string() -> ocaml::Value {
 //!     ocaml::Value::string("My string")
 //! }
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("float array -> float")]
 //! pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
 //!     let mut sum = 0f64;
 //!
 //!     for i in 0..arr.len() {
-//!         sum += arr.get_double(i)?;
+//!         sum += arr.get_f64(i)?;
 //!     }
 //!
 //!     Ok(sum / arr.len() as f64)
@@ -61,6 +65,7 @@
 //! // `native_func` has minimal overhead compared to wrapping with `func`
 //! #[cfg(feature = "derive")]
 //! #[ocaml::native_func]
+//! #[ocaml::sig("int -> int")]
 //! pub unsafe fn incr(value: ocaml::Value) -> ocaml::Value {
 //!     let i = value.int_val();
 //!     ocaml::Value::int(i + 1)
@@ -109,6 +114,8 @@
 //! external incr2: int -> int = "incr2"
 //! external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 //! ```
+//!
+//! Excluding the `incrf` example, these can also be automatically generated using [ocaml-build](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
 
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
@@ -181,7 +188,13 @@ macro_rules! import {
             type R = $crate::interop::default_to_unit!($($r)?);
             let ocaml_rs_named_func = match $crate::Value::named(stringify!($name)) {
                 Some(x) => x,
-                None => return Err($crate::Error::Message("Invalid named function")),
+                None => {
+                    let msg = concat!(
+                        stringify!($name),
+                        " has not been registered using Callback.register"
+                    );
+                    return Err($crate::Error::Message(msg));
+                },
             };
 
             let args_ = &[$($arg.into_value(rt)),*];

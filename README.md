@@ -98,11 +98,12 @@ pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 }
 
 #[ocaml::func]
+#[ocaml::sig("float array -> f64")]
 pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
     let mut sum = 0f64;
 
     for i in 0..arr.len() {
-        sum += arr.get_double(i)?;
+        sum += arr.get_f64(i)?;
     }
 
     Ok(sum / arr.len() as f64)
@@ -161,6 +162,8 @@ external incr: int -> int = "incr"
 external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
+
+Excluding the `incrf` example, these can also be generated using [ocaml-build](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
 
 For more examples see [test/src](https://github.com/zshipko/ocaml-rs/blob/master/test/src) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 

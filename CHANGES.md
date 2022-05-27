@@ -2,6 +2,8 @@
 
 - Added support for float arrays in ocaml-sys
 - Renamed `Value::float` to `Value::f64` and `Value::float_val` to `Value::f64_val`
+- Renamed `Array::set_double` to `Array::set_f64`, `Array::get_double` to `Array::get_f64`
+  and `Array::is_double_array` to `Array::is_f64`
 - Added `Value::alloc_f64_array`, `Value::f64_field` and `Value::store_f64_field`
 - Added `ocaml::import!` macro for calling OCaml functions from Rust
 - Added `ocaml::sig` proc-macro for generating `external` and type signatures

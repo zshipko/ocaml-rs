@@ -52,6 +52,7 @@ pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
 }
 
 #[ocaml::func]
+#[ocaml::sig("unit -> unit")]
 pub fn raise_failure() -> Result<(), ocaml::Error> {
     ocaml::Error::failwith("An error")
 }

@@ -24,8 +24,6 @@ exception Rust of string
 
 let () = Callback.register_exception "Exc" (Exc 0.0)
 
-external raise_failure: unit -> unit = "raise_failure"
-
 let%test "raise exc" = try
   raise_exc 10.; true
 with Exc x -> x = 10.

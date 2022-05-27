@@ -1,11 +1,16 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+struct Source {
+    path: PathBuf,
+    functions: Vec<String>,
+    types: Vec<String>,
+}
+
 pub struct Sigs {
     base_dir: PathBuf,
     output: PathBuf,
-    functions: Vec<String>,
-    types: Vec<String>,
+    source: Vec<Source>,
 }
 
 fn strip_quotes(s: &str) -> &str {
@@ -33,14 +38,20 @@ fn handle(attrs: Vec<syn::Attribute>, mut f: impl FnMut(&str)) {
             .collect::<Vec<_>>()
             .join("::");
         if attr_name == "sig" || attr_name == "ocaml::sig" {
-            if let [proc_macro2::TokenTree::Group(g)] =
-                &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..]
-            {
-                let v = g.stream().into_iter().collect::<Vec<_>>();
-                if let [proc_macro2::TokenTree::Literal(ref sig)] = v[..] {
-                    let s = sig.to_string();
-                    let ty = strip_quotes(&s);
-                    f(ty)
+            match &attr.tokens.into_iter().collect::<Vec<_>>()[..] {
+                [proc_macro2::TokenTree::Group(g)] => {
+                    let v = g.stream().into_iter().collect::<Vec<_>>();
+                    if v.len() != 1 {
+                        panic!("Invalid signature: {g}");
+                    }
+                    if let [proc_macro2::TokenTree::Literal(ref sig)] = v[..] {
+                        let s = sig.to_string();
+                        let ty = strip_quotes(&s);
+                        f(ty)
+                    }
+                }
+                x => {
+                    panic!("Invalid signature: {x:?}");
                 }
             }
         }
@@ -54,8 +65,7 @@ impl Sigs {
         Sigs {
             base_dir,
             output: p.as_ref().to_path_buf(),
-            functions: Vec::new(),
-            types: Vec::new(),
+            source: Vec::new(),
         }
     }
 
@@ -71,45 +81,103 @@ impl Sigs {
             let file = file?;
             if file.metadata()?.is_dir() {
                 self.parse(&file.path())?;
+                continue;
             }
-            if let Some(Some("rs")) = file.path().extension().map(|x| x.to_str()) {
-                let s = std::fs::read_to_string(file.path())?;
-                let t: syn::File = syn::parse_str(&s).expect("Unable to parse file");
 
-                for item in t.items {
-                    match item {
-                        syn::Item::Fn(item_fn) => {
-                            let name = &item_fn.sig.ident;
-                            handle(item_fn.attrs, |ty| {
-                                let def = format!("external {name}: {ty} = \"{name}\"");
-                                self.functions.push(def);
-                            });
-                        }
-                        syn::Item::Struct(item) => {
-                            let name = snake_case(&item.ident.to_string());
-                            handle(item.attrs, |ty| {
-                                let def = if ty.is_empty() {
-                                    format!("type {name}")
-                                } else {
-                                    format!("type {name} = {ty}")
-                                };
-                                self.types.push(def);
-                            });
-                        }
-                        syn::Item::Enum(item) => {
-                            let name = snake_case(&item.ident.to_string());
-                            handle(item.attrs, |ty| {
-                                let def = if ty.is_empty() {
-                                    format!("type {name}")
-                                } else {
-                                    format!("type {name} = {ty}")
-                                };
-                                self.types.push(def);
-                            });
-                        }
-                        _ => (),
+            if Some(Some("rs")) != file.path().extension().map(|x| x.to_str()) {
+                continue;
+            }
+
+            let path = file.path();
+            let mut src = Source {
+                path: path.clone(),
+                functions: Vec::new(),
+                types: Vec::new(),
+            };
+            let s = std::fs::read_to_string(&path)?;
+            let t: syn::File = syn::parse_str(&s)
+                .unwrap_or_else(|_| panic!("Unable to parse input file: {}", path.display()));
+
+            for item in t.items {
+                match item {
+                    syn::Item::Fn(item_fn) => {
+                        let name = &item_fn.sig.ident;
+                        handle(item_fn.attrs, |ty| {
+                            let def = format!("external {name}: {ty} = \"{name}\"");
+                            src.functions.push(def);
+                        });
                     }
+                    syn::Item::Struct(item) => {
+                        let name = snake_case(&item.ident.to_string());
+                        handle(item.attrs, |ty| {
+                            let def = if ty.is_empty() {
+                                format!("type {name}")
+                            } else {
+                                format!("type {name} = {ty}")
+                            };
+                            src.types.push(def);
+                        });
+                    }
+                    syn::Item::Enum(item) => {
+                        let name = snake_case(&item.ident.to_string());
+                        handle(item.attrs, |ty| {
+                            let def = if ty.is_empty() {
+                                format!("type {name}")
+                            } else {
+                                format!("type {name} = {ty}")
+                            };
+                            src.types.push(def);
+                        });
+                    }
+                    _ => (),
                 }
+            }
+
+            if !src.functions.is_empty() || !src.types.is_empty() {
+                self.source.push(src);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn generate_ml(&mut self) -> Result<(), std::io::Error> {
+        let mut f = std::fs::File::create(&self.output).unwrap();
+
+        writeln!(f, "(* Generated by ocaml-rs *)\n")?;
+        writeln!(f, "open! Bigarray")?;
+
+        for src in &self.source {
+            writeln!(f, "\n(* file: {} *)\n", src.path.display())?;
+
+            for t in &src.types {
+                writeln!(f, "{t}")?;
+            }
+
+            for func in &src.functions {
+                writeln!(f, "{func}")?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn generate_mli(&mut self) -> Result<(), std::io::Error> {
+        let filename = self.output.with_extension("mli");
+        let mut f = std::fs::File::create(&filename).unwrap();
+
+        writeln!(f, "(* Generated by ocaml-rs *)\n")?;
+        writeln!(f, "open! Bigarray")?;
+
+        for src in &self.source {
+            writeln!(f, "\n(* file: {} *)\n", src.path.display())?;
+
+            for t in &src.types {
+                writeln!(f, "{t}")?;
+            }
+
+            for func in &src.functions {
+                writeln!(f, "{func}")?;
             }
         }
 
@@ -119,19 +187,7 @@ impl Sigs {
     pub fn generate(mut self) -> Result<(), std::io::Error> {
         let dir = self.base_dir.clone();
         self.parse(&dir)?;
-
-        let mut f = std::fs::File::create(self.output).unwrap();
-
-        writeln!(f, "open! Bigarray")?;
-
-        for t in self.types {
-            writeln!(f, "{t}")?;
-        }
-
-        for func in self.functions {
-            writeln!(f, "{func}")?;
-        }
-
-        Ok(())
+        self.generate_ml()?;
+        self.generate_mli()
     }
 }
