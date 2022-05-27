@@ -501,7 +501,7 @@ impl Value {
     }
 
     /// Call a closure with a single argument, returning an exception value
-    pub unsafe fn call<A: IntoValue>(&self, rt: &Runtime, arg1: A) -> Result<Value, Error> {
+    pub unsafe fn call1<A: IntoValue>(&self, rt: &Runtime, arg1: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
         }
@@ -566,7 +566,7 @@ impl Value {
         v.check_result()
     }
 
-    /// Call a closure with `n` arguments, returning an exception value
+    /// Call a closure with `n` arguments, returning an exception Result
     pub unsafe fn call_n<A: AsRef<[Raw]>>(&self, args: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
@@ -581,6 +581,39 @@ impl Value {
         ));
 
         v.check_result()
+    }
+
+    /// Call a closure with a variable number of arguments, returning and exception Result
+    #[cfg(not(feature = "no-std"))]
+    pub unsafe fn call<'a, const N: usize, T: FromValue<'a>>(
+        &self,
+        rt: &Runtime,
+        args: [impl IntoValue; N],
+    ) -> Result<T, Error> {
+        if self.tag() != Tag::CLOSURE {
+            return Err(Error::NotCallable);
+        }
+
+        let n = args.len();
+        let mut a = vec![];
+
+        for arg in args {
+            a.push(arg.into_value(rt));
+        }
+
+        if a.is_empty() {
+            a.push(Value::unit());
+        }
+
+        let b: Vec<Raw> = a.iter().map(|x| x.raw()).collect();
+
+        let v: Value = Value::new(sys::caml_callbackN_exn(
+            self.raw().0,
+            n,
+            b.as_ptr() as *mut sys::Value,
+        ));
+
+        FromValue::from_value(v.check_result()?)
     }
 
     /// Modify an OCaml value in place

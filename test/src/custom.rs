@@ -78,7 +78,7 @@ pub fn testing_callback_alloc(func: ocaml::Value) -> TestingCallback {
 #[ocaml::sig("testing_callback -> int -> float")]
 pub unsafe fn testing_callback_call(
     t: ocaml::Pointer<TestingCallback>,
-    x: ocaml::Value,
-) -> Result<ocaml::Value, ocaml::Error> {
-    t.as_ref().func.call(gc, x)
+    x: ocaml::Int,
+) -> Result<ocaml::Float, ocaml::Error> {
+    t.as_ref().func.call(gc, [x])
 }

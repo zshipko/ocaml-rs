@@ -268,21 +268,3 @@ The `ocaml::sig` macro in combination with `ocaml-build` can be used to write si
 
 See [build/README.md](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
 
-## Upgrading
-
-Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:
-
-- `FromValue` and `IntoValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
-  * A possible solution to this would be a `cbindgen` like tool that generates the correct OCaml types from the Rust code
-- `IntoValue` now takes ownership of the value being converted
-- The `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
-  * `ocaml::native_func` and `ocaml::bytecode_func` were also added to create functions at a slightly lower level
-  * `derive` feature required
-- Added `derive` implementations for `IntoValue` and `FromValue` for stucts and enums
-  * `derive` feature required
-- `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
-  * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
-- `Array` and `List` now take generic types
-- Strings are converted to `str` or `String`, rather than using the `Str` type
-- Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
-- The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate and all sub-module have been removed

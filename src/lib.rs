@@ -196,11 +196,10 @@ macro_rules! import {
                     return Err($crate::Error::Message(msg));
                 },
             };
-
-            let args_ = &[$($arg.into_value(rt)),*];
-            let mut args: Vec<_> = args_.iter().map(|x| x.raw()).collect();
+            $(let $arg = $arg.into_value(rt);)*
+            let mut args = [$($arg.raw()),*];
             if args.is_empty() {
-                args.push($crate::Value::unit().raw());
+                args = [$crate::Value::unit().raw()];
             }
             let x = ocaml_rs_named_func.call_n(args)?;
             Ok(R::from_value(x))
