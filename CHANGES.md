@@ -10,6 +10,7 @@
 - Added ocaml-build crate for generating OCaml code from `ocaml::sig` macros
 - Renamed `Value::call` to `Value::call1` and rewrote `Value::call` to take a variable number of
   arguments
+- Added support for automatic conversion between OCaml `Result.t` and Rust `Result`
 
 ## 0.22.4
 

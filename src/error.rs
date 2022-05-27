@@ -158,6 +158,7 @@ impl Error {
     }
 }
 
+/*
 #[cfg(not(feature = "no-std"))]
 unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T, E> {
     fn into_value(self, rt: &Runtime) -> Value {
@@ -166,6 +167,17 @@ unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T
             Err(y) => {
                 let e: Result<T, Error> = Err(Error::Error(Box::new(y)));
                 e.into_value(rt)
+            }
+        }
+    }
+}*/
+
+unsafe impl<T: IntoValue, E: IntoValue> IntoValue for Result<T, E> {
+    fn into_value(self, rt: &Runtime) -> Value {
+        unsafe {
+            match self {
+                Ok(x) => Value::result_ok(rt, x),
+                Err(e) => Value::result_error(rt, e),
             }
         }
     }
@@ -251,5 +263,11 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
 
             Ok(T::from_value(value))
         }
+    }
+}
+
+unsafe impl<'a, A: FromValue<'a>, B: FromValue<'a>> FromValue<'a> for Result<A, B> {
+    fn from_value(value: Value) -> Result<A, B> {
+        unsafe { value.result() }
     }
 }

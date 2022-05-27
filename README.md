@@ -171,31 +171,32 @@ For more examples see [test/src](https://github.com/zshipko/ocaml-rs/blob/master
 
 This chart contains the mapping between Rust and OCaml types used by `ocaml::func`
 
-| Rust type        | OCaml type           |
-| ---------------- | -------------------- |
-| `()`             | `unit`               |
-| `isize`          | `int`                |
-| `usize`          | `int`                |
-| `i8`             | `int`                |
-| `u8`             | `int`                |
-| `i16`            | `int`                |
-| `u16`            | `int`                |
-| `i32`            | `int32`              |
-| `u32`            | `int32`              |
-| `i64`            | `int64`              |
-| `u64`            | `int64`              |
-| `f32`            | `float`              |
-| `f64`            | `float`              |
-| `str`            | `string`             |
-| `[u8]`           | `bytes`              |
-| `String`         | `string`             |
-| `Option<A>`      | `'a option`          |
-| `Result<A, B>`   | `exception`          |
-| `(A, B, C)`      | `'a * 'b * 'c`       |
-| `&[Value]`       | `'a array` (no copy) |
-| `Vec<A>`, `&[A]` | `'a array`           |
-| `BTreeMap<A, B>` | `('a, 'b) list`      |
-| `LinkedList<A>`  | `'a list`            |
+| Rust type                 | OCaml type           |
+| ------------------------- | -------------------- |
+| `()`                      | `unit`               |
+| `isize`                   | `int`                |
+| `usize`                   | `int`                |
+| `i8`                      | `int`                |
+| `u8`                      | `int`                |
+| `i16`                     | `int`                |
+| `u16`                     | `int`                |
+| `i32`                     | `int32`              |
+| `u32`                     | `int32`              |
+| `i64`                     | `int64`              |
+| `u64`                     | `int64`              |
+| `f32`                     | `float`              |
+| `f64`                     | `float`              |
+| `str`                     | `string`             |
+| `[u8]`                    | `bytes`              |
+| `String`                  | `string`             |
+| `Option<A>`               | `'a option`          |
+| `Result<A, ocaml::Error>` | `exception`          |
+| `Result<A, B>`            | `('a, 'b) Result.t`  |
+| `(A, B, C)`               | `'a * 'b * 'c`       |
+| `&[Value]`                | `'a array` (no copy) |
+| `Vec<A>`, `&[A]`          | `'a array`           |
+| `BTreeMap<A, B>`          | `('a, 'b) list`      |
+| `LinkedList<A>`           | `'a list`            |
 
 NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `IntoValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
 

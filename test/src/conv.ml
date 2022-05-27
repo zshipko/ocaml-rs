@@ -90,3 +90,9 @@ let%test "get-array-conv" = Util.check_leaks (fun () -> (
   let expected_b = Bytes.of_string "\x01\x02\x03\x04\x05\x0f\xff" in
   array_conv a = expected_b
 ))
+
+let%test "result" = Util.check_leaks (fun () -> (
+  let ok = result_ok "123" in
+  let err = result_error (`Test 123) in
+  result_get_ok ok = Some "123" && result_get_error err = Some (`Test 123) && result_get_ok err = None && result_get_error ok = None
+))

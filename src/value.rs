@@ -322,13 +322,23 @@ impl Value {
     }
 
     /// Result.Ok value
-    pub unsafe fn result_ok(rt: &Runtime, value: impl Into<Value>) -> Value {
-        Self::variant(rt, 0, Some(value.into()))
+    pub unsafe fn result_ok(rt: &Runtime, value: impl IntoValue) -> Value {
+        Self::variant(rt, 0, Some(value.into_value(rt)))
+    }
+
+    /// Convert OCaml `('a, 'b) Result.t` to Rust `Result<Value, Value>`
+    pub unsafe fn result<'a, A: FromValue<'a>, B: FromValue<'a>>(&self) -> Result<A, B> {
+        let tag = self.tag();
+        if tag.0 == 0 {
+            Ok(FromValue::from_value(self.field(0)))
+        } else {
+            Err(FromValue::from_value(self.field(0)))
+        }
     }
 
     /// Result.Error value
-    pub unsafe fn result_error(rt: &Runtime, value: impl Into<Value>) -> Value {
-        Self::variant(rt, 1, Some(value.into()))
+    pub unsafe fn result_error(rt: &Runtime, value: impl IntoValue) -> Value {
+        Self::variant(rt, 1, Some(value.into_value(rt)))
     }
 
     /// Create an OCaml `int`
