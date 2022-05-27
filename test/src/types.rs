@@ -2,6 +2,7 @@ use ocaml::interop::ToOCaml;
 use ocaml::Value;
 
 #[ocaml::func]
+#[ocaml::sig("'a list -> int")]
 pub unsafe fn list_length(
     x: ocaml::List<'static, ocaml::Value>,
 ) -> ocaml::OCaml<'static, ocaml::interop::OCamlInt> {
@@ -9,11 +10,13 @@ pub unsafe fn list_length(
 }
 
 #[ocaml::func]
+#[ocaml::sig("unit -> 'a list")]
 pub fn list_nil() -> ocaml::List<ocaml::Value> {
     ocaml::List::empty()
 }
 
 #[ocaml::func]
+#[ocaml::sig("'a list -> 'a -> 'a list")]
 pub unsafe fn list_cons(
     l: ocaml::List<'static, ocaml::Value>,
     x: ocaml::Value,
@@ -22,6 +25,7 @@ pub unsafe fn list_cons(
 }
 
 #[ocaml::func]
+#[ocaml::sig("int -> int -> int array")]
 pub unsafe fn array_make_range(
     start: ocaml::Uint,
     stop: ocaml::Uint,
@@ -36,11 +40,13 @@ pub unsafe fn array_make_range(
 }
 
 #[ocaml::func]
+#[ocaml::sig("int -> int -> float array")]
 pub fn array_make_range_f(start: isize, stop: isize) -> Vec<f64> {
     (start..stop).map(|x| x as f64).collect()
 }
 
 #[ocaml::func]
+#[ocaml::sig("'a array -> int -> 'a -> 'a option")]
 pub unsafe fn array_replace(
     mut arr: ocaml::Array<ocaml::Value>,
     index: ocaml::Uint,
@@ -52,11 +58,13 @@ pub unsafe fn array_replace(
 }
 
 #[ocaml::func]
+#[ocaml::sig("string -> (int, int8_unsigned_elt, c_layout) Array1.t")]
 pub unsafe fn array1_of_string(x: String) -> ocaml::bigarray::Array1<u8> {
     ocaml::bigarray::Array1::from_slice(x.as_bytes())
 }
 
 #[ocaml::func]
+#[ocaml::sig("int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t")]
 pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
     let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
     let data = ba.data_mut();
@@ -67,6 +75,7 @@ pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<
 }
 
 #[ocaml::func]
+#[ocaml::sig("unit -> (float, float32_elt, c_layout) Array1.t")]
 pub unsafe fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
     ocaml::bigarray::Array1::from_slice(&[1f32, 2f32, 3f32, 4f32, 5f32])
 }

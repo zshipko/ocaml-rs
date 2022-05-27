@@ -1,7 +1,7 @@
-(* Unboxed / more than 5 arguments *)
 
 open Rust
 
+(* Unboxed / more than 5 arguments *)
 external unboxed_float_avg: float -> float -> float = "unboxed_float_avg_bytecode" "unboxed_float_avg" [@@unboxed] [@@noalloc]
 external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
 

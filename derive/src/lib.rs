@@ -52,7 +52,10 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         (name.to_string().to_lowercase(), Mode::Enum, n)
     } else if let Ok(item_fn) = syn::parse::<syn::ItemFn>(item.clone()) {
         let name = &item_fn.sig.ident;
-        let n_args = item_fn.sig.inputs.iter().count();
+        let mut n_args = item_fn.sig.inputs.iter().count();
+        if n_args == 0 {
+            n_args += 1;
+        }
         (name.to_string(), Mode::Func, n_args)
     } else {
         panic!("Invalid use of ocaml::sig macro")
@@ -63,7 +66,8 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         match mode {
             Mode::Func => {
                 let n_args = s.matches("->").count();
-                if n != n_args {
+                let parens = s.matches('(').count();
+                if n != n_args && n != n_args - parens {
                     panic!(
                         "{name}: Signature and function do not have the same number of arguments"
                     )

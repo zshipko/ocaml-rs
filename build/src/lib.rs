@@ -122,6 +122,8 @@ impl Sigs {
 
         let mut f = std::fs::File::create(self.output).unwrap();
 
+        writeln!(f, "open! Bigarray")?;
+
         for t in self.types {
             writeln!(f, "{t}")?;
         }
