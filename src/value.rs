@@ -151,6 +151,16 @@ impl Value {
         }
     }
 
+    /// Helper function to convert from `Value` to `T`
+    pub fn to<T: FromValue>(&self) -> T {
+        T::from_value(Value::Raw(self.raw().0))
+    }
+
+    /// Helper function to convert from `Value` to `T`
+    pub fn into<T: FromValue>(self) -> T {
+        T::from_value(self)
+    }
+
     /// Returns a named value registered by OCaml
     pub unsafe fn named(name: &str) -> Option<Value> {
         let s = match util::CString::new(name) {
@@ -225,7 +235,7 @@ impl Value {
 
     #[inline]
     /// Create a new Value from an existing OCaml `value`
-    pub unsafe fn new(v: impl Into<sys::Value>) -> Value {
+    pub unsafe fn new<T: Into<sys::Value>>(v: T) -> Value {
         Value::Root(Root::new(v.into()))
     }
 
@@ -309,7 +319,7 @@ impl Value {
     }
 
     /// Create a variant value
-    pub unsafe fn variant(rt: &Runtime, tag: u8, value: Option<&Value>) -> Value {
+    pub unsafe fn variant(rt: &Runtime, tag: u8, value: Option<Value>) -> Value {
         match value {
             Some(v) => {
                 let mut value = Value::new(sys::caml_alloc(1, tag));
@@ -321,8 +331,8 @@ impl Value {
     }
 
     /// Result.Ok value
-    pub unsafe fn result_ok(rt: &Runtime, value: impl ToValue) -> Value {
-        Self::variant(rt, 0, Some(&value.to_value(rt)))
+    pub unsafe fn result_ok<T: ToValue>(rt: &Runtime, value: T) -> Value {
+        Self::variant(rt, 0, Some(value.to_value(rt)))
     }
 
     /// Convert OCaml `('a, 'b) Result.t` to Rust `Result<Value, Value>`
@@ -336,8 +346,8 @@ impl Value {
     }
 
     /// Result.Error value
-    pub unsafe fn result_error(rt: &Runtime, value: impl ToValue) -> Value {
-        Self::variant(rt, 1, Some(&value.to_value(rt)))
+    pub unsafe fn result_error<T: ToValue>(rt: &Runtime, value: T) -> Value {
+        Self::variant(rt, 1, Some(value.to_value(rt)))
     }
 
     /// Create an OCaml `int`
@@ -509,7 +519,7 @@ impl Value {
         Err(CamlError::Exception(self).into())
     }
 
-    /// Call a closure with a single argument, returning an exception value
+    /// Call a closure with a single argument, returning an exception result
     pub unsafe fn call1<A: ToValue>(&self, rt: &Runtime, arg1: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);
@@ -522,7 +532,7 @@ impl Value {
         v.check_result()
     }
 
-    /// Call a closure with two arguments, returning an exception value
+    /// Call a closure with two arguments, returning an exception result
     pub unsafe fn call2<A: ToValue, B: ToValue>(
         &self,
         rt: &Runtime,
@@ -544,10 +554,10 @@ impl Value {
             ))
         };
 
-        v.check_result()
+        v.check_result().map(Value::into)
     }
 
-    /// Call a closure with three arguments, returning an exception value
+    /// Call a closure with three arguments, returning an exception result
     pub unsafe fn call3<A: ToValue, B: ToValue, C: ToValue>(
         &self,
         rt: &Runtime,
@@ -572,10 +582,10 @@ impl Value {
             ))
         };
 
-        v.check_result()
+        v.check_result().map(Value::into)
     }
 
-    /// Call a closure with `n` arguments, returning an exception Result
+    /// Call a closure with `n` arguments, returning an exception result
     pub unsafe fn call_n<A: AsRef<[Raw]>>(&self, args: A) -> Result<Value, Error> {
         if self.tag() != Tag::CLOSURE {
             return Err(Error::NotCallable);

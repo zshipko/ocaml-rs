@@ -50,7 +50,7 @@ pub unsafe fn array_replace(
     index: ocaml::Uint,
     x: Value,
 ) -> Result<Option<Value>, ocaml::Error> {
-    let y = arr.get(index)?;
+    let y = arr.get(gc, index)?;
     arr.set(gc, index, &x)?;
     Ok(Some(y))
 }

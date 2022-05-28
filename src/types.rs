@@ -108,7 +108,12 @@ impl<T: ToValue + FromValue> Array<T> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
-        self.set_unchecked(rt, i, v);
+
+        if self.is_f64() {
+            self.0.store_f64_field(i, v.to_value(rt).f64_val())
+        } else {
+            self.set_unchecked(rt, i, v);
+        }
         Ok(())
     }
 
@@ -123,11 +128,16 @@ impl<T: ToValue + FromValue> Array<T> {
     }
 
     /// Get array index
-    pub fn get(&self, i: usize) -> Result<T, Error> {
+    pub unsafe fn get(&self, rt: &Runtime, i: usize) -> Result<T, Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
-        Ok(unsafe { self.get_unchecked(i) })
+
+        if self.is_f64() {
+            return Ok(FromValue::from_value(self.0.f64_field(i).to_value(rt)));
+        }
+
+        Ok(self.get_unchecked(i))
     }
 
     /// Get array index without bounds checking
@@ -158,15 +168,16 @@ impl<T: ToValue + FromValue> Array<T> {
 
     /// Array as `Vec`
     #[cfg(not(feature = "no-std"))]
-    pub fn as_vec(&self) -> Vec<T> {
+    pub unsafe fn as_vec(&self, rt: &Runtime) -> Result<Vec<T>, Error> {
         let mut dest = Vec::new();
         let len = self.len();
 
         for i in 0..len {
-            unsafe { dest.push(self.get_unchecked(i)) }
+            let x = self.get(rt, i)?;
+            dest.push(x)
         }
 
-        dest
+        Ok(dest)
     }
 }
 
