@@ -12,3 +12,4 @@ _build
 examples/ocaml/test
 *.merlin
 *.install
+book/book

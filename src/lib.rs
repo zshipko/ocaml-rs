@@ -15,9 +15,9 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! // Automatically derive `IntoValue` and `FromValue`
+//! // Automatically derive `ToValue` and `FromValue`
 //! #[cfg(feature = "derive")]
-//! #[derive(ocaml::IntoValue, ocaml::FromValue)]
+//! #[derive(ocaml::ToValue, ocaml::FromValue)]
 //! #[ocaml::sig("{name: string; i: int}")]
 //! struct Example {
 //!     name: String,
@@ -128,7 +128,7 @@ pub use ocaml_sys as sys;
 #[cfg(feature = "derive")]
 pub use ocaml_derive::{
     ocaml_bytecode_func as bytecode_func, ocaml_func as func, ocaml_native_func as native_func,
-    ocaml_sig as sig, FromValue, IntoValue,
+    ocaml_sig as sig, FromValue, ToValue,
 };
 
 #[macro_use]
@@ -155,7 +155,7 @@ pub use crate::error::{CamlError, Error};
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Pointer};
-pub use crate::value::{FromValue, IntoValue, Raw, Value};
+pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 #[cfg(not(feature = "no-std"))]
 pub use crate::macros::inital_setup;
@@ -184,7 +184,7 @@ mod tests;
 macro_rules! import {
     ($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?) => {
         $vis unsafe fn $name(rt: &$crate::Runtime, $($arg: &$t),*) -> Result<$crate::interop::default_to_unit!($($r)?), $crate::Error> {
-            use $crate::{IntoValue, FromValue};
+            use $crate::{ToValue, FromValue};
             type R = $crate::interop::default_to_unit!($($r)?);
             let ocaml_rs_named_func = match $crate::Value::named(stringify!($name)) {
                 Some(x) => x,
@@ -196,7 +196,7 @@ macro_rules! import {
                     return Err($crate::Error::Message(msg));
                 },
             };
-            $(let $arg = $arg.into_value(rt);)*
+            $(let $arg = $arg.to_value(rt);)*
             let mut args = [$($arg.raw()),*];
             if args.is_empty() {
                 args = [$crate::Value::unit().raw()];

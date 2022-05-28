@@ -1,6 +1,6 @@
-use ocaml::{interop::ToOCaml, FromValue, IntoValue};
+use ocaml::{interop::ToOCaml, FromValue, ToValue};
 
-#[derive(IntoValue, FromValue)]
+#[derive(ToValue, FromValue)]
 #[ocaml::sig("Empty | First of int | Second of string array")]
 enum Enum1<'a> {
     Empty,
@@ -25,7 +25,7 @@ pub unsafe fn enum1_first(i: ocaml::Value) -> Enum1 {
 #[ocaml::sig("string -> enum1")]
 pub unsafe fn enum1_make_second(s: String) -> Enum1 {
     let mut arr = ocaml::Array::alloc(1);
-    let _ = arr.set(test, 0, s);
+    let _ = arr.set(test, 0, &s);
     Enum1::Second(arr)
 }
 
@@ -44,7 +44,7 @@ pub fn enum1_is_empty(e: Enum1) -> bool {
     matches!(e, Enum1::Empty)
 }
 
-#[derive(IntoValue, FromValue, Default)]
+#[derive(ToValue, FromValue, Default)]
 #[ocaml::sig("{a: int; b: float; mutable c: string option; d: string array option;}")]
 struct Struct1 {
     a: ocaml::Int,
@@ -116,7 +116,7 @@ pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
 #[ocaml::func]
 #[ocaml::sig("unit -> (string * int) array")]
 pub fn pair_vec() -> ocaml::Value {
-    vec![("foo", 1), ("bar", 2isize)].into_value(gc)
+    vec![("foo", 1), ("bar", 2isize)].to_value(gc)
 }
 
 #[ocaml::native_func]
@@ -126,7 +126,7 @@ pub fn string_array() -> ocaml::Value {
     for i in 1..10000000 {
         v.push(format!("foo {}", i));
     }
-    v.into_value(gc)
+    v.to_value(gc)
 }
 
 #[ocaml::func]

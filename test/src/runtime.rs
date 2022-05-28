@@ -1,4 +1,4 @@
-use ocaml::{IntoValue, Value};
+use ocaml::{ToValue, Value};
 
 #[no_mangle]
 pub extern "C" fn unboxed_float_avg(a: f64, b: f64) -> f64 {
@@ -50,7 +50,7 @@ pub fn mutable_parameter_with_more_than_five_arguments(
 #[ocaml::func]
 #[ocaml::sig("float -> unit")]
 pub fn raise_exc(x: ocaml::Float) -> Result<(), ocaml::Error> {
-    ocaml::Error::raise_with_arg("Exc", x.into_value(gc))
+    ocaml::Error::raise_with_arg("Exc", x.to_value(gc))
 }
 
 #[ocaml::func]

@@ -21,7 +21,7 @@ pub unsafe fn list_cons(
     l: ocaml::List<'static, ocaml::Value>,
     x: ocaml::Value,
 ) -> ocaml::List<'static, ocaml::Value> {
-    l.add(gc, x)
+    l.add(gc, &x)
 }
 
 #[ocaml::func]
@@ -34,7 +34,7 @@ pub unsafe fn array_make_range(
     let mut arr = ocaml::Array::alloc(len);
 
     for i in 0..len {
-        arr.set(gc, i, Value::uint(i + start))?;
+        arr.set(gc, i, &Value::uint(i + start))?;
     }
     Ok(arr)
 }
@@ -53,7 +53,7 @@ pub unsafe fn array_replace(
     x: Value,
 ) -> Result<Option<Value>, ocaml::Error> {
     let y = arr.get(index)?;
-    arr.set(gc, index, x)?;
+    arr.set(gc, index, &x)?;
     Ok(Some(y))
 }
 

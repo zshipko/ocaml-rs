@@ -29,12 +29,12 @@ ocaml::custom!(Testing {
 
 #[ocaml::func]
 #[ocaml::sig("int64 -> testing")]
-pub fn testing_alloc(b: i64) -> Testing {
-    Testing {
+pub fn testing_alloc(b: i64) -> ocaml::Pointer<Testing> {
+    ocaml::Pointer::alloc_custom(Testing {
         a: 0.0,
         b,
         c: String::new(),
-    }
+    })
 }
 
 #[ocaml::func]
@@ -70,8 +70,8 @@ ocaml::custom_finalize!(TestingCallback, testing_callback_finalize);
 
 #[ocaml::func]
 #[ocaml::sig("(int -> float) -> testing_callback")]
-pub fn testing_callback_alloc(func: ocaml::Value) -> TestingCallback {
-    TestingCallback { func }
+pub fn testing_callback_alloc(func: ocaml::Value) -> ocaml::Pointer<TestingCallback> {
+    ocaml::Pointer::alloc_custom(TestingCallback { func })
 }
 
 #[ocaml::func]
@@ -80,5 +80,5 @@ pub unsafe fn testing_callback_call(
     t: ocaml::Pointer<TestingCallback>,
     x: ocaml::Int,
 ) -> Result<ocaml::Float, ocaml::Error> {
-    t.as_ref().func.call(gc, [x])
+    t.as_ref().func.call(gc, [&x])
 }

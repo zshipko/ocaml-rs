@@ -91,11 +91,11 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(#field.into_value(gc)))
+            variant.each(|field| quote!(#field.to_value(gc)))
         } else {
             let mut idx = 0usize;
             let ghost = (0..arity)
-                .map(|idx| quote!(unsafe { value.store_field(gc, #idx, ocaml::Value::unit()) }));
+                .map(|idx| quote!(unsafe { value.store_field(gc, #idx, &ocaml::Value::unit()) }));
             let init = quote!(
                 value = unsafe { ocaml::Value::alloc(#arity, ocaml::Tag(#tag)) };
                 #(#ghost);*;
@@ -109,8 +109,8 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
     });
 
     s.gen_impl(quote! {
-        gen unsafe impl ocaml::IntoValue for @Self {
-            fn into_value(self, gc: &ocaml::Runtime) -> ocaml::Value {
+        gen unsafe impl ocaml::ToValue for @Self {
+            fn to_value(&self, gc: &ocaml::Runtime) -> ocaml::Value {
                 let mut value = ocaml::Value::unit();
                 match self {
                     #(#body),*

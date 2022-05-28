@@ -19,7 +19,8 @@ pub unsafe fn apply3(f: Value, x: Value) -> Result<Value, Error> {
 pub unsafe fn apply_range(f: Value, start: ocaml::Int, stop: ocaml::Int) -> Result<Value, Error> {
     let mut l = ocaml::List::empty();
     for i in start..stop {
-        l = l.add(gc, stop - 1 - i)
+        let v = stop - 1 - i;
+        l = l.add(gc, &v)
     }
 
     f.call1(gc, l)

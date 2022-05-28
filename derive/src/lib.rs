@@ -219,7 +219,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 let res = inner(#gc_name, #param_names);
                 #[allow(unused_unsafe)]
                 let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
-                unsafe { ocaml::IntoValue::into_value(res, &gc_).raw() }
+                unsafe { ocaml::ToValue::to_value(&res, &gc_).raw() }
             })
         }
     };
@@ -480,7 +480,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name).raw()
+                ocaml::ToValue::to_value(&res, &#gc_name).raw()
             }
         }
     } else {
@@ -507,11 +507,11 @@ fn ocaml_bytecode_func_impl(
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name).raw()
+                ocaml::ToValue::to_value(&res, &#gc_name).raw()
             }
         }
     }
 }
 
-synstructure::decl_derive!([IntoValue, attributes(ocaml)] => derive::intovalue_derive);
+synstructure::decl_derive!([ToValue, attributes(ocaml)] => derive::intovalue_derive);
 synstructure::decl_derive!([FromValue, attributes(ocaml)] => derive::fromvalue_derive);
