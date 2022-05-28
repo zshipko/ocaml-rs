@@ -24,18 +24,18 @@ pub fn inital_setup() {
     ::std::panic::set_hook(Box::new(|info| unsafe {
         let err = info.payload();
         let msg = if err.is::<&str>() {
-            err.downcast_ref::<&str>().unwrap()
+            err.downcast_ref::<&str>().unwrap().to_string()
         } else if err.is::<String>() {
-            err.downcast_ref::<String>().unwrap().as_ref()
+            err.downcast_ref::<String>().unwrap().clone()
         } else {
-            "rust panic"
+            format!("{:?}", err)
         };
 
         if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(err, msg);
+            crate::Error::raise_value(err, &msg);
         }
 
-        crate::Error::raise_failure(msg)
+        crate::Error::raise_failure(&msg)
     }))
 }
 
