@@ -366,7 +366,7 @@ unsafe impl<'a> FromValue for &'a mut [Raw] {
 }
 
 #[cfg(not(feature = "no-std"))]
-unsafe impl<'a, K: Ord + FromValue, V: FromValue> FromValue for std::collections::BTreeMap<K, V> {
+unsafe impl<K: Ord + FromValue, V: FromValue> FromValue for std::collections::BTreeMap<K, V> {
     fn from_value(v: Value) -> std::collections::BTreeMap<K, V> {
         let mut dest = std::collections::BTreeMap::new();
         unsafe {
