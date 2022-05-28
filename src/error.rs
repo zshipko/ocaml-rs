@@ -240,7 +240,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
     }
 }
 
-unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
+unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
@@ -252,7 +252,7 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
     }
 }
 
-unsafe impl<'a, A: FromValue<'a>, B: FromValue<'a>> FromValue<'a> for Result<A, B> {
+unsafe impl<A: FromValue, B: FromValue> FromValue for Result<A, B> {
     fn from_value(value: Value) -> Result<A, B> {
         unsafe { value.result() }
     }

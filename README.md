@@ -62,7 +62,7 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Features
 
 - `derive`
-  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `IntoValue`
+  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
 - `link`
   * link the native OCaml runtime, this should only be used when no OCaml code will be linked statically
 - `no-std`
@@ -75,8 +75,8 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Examples
 
 ```rust
-// Automatically derive `IntoValue` and `FromValue`
-#[derive(ocaml::IntoValue, ocaml::FromValue)]
+// Automatically derive `ToValue` and `FromValue`
+#[derive(ocaml::ToValue, ocaml::FromValue)]
 #[ocaml::sig("{name: string; i: int}")]
 struct Example<'a> {
     name: &'a str,
@@ -198,7 +198,7 @@ This chart contains the mapping between Rust and OCaml types used by `ocaml::fun
 | `BTreeMap<A, B>`          | `('a, 'b) list`      |
 | `LinkedList<A>`           | `'a list`            |
 
-NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `IntoValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
+NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
 
 If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
 

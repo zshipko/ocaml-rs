@@ -67,7 +67,7 @@ pub unsafe trait ToValue {
 /// NOTE: This should only be used after the OCaml runtime has been initialized, when calling
 /// Rust functions from OCaml, the runtime is already initialized otherwise `ocaml::Runtime::init`
 /// should be used
-pub unsafe trait FromValue<'a> {
+pub unsafe trait FromValue {
     /// Convert from OCaml value
     fn from_value(v: Value) -> Self;
 }
@@ -78,8 +78,7 @@ unsafe impl ToValue for Value {
     }
 }
 
-unsafe impl<'a> FromValue<'a> for Value {
-    #[allow(clippy::wrong_self_convention)]
+unsafe impl FromValue for Value {
     fn from_value(v: Value) -> Value {
         v
     }
@@ -91,7 +90,7 @@ unsafe impl ToValue for Raw {
     }
 }
 
-unsafe impl<'a> FromValue<'a> for Raw {
+unsafe impl FromValue for Raw {
     #[inline]
     fn from_value(v: Value) -> Raw {
         v.raw().0.into()
@@ -116,14 +115,14 @@ unsafe impl<T> ToValue for BoxRoot<T> {
     }
 }
 
-unsafe impl<'a, T> FromValue<'a> for BoxRoot<T> {
+unsafe impl<T> FromValue for BoxRoot<T> {
     fn from_value(v: Value) -> BoxRoot<T> {
-        let ocaml: OCaml<'a, T> = FromValue::from_value(v);
+        let ocaml: OCaml<T> = FromValue::from_value(v);
         ocaml.root()
     }
 }
 
-unsafe impl<'a, T> FromValue<'a> for OCaml<'a, T> {
+unsafe impl<'a, T> FromValue for OCaml<'a, T> {
     fn from_value<'b>(v: Value) -> OCaml<'a, T> {
         // NOTE: this should only be used after the runtime is initialized
         let rt = unsafe { Runtime::recover_handle() };
@@ -327,7 +326,7 @@ impl Value {
     }
 
     /// Convert OCaml `('a, 'b) Result.t` to Rust `Result<Value, Value>`
-    pub unsafe fn result<'a, A: FromValue<'a>, B: FromValue<'a>>(&self) -> Result<A, B> {
+    pub unsafe fn result<A: FromValue, B: FromValue>(&self) -> Result<A, B> {
         let tag = self.tag();
         if tag.0 == 0 {
             Ok(FromValue::from_value(self.field(0)))
@@ -595,7 +594,7 @@ impl Value {
 
     /// Call a closure with a variable number of arguments, returning and exception Result
     #[cfg(not(feature = "no-std"))]
-    pub unsafe fn call<'a, const N: usize, T: FromValue<'a>>(
+    pub unsafe fn call<const N: usize, T: FromValue>(
         &self,
         rt: &Runtime,
         args: [impl ToValue; N],

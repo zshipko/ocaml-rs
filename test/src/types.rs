@@ -3,9 +3,7 @@ use ocaml::Value;
 
 #[ocaml::func]
 #[ocaml::sig("'a list -> int")]
-pub unsafe fn list_length(
-    x: ocaml::List<'static, ocaml::Value>,
-) -> ocaml::OCaml<'static, ocaml::interop::OCamlInt> {
+pub unsafe fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::OCaml<ocaml::interop::OCamlInt> {
     ocaml::OCaml::of_i32(x.len() as i32)
 }
 
@@ -18,9 +16,9 @@ pub fn list_nil() -> ocaml::List<ocaml::Value> {
 #[ocaml::func]
 #[ocaml::sig("'a list -> 'a -> 'a list")]
 pub unsafe fn list_cons(
-    l: ocaml::List<'static, ocaml::Value>,
+    l: ocaml::List<ocaml::Value>,
     x: ocaml::Value,
-) -> ocaml::List<'static, ocaml::Value> {
+) -> ocaml::List<ocaml::Value> {
     l.add(gc, &x)
 }
 

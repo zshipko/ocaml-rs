@@ -45,7 +45,7 @@ impl Default for CustomOps {
 /// #[cfg(feature = "derive")]
 /// #[ocaml::func]
 /// pub unsafe fn example() -> ocaml::Pointer<Example> {
-///     ocaml::Pointer::alloc_custom(Example(123))
+///     Example(123).into()
 /// }
 ///
 /// #[cfg(feature = "derive")]

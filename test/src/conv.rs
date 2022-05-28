@@ -2,10 +2,10 @@ use ocaml::{interop::ToOCaml, FromValue, ToValue};
 
 #[derive(ToValue, FromValue)]
 #[ocaml::sig("Empty | First of int | Second of string array")]
-enum Enum1<'a> {
+enum Enum1 {
     Empty,
     First(ocaml::Int),
-    Second(ocaml::Array<'a, String>),
+    Second(ocaml::Array<String>),
 }
 
 #[ocaml::func]
@@ -31,7 +31,7 @@ pub unsafe fn enum1_make_second(s: String) -> Enum1 {
 
 #[ocaml::func]
 #[ocaml::sig("enum1 -> string array option")]
-pub fn enum1_get_second_value(e: Enum1<'static>) -> Option<ocaml::Array<'static, String>> {
+pub fn enum1_get_second_value(e: Enum1) -> Option<ocaml::Array<String>> {
     match e {
         Enum1::Second(x) => Some(x),
         Enum1::Empty | Enum1::First(_) => None,
@@ -50,7 +50,7 @@ struct Struct1 {
     a: ocaml::Int,
     b: ocaml::Float,
     c: Option<String>,
-    d: Option<ocaml::Array<'static, String>>,
+    d: Option<ocaml::Array<String>>,
 }
 
 #[ocaml::func]
@@ -85,7 +85,7 @@ pub unsafe fn make_struct1(
     a: ocaml::Int,
     b: ocaml::Float,
     c: Option<String>,
-    d: Option<ocaml::Array<'static, String>>,
+    d: Option<ocaml::Array<String>>,
 ) -> Result<Struct1, ocaml::Error> {
     Ok(Struct1 { a, b, c, d })
 }

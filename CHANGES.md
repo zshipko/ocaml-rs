@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Removed `IntoValue` and added `ToValue`
+- Removed `IntoValue` and added `ToValue` because it now accepts a reference to self
 - `Custom` types now have to be wrapped in a `Pointer<T>`
 - Added `ocaml::import!` macro for calling OCaml functions from Rust
 - Added `ocaml::sig` proc-macro for generating `external` and type signatures

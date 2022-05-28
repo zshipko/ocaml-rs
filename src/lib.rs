@@ -136,6 +136,7 @@ mod macros;
 
 mod conv;
 mod error;
+mod pointer;
 mod tag;
 mod types;
 mod util;
@@ -152,9 +153,10 @@ pub mod custom;
 
 pub use crate::custom::Custom;
 pub use crate::error::{CamlError, Error};
+pub use crate::pointer::Pointer;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
-pub use crate::types::{bigarray, Array, List, Pointer};
+pub use crate::types::{bigarray, Array, List};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 #[cfg(not(feature = "no-std"))]
