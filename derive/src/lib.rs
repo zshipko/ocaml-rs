@@ -70,11 +70,12 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         match mode {
             Mode::Func => {
                 let n_args = s.matches("->").count();
-                let parens = s.matches('(').count();
+                let last_index = s.rfind("->").unwrap_or_default();
+                let parens = s[..last_index].matches('(').count();
                 if n != n_args && n != n_args - parens {
                     panic!(
                         "{name}: Signature and function do not have the same number of arguments"
-                    )
+                    );
                 }
             }
             Mode::Enum => {

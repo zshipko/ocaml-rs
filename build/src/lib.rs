@@ -116,6 +116,8 @@ impl Sigs {
                         handle(item.attrs, |ty| {
                             let def = if ty.is_empty() {
                                 format!("type {name}")
+                            } else if !ty.trim_start().starts_with('{') {
+                                format!("type {}{name}{} = {ty}", '{', '}')
                             } else {
                                 format!("type {name} = {ty}")
                             };
