@@ -53,10 +53,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         (name.to_string().to_lowercase(), Mode::Enum, n)
     } else if let Ok(item_fn) = syn::parse::<syn::ItemFn>(item.clone()) {
         let name = &item_fn.sig.ident;
-        let mut n_args = item_fn.sig.inputs.iter().count();
-        if n_args == 0 {
-            n_args += 1;
-        }
+        let n_args = item_fn.sig.inputs.iter().count();
         (name.to_string(), Mode::Func, n_args)
     } else if let Ok(item) = syn::parse::<syn::ItemType>(item.clone()) {
         let name = &item.ident;
@@ -69,12 +66,42 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         let s = sig.value();
         match mode {
             Mode::Func => {
-                let n_args = s.matches("->").count();
-                let last_index = s.rfind("->").unwrap_or_default();
-                let parens = s[..last_index].matches('(').count();
-                if n != n_args && n != n_args - parens {
+                let mut n_args = 0;
+                let mut dash = false;
+                let mut gt;
+                let mut paren_level = 0;
+                let iter = s.chars();
+                for ch in iter {
+                    if ch == '-' {
+                        dash = true;
+                    } else if ch != '>' {
+                        dash = false;
+                    }
+
+                    if ch == '>' {
+                        gt = true;
+                    } else {
+                        gt = false;
+                    }
+
+                    if ch == '(' {
+                        paren_level += 1;
+                    } else if ch == ')' {
+                        paren_level -= 1;
+                    }
+
+                    if dash && gt && paren_level == 0 {
+                        n_args += 1;
+                    }
+                }
+
+                if n == 0 && !s.trim().starts_with("unit") {
+                    panic!("{name}: Expected a single unit argument");
+                }
+
+                if n != n_args && (n == 0 && n_args > 1) {
                     panic!(
-                        "{name}: Signature and function do not have the same number of arguments"
+                        "{name}: Signature and function do not have the same number of arguments (expected: {n}, got {n_args})"
                     );
                 }
             }
@@ -85,7 +112,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                         n_variants -= 1;
                     }
                     if n != n_variants {
-                        panic!("{name}: Signature and enum do not have the same number of variants")
+                        panic!("{name}: Signature and enum do not have the same number of variants (expected: {n}, got {n_variants})")
                     }
                 }
             }
@@ -93,7 +120,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 if !s.is_empty() {
                     let n_fields = s.matches(':').count();
                     if n != n_fields {
-                        panic!("{name} Signature and struct do not have the same number of fields")
+                        panic!("{name} Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})")
                     }
                 }
             }
