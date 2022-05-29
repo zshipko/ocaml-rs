@@ -1,6 +1,4 @@
-[ocaml-rs](https://github.com/zshipko/ocaml-rs) is a Rust crate for interacting with the OCaml runtime. It allows you to write functions in Rust that can be called from OCaml and vice-versa. `ocaml-rs` also does automatic conversion between OCaml and Rust representations.
-
-There are several crates that make this possible:
+[ocaml-rs](https://github.com/zshipko/ocaml-rs) is a Rust crate for interacting with the OCaml runtime. It allows you to write functions in Rust that can be called from OCaml and vice-versa. `ocaml-rs` also does automatic conversion between OCaml and Rust representations. There are several crates that make this possible:
 
 * [ocaml-sys](https://crates.io/crates/ocaml-sys) - Low level bindings to the OCaml runtime
 * [ocaml-boxroot-sys](https://crates.io/crates/ocaml-boxroot-sys) - Bindings to [ocaml-boxroot](https://gitlab.com/ocaml-rust/ocaml-boxroot/), which handles safe allocation of OCaml values
@@ -8,6 +6,8 @@ There are several crates that make this possible:
 * [ocaml-derive](https://crates.io/crates/ocaml-derive) - Procedural macros: `ocaml::func`, `ocaml::sig`, `derive(FromValue)`, `derive(ToValue)`
 * [ocaml-build](https://crates.io/crates/ocaml-build) - Generate OCaml interfaces from `ocaml::sig` definitions
 * [ocaml](https://crates.io/crates/ocaml) - Higher level bindings built using the crates listed above
+
+Before going any further, it may be helpful to read through the [Interfacing C with OCaml](https://v2.ocaml.org/manual/intfc.html) from the OCaml handbook if you haven't already!
 
 ## Initial setup
 
@@ -71,16 +71,16 @@ To simplify the full setup process, take a look at [ocaml-rust-starter](https://
 
 ## Writing your first `ocaml::func`
 
-`ocaml::func` is the highest-level macro that can be used to generate OCaml functions. It's built on `ocaml::native_func` which only works on `Value` parameters and `ocaml::bytecode_func` which is used for generating bytecode functions. `ocaml::func` will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime.
+`ocaml::func` is the highest-level macro that can be used to generate OCaml functions. It's built on `ocaml::native_func` which only works on `Value` parameters and `ocaml::bytecode_func` which is used for generating bytecode functions. `ocaml::func` will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime. `ocaml::func` handles using `CAMLparam`/`CAMLlocal`/`CAMLreturn` correctly for you, often making it much easier to write bindings than using the C API directly, particularly for those who haven't used the OCaml C API before.
 
-All `ocaml::func`'s have an implicit `gc` variable which is used to access the OCaml runtime. To make this explicit you can define the name by providing it as an argument to the `ocaml::func` macro:
+All `ocaml::func`'s have an implicit `gc` variable which is used to access the OCaml runtime. To pick another name you can provide it as an argument to the `ocaml::func` macro:
 
 ```rust,ignore
 #[ocaml::func(my_gc_name)]
 ...
 ```
 
-The following example will read a file and return the contents, we will ignore error handling for now since that will be covered later - however, one thing worth mentioning now is that Rust panics will be converted into OCaml exceptions.
+The following example will read a file and return the contents, we will ignore error handling for now since that will be covered later - however, one thing worth mentioning is that Rust panics will be converted into OCaml exceptions.
 
 ```rust
 # extern crate ocaml;
