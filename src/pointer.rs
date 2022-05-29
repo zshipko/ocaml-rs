@@ -31,7 +31,10 @@ impl<T: Custom> From<T> for Pointer<T> {
     }
 }
 
-unsafe extern "C" fn ignore(_: Raw) {}
+unsafe extern "C" fn drop_value<T>(raw: Raw) {
+    let p = raw.as_pointer::<T>();
+    p.drop_in_place();
+}
 
 impl<T: Custom> Pointer<T> {
     /// Allocate a `Custom` value
@@ -60,12 +63,17 @@ impl<T> Pointer<T> {
         unsafe {
             let value = match finalizer {
                 Some(f) => Value::alloc_final::<T>(f, used_max),
-                None => Value::alloc_final::<T>(ignore, used_max),
+                None => Value::alloc_final::<T>(drop_value::<T>, used_max),
             };
             let mut ptr = Pointer(value, PhantomData);
             ptr.set(x);
             ptr
         }
+    }
+
+    /// Allocate a new abstract value
+    pub fn alloc(x: T) -> Pointer<T> {
+        Self::alloc_final(x, None, None)
     }
 
     /// Drop pointer in place

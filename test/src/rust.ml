@@ -42,12 +42,16 @@ external gc_compact: unit -> unit = "gc_compact"
 
 type testing
 type testing_callback
+type file
 external testing_alloc: int64 -> testing = "testing_alloc"
 external testing_set_c: testing -> string -> unit = "testing_set_c"
 external testing_set_a: testing -> float -> unit = "testing_set_a"
 external testing_get_values: testing -> (float * int64 * string) = "testing_get_values"
 external testing_callback_alloc: (int -> float) -> testing_callback = "testing_callback_alloc"
 external testing_callback_call: testing_callback -> int -> float = "testing_callback_call"
+external file_open: string -> file = "file_open"
+external file_read: file -> string = "file_read"
+external file_close: file -> unit = "file_close"
 
 (* file: /mnt/devel/ocaml-rs/test/src/conv.rs *)
 

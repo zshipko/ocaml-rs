@@ -82,3 +82,32 @@ pub unsafe fn testing_callback_call(
 ) -> Result<ocaml::Float, ocaml::Error> {
     t.as_ref().func.call(gc, [&x])
 }
+
+// Abstract
+
+use std::io::Read;
+
+#[ocaml::sig("")]
+type File = std::fs::File;
+
+#[ocaml::func]
+#[ocaml::sig("string -> file")]
+pub fn file_open(filename: &str) -> Result<ocaml::Pointer<File>, ocaml::Error> {
+    let f = File::open(filename)?;
+    Ok(ocaml::Pointer::alloc(f))
+}
+
+#[ocaml::func]
+#[ocaml::sig("file -> string")]
+pub fn file_read(mut file: ocaml::Pointer<File>) -> Result<String, ocaml::Error> {
+    let mut s = String::new();
+    let file = file.as_mut();
+    file.read_to_string(&mut s)?;
+    Ok(s)
+}
+
+#[ocaml::func]
+#[ocaml::sig("file -> unit")]
+pub unsafe fn file_close(file: ocaml::Pointer<File>) {
+    file.drop_in_place();
+}

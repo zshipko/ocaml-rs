@@ -27,3 +27,15 @@ let%test "testing callback 2" = Util.check_leaks (fun () -> (
   Util.gc ();
   testing_callback_call c 5 = sin 5.0)
 )
+
+let%test "testing abstract" = Util.check_leaks (fun () -> (
+  let a = open_in "./custom.ml" in
+  let len = in_channel_length a in
+  let s = really_input_string a len in
+  let () = close_in a in
+  assert (String.length s = len);
+  let f = file_open "./custom.ml" in
+  let s' = file_read f in
+  let () = file_close f in
+  s = s'
+))
