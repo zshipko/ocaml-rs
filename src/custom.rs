@@ -161,8 +161,8 @@ pub trait Custom {
 /// ```
 #[macro_export]
 macro_rules! custom {
-    ($name:ident $(<$t:tt>)? $({$($k:ident : $v:expr),* $(,)? })?) => {
-        impl $(<$t>)? $crate::Custom for $name $(<$t>)? {
+    ($name:ident $(<$($t:tt),*>)? $({$($k:ident : $v:expr),* $(,)? })?) => {
+        impl $(<$($t),*>)? $crate::Custom for $name $(<$($t),*>)? {
             $crate::custom! {
                 name: concat!("rust.", stringify!($name))
                 $(, $($k: $v),*)?
