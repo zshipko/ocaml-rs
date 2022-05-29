@@ -28,6 +28,8 @@ Additionally, on macOS you may need to add a `.cargo/config` with the following:
 rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 ```
 
+This is because macOS doesn't allow undefined symbols in dynamic libraries by default.
+
 If you plan on using `ocaml-build`:
 
 ```toml
@@ -67,7 +69,40 @@ Next you will need to add setup a [dune](https://dune.build) project to handle c
 
 It can take a little trial and error to get this right depending on the specifics of your project!
 
+Additionally, if you plan on releasing to [opam](https://github.com/ocaml/opam), you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:
+
+```shell
+cargo vendor
+```
+
+then follow the instructions for editing `.cargo/config`
+
+
 To simplify the full setup process, take a look at [ocaml-rust-starter](https://github.com/zshipko/ocaml-rust-starter).
+
+## Build options
+
+By default, building `ocaml-sys` will invoke the `ocamlopt` command to figure out the version and location of the OCaml compiler. There are a few environment variables to control this.
+
+- `OCAMLOPT` (default: `ocamlopt`) is the command that will invoke `ocamlopt`
+- `OCAML_VERSION` (default: result of `$OCAMLOPT -version`) is the target runtime OCaml version.
+- `OCAML_WHERE_PATH` (default: result of `$OCAMLOPT -where`) is the path of the OCaml standard library.
+- `OCAML_INTEROP_NO_CAML_STARTUP` (default: unset) can be set when loading an `ocaml-rs` library into an OCaml
+  bytecode runtime (such as `utop`) to avoid linking issues with `caml_startup`
+
+If both `OCAML_VERSION` and `OCAML_WHERE_PATH` are present, their values are used without invoking `ocamlopt`. If any of those two env variables is undefined, then `ocamlopt` will be invoked to obtain both values.
+
+Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for saving time in CI environments where an OCaml install is not really required (to run `clippy` for example).
+
+### Features
+
+- `derive`
+  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
+- `link`
+  * link the native OCaml runtime, this should only be used when no OCaml code will be linked statically
+- `no-std`
+  * Allows `ocaml` to be used in `#![no_std]` environments like MirageOS
+
 
 ## Writing your first `ocaml::func`
 

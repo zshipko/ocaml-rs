@@ -31,6 +31,9 @@ Below is a list of types that implement these traits in `ocaml-rs` and their cor
 | `BTreeMap<A, B>`          | `('a, 'b) list`      |
 | `LinkedList<A>`           | `'a list`            |
 
+NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
+
+If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
 
 ## Implementing `ToValue` and `FromValue`
 
@@ -62,6 +65,8 @@ This can also be accomplished using the derive macros:
 #[derive(ocaml::ToValue, ocaml::FromValue)]
 pub struct MyType(i32);
 ```
+
+`derive(ToValue, FromValue)` will work on any struct or enum that are comprised of types that also implement `ToValue` and `FromValue`
 
 ## Types that work directly on OCaml values
 

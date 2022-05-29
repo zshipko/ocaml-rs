@@ -8,6 +8,8 @@ test-ocaml:
 	@dune runtest --root=test --force --no-buffer
 
 test-book:
+	@cargo clean
+	@cargo build
 	@mdbook test doc -L ./target/debug/deps
 
 build-book:
