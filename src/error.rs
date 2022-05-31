@@ -183,7 +183,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
                 crate::sys::caml_array_bound_error();
             },
             Err(Error::Caml(CamlError::OutOfMemory)) => unsafe {
-                crate::sys::caml_array_bound_error();
+                crate::sys::caml_raise_out_of_memory();
             },
             Err(Error::Caml(CamlError::EndOfFile)) => unsafe {
                 crate::sys::caml_raise_end_of_file()
