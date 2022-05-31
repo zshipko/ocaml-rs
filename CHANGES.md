@@ -8,10 +8,8 @@
 - Renamed `Value::call` to `Value::call1` and rewrote `Value::call` to take a variable number of
   arguments
 - Added support for automatic conversion between OCaml `Result.t` and Rust `Result`
-- Renamed `Value::float` to `Value::f64` and `Value::float_val` to `Value::f64_val`
-- Renamed `Array::set_double` to `Array::set_f64`, `Array::get_double` to `Array::get_f64`
-  and `Array::is_double_array` to `Array::is_f64`
-- Added `Value::alloc_f64_array`, `Value::f64_field` and `Value::store_f64_field`
+- Renamed `Value::float` to `Value::double` and `Value::float_val` to `Value::double_val`
+- Added `Value::alloc_double_array`, `Value::double_field` and `Value::store_double_field`
 - Improved support for float arrays in ocaml-sys
 
 ## 0.22.4

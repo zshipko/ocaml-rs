@@ -2,13 +2,7 @@
 
 open! Bigarray
 
-(* file: /mnt/devel/ocaml-rs/test/src/callbacks.rs *)
-
-external apply1: ('a -> 'b) -> 'a -> 'b = "apply1"
-external apply3: ('a -> 'b) -> 'a -> 'b = "apply3"
-external apply_range: (int list -> 'a) -> int -> int -> 'a = "apply_range"
-
-(* file: /mnt/devel/ocaml-rs/test/src/types.rs *)
+(* file: types.rs *)
 
 external list_length: 'a list -> int = "list_length"
 external list_nil: unit -> 'a list = "list_nil"
@@ -20,7 +14,7 @@ external array1_of_string: string -> (int, int8_unsigned_elt, c_layout) Array1.t
 external array1_new: int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t = "array1_new"
 external array1_from_rust_vec: unit -> (float, float32_elt, c_layout) Array1.t = "array1_from_rust_vec"
 
-(* file: /mnt/devel/ocaml-rs/test/src/runtime.rs *)
+(* file: runtime.rs *)
 
 external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
 external mutable_parameter_with_more_than_five_arguments: bool -> bool -> int64 -> int64 -> int64 option -> int32 option -> unit = "mutable_parameter_with_more_than_five_arguments_bytecode" "mutable_parameter_with_more_than_five_arguments"
@@ -38,22 +32,7 @@ external gc_major: unit -> unit = "gc_major"
 external gc_full_major: unit -> unit = "gc_full_major"
 external gc_compact: unit -> unit = "gc_compact"
 
-(* file: /mnt/devel/ocaml-rs/test/src/custom.rs *)
-
-type testing
-type testing_callback
-type file
-external testing_alloc: int64 -> testing = "testing_alloc"
-external testing_set_c: testing -> string -> unit = "testing_set_c"
-external testing_set_a: testing -> float -> unit = "testing_set_a"
-external testing_get_values: testing -> (float * int64 * string) = "testing_get_values"
-external testing_callback_alloc: (int -> float) -> testing_callback = "testing_callback_alloc"
-external testing_callback_call: testing_callback -> int -> float = "testing_callback_call"
-external file_open: string -> file = "file_open"
-external file_read: file -> string = "file_read"
-external file_close: file -> unit = "file_close"
-
-(* file: /mnt/devel/ocaml-rs/test/src/conv.rs *)
+(* file: conv.rs *)
 
 type enum1 = Empty | First of int | Second of string array
 type struct1 = {a: int; b: float; mutable c: string option; d: string array option;}
@@ -77,3 +56,24 @@ external result_ok: 'a -> ('a, 'b) result = "result_ok"
 external result_error: 'a -> ('b, 'a) result = "result_error"
 external result_get_ok: ('a, 'b) result -> 'a option = "result_get_ok"
 external result_get_error: ('a, 'b) result -> 'b option = "result_get_error"
+
+(* file: callbacks.rs *)
+
+external apply1: ('a -> 'b) -> 'a -> 'b = "apply1"
+external apply3: ('a -> 'b) -> 'a -> 'b = "apply3"
+external apply_range: (int list -> 'a) -> int -> int -> 'a = "apply_range"
+
+(* file: custom.rs *)
+
+type testing
+type testing_callback
+type file
+external testing_alloc: int64 -> testing = "testing_alloc"
+external testing_set_c: testing -> string -> unit = "testing_set_c"
+external testing_set_a: testing -> float -> unit = "testing_set_a"
+external testing_get_values: testing -> (float * int64 * string) = "testing_get_values"
+external testing_callback_alloc: (int -> float) -> testing_callback = "testing_callback_alloc"
+external testing_callback_call: testing_callback -> int -> float = "testing_callback_call"
+external file_open: string -> file = "file_open"
+external file_read: file -> string = "file_read"
+external file_close: file -> unit = "file_close"

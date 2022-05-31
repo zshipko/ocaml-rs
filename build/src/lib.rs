@@ -158,7 +158,11 @@ impl Sigs {
         writeln!(f, "open! Bigarray")?;
 
         for src in &self.source {
-            writeln!(f, "\n(* file: {} *)\n", src.path.display())?;
+            writeln!(
+                f,
+                "\n(* file: {} *)\n",
+                src.path.strip_prefix(&self.base_dir).unwrap().display()
+            )?;
 
             for t in &src.types {
                 writeln!(f, "{t}")?;
@@ -180,7 +184,11 @@ impl Sigs {
         writeln!(f, "open! Bigarray")?;
 
         for src in &self.source {
-            writeln!(f, "\n(* file: {} *)\n", src.path.display())?;
+            writeln!(
+                f,
+                "\n(* file: {} *)\n",
+                src.path.strip_prefix(&self.base_dir).unwrap().display()
+            )?;
 
             for t in &src.types {
                 writeln!(f, "{t}")?;

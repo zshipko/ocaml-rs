@@ -93,7 +93,7 @@ unsafe impl ToValue for Raw {
 unsafe impl FromValue for Raw {
     #[inline]
     fn from_value(v: Value) -> Raw {
-        v.raw().0.into()
+        v.raw()
     }
 }
 
@@ -181,7 +181,7 @@ impl Value {
     }
 
     /// Allocate a new float array
-    pub unsafe fn alloc_f64_array(n: usize) -> Value {
+    pub unsafe fn alloc_double_array(n: usize) -> Value {
         Value::new(sys::caml_alloc_float_array(n))
     }
 
@@ -376,7 +376,7 @@ impl Value {
     }
 
     /// Create an OCaml `Float` from `f64`
-    pub unsafe fn f64(d: f64) -> Value {
+    pub unsafe fn double(d: f64) -> Value {
         Value::new(sys::caml_copy_double(d))
     }
 
@@ -398,7 +398,7 @@ impl Value {
     }
 
     /// Get index of underlying OCaml double array value
-    pub unsafe fn f64_field(&self, i: Size) -> f64 {
+    pub unsafe fn double_field(&self, i: Size) -> f64 {
         sys::caml_sys_double_field(self.raw().0, i)
     }
 
@@ -409,7 +409,7 @@ impl Value {
     }
 
     /// Set index of underlying OCaml double array value
-    pub unsafe fn store_f64_field(&mut self, i: Size, val: f64) {
+    pub unsafe fn store_double_field(&mut self, i: Size, val: f64) {
         sys::caml_sys_store_double_field(self.raw().0, i, val)
     }
 
@@ -419,12 +419,12 @@ impl Value {
     }
 
     /// Convert an OCaml `Float` to `f64`
-    pub unsafe fn f64_val(&self) -> f64 {
+    pub unsafe fn double_val(&self) -> f64 {
         sys::caml_sys_double_val(self.raw().0)
     }
 
     /// Store `f64` in OCaml `Float`
-    pub unsafe fn store_f64_val(&mut self, val: f64) {
+    pub unsafe fn store_double_val(&mut self, val: f64) {
         sys::caml_sys_store_double_val(self.raw().0, val)
     }
 
@@ -504,7 +504,7 @@ impl Value {
     }
 
     /// Convert value to Rust Result type depending on if the value is an exception or not
-    pub unsafe fn check_result(mut self) -> Result<Value, Error> {
+    unsafe fn check_result(mut self) -> Result<Value, Error> {
         if !self.is_exception_result() {
             return Ok(self);
         }

@@ -35,13 +35,13 @@ macro_rules! value_f {
     ($t:ty) => {
         unsafe impl ToValue for $t {
             fn to_value(&self, _rt: &Runtime) -> $crate::Value {
-                unsafe { $crate::Value::f64(*self as crate::Float) }
+                unsafe { $crate::Value::double(*self as crate::Float) }
             }
         }
 
         unsafe impl FromValue for $t {
             fn from_value(v: $crate::Value) -> $t {
-                unsafe { v.f64_val () as $t }
+                unsafe { v.double_val () as $t }
             }
         }
     };
@@ -303,10 +303,10 @@ unsafe impl<V: 'static + ToValue> ToValue for Vec<V> {
         let len = self.len();
 
         if core::any::TypeId::of::<f64>() == core::any::TypeId::of::<V>() && sys::FLAT_FLOAT_ARRAY {
-            let mut arr = unsafe { Value::alloc_f64_array(len) };
+            let mut arr = unsafe { Value::alloc_double_array(len) };
             for (i, v) in self.iter().enumerate() {
                 unsafe {
-                    arr.store_f64_field(i, v.to_value(rt).f64_val());
+                    arr.store_double_field(i, v.to_value(rt).double_val());
                 }
             }
             arr
@@ -329,10 +329,10 @@ unsafe impl<V: FromValue> FromValue for Vec<V> {
             let len = crate::sys::caml_array_length(v.raw().0);
             let is_double = sys::caml_is_double_array(v.raw().0) == 1 && sys::FLAT_FLOAT_ARRAY;
             let mut dst = Vec::with_capacity(len);
-            let mut tmp = Value::f64(0.0);
+            let mut tmp = Value::double(0.0);
             for i in 0..len {
                 if is_double {
-                    tmp.store_f64_val(v.f64_field(i));
+                    tmp.store_double_val(v.double_field(i));
                     dst.push(V::from_value(Value::new(tmp.raw().0)));
                 } else {
                     dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))

@@ -32,7 +32,7 @@ unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
 
 impl Array<f64> {
     /// Set value to double array
-    pub fn set_f64(&mut self, i: usize, f: f64) -> Result<(), Error> {
+    pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {
             return Err(CamlError::ArrayBoundError.into());
         }
@@ -54,7 +54,7 @@ impl Array<f64> {
     /// This function performs no bounds checking
     #[inline]
     pub unsafe fn set_f64_unchecked(&mut self, i: usize, f: f64) {
-        self.0.store_f64_field(i, f)
+        self.0.store_double_field(i, f)
     }
 
     /// Get a value from a double array
@@ -66,7 +66,7 @@ impl Array<f64> {
             return Err(Error::NotDoubleArray);
         }
 
-        Ok(unsafe { self.get_f64_unchecked(i) })
+        Ok(unsafe { self.get_double_unchecked(i) })
     }
 
     /// Get a value from a double array without checking if the array is actually a double array
@@ -75,8 +75,8 @@ impl Array<f64> {
     ///
     /// This function does not perform bounds checking
     #[inline]
-    pub unsafe fn get_f64_unchecked(&self, i: usize) -> f64 {
-        self.0.f64_field(i)
+    pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
+        self.0.double_field(i)
     }
 }
 
@@ -110,7 +110,7 @@ impl<T: ToValue + FromValue> Array<T> {
         }
 
         if self.is_f64() {
-            self.0.store_f64_field(i, v.to_value(rt).f64_val())
+            self.0.store_double_field(i, v.to_value(rt).double_val())
         } else {
             self.set_unchecked(rt, i, v);
         }
@@ -134,7 +134,7 @@ impl<T: ToValue + FromValue> Array<T> {
         }
 
         if self.is_f64() {
-            return Ok(FromValue::from_value(self.0.f64_field(i).to_value(rt)));
+            return Ok(FromValue::from_value(self.0.double_field(i).to_value(rt)));
         }
 
         Ok(self.get_unchecked(i))

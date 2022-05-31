@@ -15,6 +15,8 @@
 //! ## Examples
 //!
 //! ```rust,no_run
+//! use ocaml::FromValue;
+//!
 //! // Automatically derive `ToValue` and `FromValue`
 //! #[cfg(feature = "derive")]
 //! #[derive(ocaml::ToValue, ocaml::FromValue)]
@@ -67,7 +69,7 @@
 //! #[ocaml::native_func]
 //! #[ocaml::sig("int -> int")]
 //! pub unsafe fn incr(value: ocaml::Value) -> ocaml::Value {
-//!     let i = value.int_val();
+//!     let i = isize::from_value(value);
 //!     ocaml::Value::int(i + 1)
 //! }
 //!
@@ -75,7 +77,7 @@
 //! #[no_mangle]
 //! pub unsafe extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
 //!     ocaml::body!(gc: {
-//!         let i = value.int_val();
+//!         let i = isize::from_value(value);
 //!         ocaml::Value::int( i + 1)
 //!     })
 //! }
