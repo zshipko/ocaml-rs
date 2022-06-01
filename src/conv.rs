@@ -329,12 +329,14 @@ unsafe impl<V: FromValue> FromValue for Vec<V> {
             let len = crate::sys::caml_array_length(v.raw().0);
             let is_double = sys::caml_is_double_array(v.raw().0) == 1 && sys::FLAT_FLOAT_ARRAY;
             let mut dst = Vec::with_capacity(len);
-            let mut tmp = Value::double(0.0);
-            for i in 0..len {
-                if is_double {
+            if is_double {
+                let mut tmp = Value::double(0.0);
+                for i in 0..len {
                     tmp.store_double_val(v.double_field(i));
                     dst.push(V::from_value(Value::new(tmp.raw().0)));
-                } else {
+                }
+            } else {
+                for i in 0..len {
                     dst.push(V::from_value(Value::new(*crate::sys::field(v.raw().0, i))))
                 }
             }
