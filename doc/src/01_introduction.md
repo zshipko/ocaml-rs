@@ -11,6 +11,8 @@ Before going any further, it may be helpful to read through the [Interfacing C w
 
 ## Initial setup
 
+This section will cover how to set up a Rust crate that is linked into an OCaml program. If you're interested in calling into an OCaml library from Rust instead, see [Linking an OCaml library into a Rust program](./04_linking_an_ocaml_library_into_a_rust_program.md).
+
 Add the following to your `Cargo.toml`:
 
 ```toml
@@ -74,9 +76,7 @@ Additionally, if you plan on releasing to [opam](https://github.com/ocaml/opam),
 ```shell
 cargo vendor
 ```
-
 then follow the instructions for editing `.cargo/config`
-
 
 To simplify the full setup process, take a look at [ocaml-rust-starter](https://github.com/zshipko/ocaml-rust-starter).
 

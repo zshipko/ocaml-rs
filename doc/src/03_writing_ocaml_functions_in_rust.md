@@ -80,7 +80,7 @@ ocaml::import! {
 #[ocaml::func]
 #[ocaml::sig("int -> int")]
 pub unsafe fn call_my_incr(x: ocaml::Int) -> Result<ocaml::Int, ocaml::Error> {
-  my_incr(gc, &x)
+  my_incr(gc, x)
 }
 ```
 
