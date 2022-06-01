@@ -85,7 +85,7 @@ ocaml::import! {
 #[ocaml::func]
 #[ocaml::sig("float -> float")]
 pub unsafe fn test_call_named(g: f64) -> Result<f64, ocaml::Error> {
-    call_named(gc, &g)
+    call_named(gc, g)
 }
 
 #[ocaml::func]

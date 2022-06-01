@@ -13,3 +13,7 @@ readme = "./README.md"
 [dependencies]
 syn = {version = "1", features =["full"]}
 proc-macro2 = "1"
+cc = {version = "1", optional=true}
+
+[features]
+dune = ["cc"]

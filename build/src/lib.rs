@@ -1,6 +1,12 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "dune")]
+mod dune;
+
+#[cfg(feature = "dune")]
+pub use dune::Dune;
+
 struct Source {
     path: PathBuf,
     functions: Vec<String>,

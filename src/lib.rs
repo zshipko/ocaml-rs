@@ -162,7 +162,7 @@ pub use crate::types::{bigarray, Array, List};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 #[cfg(not(feature = "no-std"))]
-pub use crate::macros::inital_setup;
+pub use crate::macros::initial_setup;
 
 /// OCaml `float`
 pub type Float = f64;
@@ -182,36 +182,3 @@ pub fn ocamlopt() -> std::process::Command {
 #[cfg(feature = "link")]
 #[cfg(test)]
 mod tests;
-
-#[macro_export]
-/// Import OCaml functions
-macro_rules! import {
-    ($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?) => {
-        $vis unsafe fn $name(rt: &$crate::Runtime, $($arg: &$t),*) -> Result<$crate::interop::default_to_unit!($($r)?), $crate::Error> {
-            use $crate::{ToValue, FromValue};
-            type R = $crate::interop::default_to_unit!($($r)?);
-            let ocaml_rs_named_func = match $crate::Value::named(stringify!($name)) {
-                Some(x) => x,
-                None => {
-                    let msg = concat!(
-                        stringify!($name),
-                        " has not been registered using Callback.register"
-                    );
-                    return Err($crate::Error::Message(msg));
-                },
-            };
-            $(let $arg = $arg.to_value(rt);)*
-            let mut args = [$($arg.raw()),*];
-            if args.is_empty() {
-                args = [$crate::Value::unit().raw()];
-            }
-            let x = ocaml_rs_named_func.call_n(args)?;
-            Ok(R::from_value(x))
-        }
-    };
-    ($($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?;)+) => {
-        $(
-            $crate::import!($vis fn $name($($arg: $t),*) $(-> $r)?);
-        )*
-    }
-}
