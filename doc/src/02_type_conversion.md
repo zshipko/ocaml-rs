@@ -1,6 +1,6 @@
 # Type conversion
 
-As mentioned in the previous section, `ocaml-rs` automates the conversion between Rust and OCaml representations for many types. This is done using two traits: `ToValue`, which is implemented for types that can be converted to an OCaml value and `FromValue` for types that can be converted from an OCaml value.
+As mentioned in the previous section, `ocaml-rs` automates the conversion between Rust and OCaml representations for many types. This is done using two traits: [ToValue](https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html), which is implemented for types that can be converted to an OCaml value and [FromValue](https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html) for types that can be converted from an OCaml value.
 
 Below is a list of types that implement these traits in `ocaml-rs` and their corresponding OCaml type:
 
@@ -37,7 +37,7 @@ If you're concerned with minimizing allocations/conversions you should use `Valu
 
 ## Implementing `ToValue` and `FromValue`
 
-The `ToValue` trait has a single function, `to_value`, that takes a `Value` and returns the new type and `FromValue` takes a reference to a type and returns a new `Value`:
+The [ToValue](https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html) trait has a single function, `to_value` which takes a reference to `self`, a reference to [Runtime] and returns a [Value](https://docs.rs/ocaml/latest/ocaml/enum.Value.html) and [FromValue](https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html) has `from_value`, which takes a `Value` and returns `Self`:
 
 ```rust
 # extern crate ocaml;
@@ -82,36 +82,32 @@ There are several types that work directly on OCaml values, these don't perform 
 
 ## Wrapping Rust values
 
-Rust values can be used as opaque values that can be shared with OCaml using `ocaml::Pointer<T>`. The `Pointer` type allows for Rust values to be allocated using the OCaml runtime, this means their lifetime will be handled by the garbage collector. `Pointer::alloc_final` is used to move an existing Rust type into an OCaml allocated pointer, but even better is the option to implement the `Custom` trait for your type.
+Rust values can be used as opaque values that can be shared with OCaml using [ocaml::Pointer<T>](https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html). The `Pointer` type allows for Rust values to be allocated using the OCaml runtime, this means their lifetime will be handled by the garbage collector. [Pointer::alloc_final](https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html#method.alloc_final) is used to move an existing Rust type into an OCaml allocated pointer, but even better is the option to implement the `Custom` trait for your type.
 
-Implementing `Custom` allows you to define equality/comparison, finalization, hashing and serialization functions for your type that will be used by OCaml. When allocation custom values you should use `Pointer::alloc_custom`.
+Implementing [Custom](https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html) allows you to define equality/comparison, finalization, hashing and serialization functions for your type that will be used by OCaml. When allocating custom values you should use `Pointer::from` or `Pointer::alloc_custom`.
 
-In either case you will need to write the allocation function in Rust because OCaml doesn't know the specifics about the layout or contents of these types, unlike when using `FromValue` or `ToValue`. `Pointer` should primarily be used on Rust values that cannot be converted directly to OCaml types.
+In either case you will need to write the allocation function in Rust because OCaml doesn't know the specifics about the layout or contents of these types, unlike when using `FromValue` or `ToValue`. [Pointer](https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html) should primarily be used on Rust values that cannot be converted directly to OCaml types.
 
 ```rust
 # extern crate ocaml;
 
-#[ocaml::sig("")]   // Creates an opaque type on the OCaml side
+#[ocaml::sig]   // Creates an opaque type on the OCaml side
 pub struct MyType {
   a: i32,
   b: f64,
   c: std::fs::File, // This can't be converted to an OCaml value
 }
 
-extern "C" fn mytype_finalizer(_: ocaml::Raw) {
-  println!("This runs when the value gets garbage collected");
-}
-
-ocaml::custom!(MyType {
-  finalize: mytype_finalizer
-});
+ocaml::custom!(MyType);
 
 #[ocaml::func]
 #[ocaml::sig("my_type -> float")]
-pub unsafe fn my_type_add_a_b(t: ocaml::Pointer<MyType>) -> f64 {
-  let t = t.as_ref();
+pub unsafe fn my_type_add_a_b(t: &MyType) -> f64 {
   t.a as f64 + t.b
 }
 ```
+NOTE: In this example the Rust type `MyType` has automatically been renamed to `my_type` in OCaml.
+
+Also in this example, the default finalizer is used - this will call `Pointer::drop_in_place` to call `drop` on the Rust side before freeing the memory on the OCaml heap. If you add your own `finalize` implementation you should make sure to call `Pointer::drop_in_place` any time the underlying Rust value contains dynamically allocated values, like `std::fs::File` in the example above.
 
 Now that you have some insight into how type conversion is handled, the next section will cover more details about writing OCaml functions in Rust.

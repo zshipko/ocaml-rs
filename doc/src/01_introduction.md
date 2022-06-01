@@ -106,7 +106,7 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 
 ## Writing your first `ocaml::func`
 
-`ocaml::func` is the highest-level macro that can be used to generate OCaml functions. It's built on `ocaml::native_func` which only works on `Value` parameters and `ocaml::bytecode_func` which is used for generating bytecode functions. `ocaml::func` will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime. `ocaml::func` handles using `CAMLparam`/`CAMLlocal`/`CAMLreturn` correctly for you, often making it much easier to write bindings than using the C API directly, particularly for those who haven't used the OCaml C API before.
+[ocaml::func](https://docs.rs/ocaml/latest/ocaml/attr.func.html) is the highest-level macro that can be used to generate OCaml functions. It's built on `ocaml::native_func` which only works on `Value` parameters and `ocaml::bytecode_func` which is used for generating bytecode functions. `ocaml::func` will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime. `ocaml::func` handles using `CAMLparam`/`CAMLlocal`/`CAMLreturn` correctly for you, often making it much easier to write bindings than using the C API directly, particularly for those who haven't used the OCaml C API before.
 
 All `ocaml::func`'s have an implicit `gc` variable which is used to access the OCaml runtime. To pick another name you can provide it as an argument to the `ocaml::func` macro:
 

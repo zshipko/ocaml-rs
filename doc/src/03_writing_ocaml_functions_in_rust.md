@@ -1,11 +1,11 @@
 # Writing OCaml functions in Rust
 
-This section requires the `derive` feature, which is enabled in `ocaml-rs` by default. This exposes `ocaml::func`, which is the recommended way to create an OCaml function in Rust. Below are some examples using `ocaml::func`
+This section requires the `derive` feature, which is enabled in `ocaml-rs` by default. This exposes [ocaml::func](https://docs.rs/ocaml/latest/ocaml/attr.func.html), which is the recommended way to create an OCaml function in Rust. Below are some examples using `ocaml::func`
 
 - [Hello world](#hello-world)
 - [Structs and enums](#structs-and-enums)
 - [Calling an OCaml function](#calling-an-ocaml-function)
-- [Abstract types](#abstract-types)
+- [Opaque types](#opaque-types)
 - [Raising an exception](#raising-an-exception)
 - [Returning OCaml result](#returning-ocaml-resut)
 - [Using `Value` directly](#using-value-directly)
@@ -26,7 +26,7 @@ pub fn hello_world() -> &'static str {
 
 ## Structs and enums
 
-The example uses `derive(ToValue)` and `derive(FromValue)` to create an enum and struct that can be used as parameters to `ocaml::func`s
+The example uses `derive(ToValue)` and `derive(FromValue)` to create an enum and struct that can be used as parameters to `ocaml::func`s. Their names will be converted to snake case for OCaml, so the Rust type `BinOp` will become `bin_op` and `Expr` will become `expr`.
 
 ```rust
 # extern crate ocaml;
@@ -63,7 +63,7 @@ pub fn expr_eval(expr: Expr) -> f64 {
 
 ## Calling an OCaml function
 
-This example shows how to call an OCaml function from Rust - the OCaml function must be registered using `Callback.register`. In this case we're calling the OCaml function `my_incr`, which looks like this:
+This example shows how to call an OCaml function from Rust - the OCaml function must be registered using [Callback.register](https://ocaml.org/api/Callback.html). In this case we're calling the OCaml function `my_incr`, which looks like this:
 
 ```ocaml
 let my_incr x = x + 1
@@ -86,43 +86,40 @@ pub unsafe fn call_my_incr(x: ocaml::Int) -> Result<ocaml::Int, ocaml::Error> {
 
 A few things to note:
 
-- When calling the `import!`ed function you will need to pass the OCaml runtime handle as the first parameter
+- When calling the [import!](https://docs.rs/ocaml/latest/ocaml/macro.import.html)ed function you will need to pass the OCaml runtime handle as the first parameter
 - The return value of the function will be wrapped in `Result<T, ocaml::Error>` because the function may raise an exception
 
-## Abstract types
+## Opaque types
 
-This example shows how to wrap a Rust type using `ocaml::Pointer`
+This example shows how to wrap a Rust type using the [Custom](https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html) trait and [ocaml::Pointer](https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html)
 
 ```rust
 # extern crate ocaml;
 
 use std::io::Read;
 
-#[ocaml::sig("")] // Creates an abstract type on the OCaml side
-type File = std::fs::File;
+#[ocaml::sig] // Creates an opaque type on the OCaml side
+struct File(std::fs::File);
+
+ocaml::custom!(File);
 
 #[ocaml::func]
 #[ocaml::sig("string -> file")]
 pub fn file_open(filename: &str) -> Result<ocaml::Pointer<File>, ocaml::Error> {
-  let f = File::open(filename)?;
-  Ok(ocaml::Pointer::alloc(f))
+  let f = std::fs::File::open(filename)?;
+  Ok(File(f).into())
 }
 
 #[ocaml::func]
 #[ocaml::sig("file -> string")]
-pub fn file_read(mut file :ocaml::Pointer<File>) -> Result<String, ocaml::Error> {
+pub fn file_read(file : &mut File) -> Result<String, ocaml::Error> {
     let mut s = String::new();
-    let file = file.as_mut();
-    file.read_to_string(&mut s)?;
+    file.0.read_to_string(&mut s)?;
     Ok(s)
 }
-
-#[ocaml::func]
-#[ocaml::sig("file -> unit")]
-pub unsafe fn file_close(file: ocaml::Pointer<File>) {
-  file.drop_in_place();
-}
 ```
+
+Once this value is garbage collected, the default finalizer will call `Pointer::drop_in_place` to run `drop` and clean up resources on the Rust side, if you write a custom finalizer make sure to include a call to `Pointer::drop_in_place`.
 
 ## Raising an exception
 
@@ -151,7 +148,7 @@ or returning a `Result<_, ocaml::Error>` value:
 #[ocaml::sig("int -> unit")]
 pub unsafe fn fail_if_even_result(i: ocaml::Int) -> Result<(), ocaml::Error> {
   if i % 2 == 0 {
-    return Err(ocaml::Error::Caml(ocaml::CamlError::Failure("even")))
+    return Err(ocaml::CamlError::Failure("even").into())
   }
 
   Ok(())
