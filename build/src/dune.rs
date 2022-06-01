@@ -8,7 +8,7 @@ pub struct Dune {
 impl Dune {
     pub fn new(library: impl AsRef<Path>) -> Dune {
         Dune {
-            root: PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")),
+            root: PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()),
             library: library.as_ref().to_path_buf(),
         }
     }
