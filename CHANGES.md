@@ -4,7 +4,8 @@
 - `Custom` types now have to be wrapped in a `Pointer<T>`
 - Added `ocaml::import!` macro for calling OCaml functions from Rust
 - Added `ocaml::sig` proc-macro for generating `external` and type signatures
-- Added ocaml-build crate for generating OCaml code from `ocaml::sig` macros
+- Added ocaml-build crate for generating OCaml code from `ocaml::sig` macros and linking dune
+  projects
 - Renamed `Value::call` to `Value::call1` and rewrote `Value::call` to take a variable number of
   arguments
 - Added support for automatic conversion between OCaml `Result.t` and Rust `Result`
