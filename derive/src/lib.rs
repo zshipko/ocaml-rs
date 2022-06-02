@@ -67,32 +67,21 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         match mode {
             Mode::Func => {
                 let mut n_args = 0;
-                let mut dash = false;
-                let mut gt;
+                let mut prev = None;
                 let mut paren_level = 0;
                 let iter = s.chars();
                 for ch in iter {
-                    if ch == '-' {
-                        dash = true;
-                    } else if ch != '>' {
-                        dash = false;
-                    }
-
-                    if ch == '>' {
-                        gt = true;
-                    } else {
-                        gt = false;
-                    }
-
                     if ch == '(' {
                         paren_level += 1;
                     } else if ch == ')' {
                         paren_level -= 1;
                     }
 
-                    if dash && gt && paren_level == 0 {
+                    if ch == '>' && prev == Some('-') && paren_level == 0 {
                         n_args += 1;
                     }
+
+                    prev = Some(ch);
                 }
 
                 if n == 0 && !s.trim().starts_with("unit") {
@@ -107,8 +96,21 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
             }
             Mode::Enum => {
                 if !s.is_empty() {
-                    let mut n_variants = s.matches('|').count() + 1;
-                    if s.starts_with('|') {
+                    let mut n_variants = 1;
+                    let mut bracket_level = 0;
+                    let iter = s.chars();
+                    for ch in iter {
+                        if ch == '[' {
+                            bracket_level += 1;
+                        } else if ch == ']' {
+                            bracket_level -= 1;
+                        }
+
+                        if ch == '|' && bracket_level == 0 {
+                            n_variants += 1;
+                        }
+                    }
+                    if s.trim().starts_with('|') {
                         n_variants -= 1;
                     }
                     if n != n_variants {
