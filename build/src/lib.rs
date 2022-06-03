@@ -211,6 +211,8 @@ impl Sigs {
     pub fn generate(mut self) -> Result<(), std::io::Error> {
         let dir = self.base_dir.clone();
         self.parse(&dir)?;
+
+        self.source.sort_by(|a, b| a.path.cmp(&b.path));
         self.generate_ml()?;
         self.generate_mli()
     }

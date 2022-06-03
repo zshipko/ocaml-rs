@@ -2,35 +2,11 @@
 
 open! Bigarray
 
-(* file: types.rs *)
+(* file: callbacks.rs *)
 
-external list_length: 'a list -> int = "list_length"
-external list_nil: unit -> 'a list = "list_nil"
-external list_cons: 'a list -> 'a -> 'a list = "list_cons"
-external array_make_range: int -> int -> int array = "array_make_range"
-external array_make_range_f: int -> int -> float array = "array_make_range_f"
-external array_replace: 'a array -> int -> 'a -> 'a option = "array_replace"
-external array1_of_string: string -> (int, int8_unsigned_elt, c_layout) Array1.t = "array1_of_string"
-external array1_new: int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t = "array1_new"
-external array1_from_rust_vec: unit -> (float, float32_elt, c_layout) Array1.t = "array1_from_rust_vec"
-
-(* file: runtime.rs *)
-
-external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
-external mutable_parameter_with_more_than_five_arguments: bool -> bool -> int64 -> int64 -> int64 option -> int32 option -> unit = "mutable_parameter_with_more_than_five_arguments_bytecode" "mutable_parameter_with_more_than_five_arguments"
-external raise_exc: float -> unit = "raise_exc"
-external raise_failure: unit -> unit = "raise_failure"
-external hash_variant_abc: int -> [`Abc of int] = "hash_variant_abc"
-external hash_variant_def: float -> [`Def of float] = "hash_variant_def"
-external test_panic: unit -> int = "test_panic"
-external test_call_named: float -> float = "test_call_named"
-external bench_func: unit -> unit = "bench_func"
-external bench_native_func: unit -> unit = "bench_native_func"
-external exn_to_string: exn -> string = "exn_to_string"
-external gc_minor: unit -> unit = "gc_minor"
-external gc_major: unit -> unit = "gc_major"
-external gc_full_major: unit -> unit = "gc_full_major"
-external gc_compact: unit -> unit = "gc_compact"
+external apply1: ('a -> 'b) -> 'a -> 'b = "apply1"
+external apply3: ('a -> 'b) -> 'a -> 'b = "apply3"
+external apply_range: (int list -> 'a) -> int -> int -> 'a = "apply_range"
 
 (* file: conv.rs *)
 
@@ -57,12 +33,6 @@ external result_error: 'a -> ('b, 'a) result = "result_error"
 external result_get_ok: ('a, 'b) result -> 'a option = "result_get_ok"
 external result_get_error: ('a, 'b) result -> 'b option = "result_get_error"
 
-(* file: callbacks.rs *)
-
-external apply1: ('a -> 'b) -> 'a -> 'b = "apply1"
-external apply3: ('a -> 'b) -> 'a -> 'b = "apply3"
-external apply_range: (int list -> 'a) -> int -> int -> 'a = "apply_range"
-
 (* file: custom.rs *)
 
 type testing
@@ -77,3 +47,33 @@ external testing_callback_call: testing_callback -> int -> float = "testing_call
 external file_open: string -> file = "file_open"
 external file_read: file -> string = "file_read"
 external file_close: file -> unit = "file_close"
+
+(* file: runtime.rs *)
+
+external more_than_five_params: float -> float -> float -> float -> float -> float -> float -> float = "more_than_five_params_bytecode" "more_than_five_params"
+external mutable_parameter_with_more_than_five_arguments: bool -> bool -> int64 -> int64 -> int64 option -> int32 option -> unit = "mutable_parameter_with_more_than_five_arguments_bytecode" "mutable_parameter_with_more_than_five_arguments"
+external raise_exc: float -> unit = "raise_exc"
+external raise_failure: unit -> unit = "raise_failure"
+external hash_variant_abc: int -> [`Abc of int] = "hash_variant_abc"
+external hash_variant_def: float -> [`Def of float] = "hash_variant_def"
+external test_panic: unit -> int = "test_panic"
+external test_call_named: float -> float = "test_call_named"
+external bench_func: unit -> unit = "bench_func"
+external bench_native_func: unit -> unit = "bench_native_func"
+external exn_to_string: exn -> string = "exn_to_string"
+external gc_minor: unit -> unit = "gc_minor"
+external gc_major: unit -> unit = "gc_major"
+external gc_full_major: unit -> unit = "gc_full_major"
+external gc_compact: unit -> unit = "gc_compact"
+
+(* file: types.rs *)
+
+external list_length: 'a list -> int = "list_length"
+external list_nil: unit -> 'a list = "list_nil"
+external list_cons: 'a list -> 'a -> 'a list = "list_cons"
+external array_make_range: int -> int -> int array = "array_make_range"
+external array_make_range_f: int -> int -> float array = "array_make_range_f"
+external array_replace: 'a array -> int -> 'a -> 'a option = "array_replace"
+external array1_of_string: string -> (int, int8_unsigned_elt, c_layout) Array1.t = "array1_of_string"
+external array1_new: int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t = "array1_new"
+external array1_from_rust_vec: unit -> (float, float32_elt, c_layout) Array1.t = "array1_from_rust_vec"
