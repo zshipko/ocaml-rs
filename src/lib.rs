@@ -118,6 +118,8 @@
 //! ```
 //!
 //! Excluding the `incrf` example, these can also be automatically generated using [ocaml-build](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
+//!
+//! For more information see the [ocaml-rs book](https://zshipko.github.io/ocaml-rs)
 
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");

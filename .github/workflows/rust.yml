@@ -32,9 +32,13 @@ jobs:
         run: opam env | tr '\n' ' ' >> $GITHUB_ENV
       - name: Add Opam switch to PATH
         run: opam var bin >> $GITHUB_PATH
+      - name: Install mdbook
+        run: cargo install mdbook
       - name: Build
         run: cargo build --tests --features=link
       - name: Build build
         run: cargo build --package ocaml-build --features=dune
       - name: Run Rust tests
         run: cargo test --features=link -- --test-threads=1
+      - name: Check mdbook
+        run: mdbook test doc -L ./target/debug/deps
