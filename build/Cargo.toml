@@ -1,0 +1,19 @@
+[package]
+name = "ocaml-build"
+version = "1.0.0-beta.0"
+edition = "2021"
+authors = ["Zach Shipko <zachshipko@gmail.com>"]
+license = "ISC"
+keywords = ["ocaml-rs", "build"]
+repository = "https://github.com/zshipko/ocaml-rs"
+description = "OCaml code generation"
+documentation = "https://docs.rs/ocaml-build"
+readme = "./README.md"
+
+[dependencies]
+syn = {version = "1", features =["full"]}
+proc-macro2 = "1"
+cc = {version = "1", optional=true}
+
+[features]
+dune = ["cc"]

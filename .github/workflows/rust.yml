@@ -34,5 +34,7 @@ jobs:
         run: opam var bin >> $GITHUB_PATH
       - name: Build
         run: cargo build --tests --features=link
+      - name: Build build
+        run: cargo build --package ocaml-build --features=dune
       - name: Run Rust tests
         run: cargo test --features=link -- --test-threads=1

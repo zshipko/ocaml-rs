@@ -4,7 +4,7 @@ static PANIC_HANDLER_INIT: std::sync::atomic::AtomicBool =
 
 #[cfg(not(feature = "no-std"))]
 #[doc(hidden)]
-pub fn inital_setup() {
+pub fn initial_setup() {
     if PANIC_HANDLER_INIT
         .compare_exchange(
             false,
@@ -24,18 +24,18 @@ pub fn inital_setup() {
     ::std::panic::set_hook(Box::new(|info| unsafe {
         let err = info.payload();
         let msg = if err.is::<&str>() {
-            err.downcast_ref::<&str>().unwrap()
+            err.downcast_ref::<&str>().unwrap().to_string()
         } else if err.is::<String>() {
-            err.downcast_ref::<String>().unwrap().as_ref()
+            err.downcast_ref::<String>().unwrap().clone()
         } else {
-            "rust panic"
+            format!("{:?}", err)
         };
 
         if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(err, msg);
+            crate::Error::raise_value(err, &msg);
         }
 
-        crate::Error::raise_failure(msg)
+        crate::Error::raise_failure(&msg)
     }))
 }
 
@@ -61,7 +61,7 @@ macro_rules! body {
 
         // Ensure panic handler is initialized
         #[cfg(not(feature = "no-std"))]
-        $crate::inital_setup();
+        $crate::initial_setup();
 
         {
             $code
@@ -87,4 +87,39 @@ macro_rules! list {
         }
         l
     }};
+}
+
+#[macro_export]
+/// Import OCaml functions
+macro_rules! import {
+    ($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?) => {
+        $vis unsafe fn $name(rt: &$crate::Runtime, $($arg: $t),*) -> Result<$crate::interop::default_to_unit!($($r)?), $crate::Error> {
+            use $crate::{ToValue, FromValue};
+            type R = $crate::interop::default_to_unit!($($r)?);
+            let ocaml_rs_named_func = match $crate::Value::named(stringify!($name)) {
+                Some(x) => x,
+                None => {
+                    let msg = concat!(
+                        stringify!($name),
+                        " has not been registered using Callback.register"
+                    );
+                    return Err($crate::Error::Message(msg));
+                },
+            };
+            $(let $arg = $arg.to_value(rt);)*
+            let __unit = [$crate::Value::unit().raw()];
+            let __args = [$($arg.raw()),*];
+            let mut args = __args.as_slice();
+            if args.is_empty() {
+                args = &__unit;
+            }
+            let x = ocaml_rs_named_func.call_n(args)?;
+            Ok(R::from_value(x))
+        }
+    };
+    ($($vis:vis fn $name:ident($($arg:ident: $t:ty),*) $(-> $r:ty)?;)+) => {
+        $(
+            $crate::import!($vis fn $name($($arg: $t),*) $(-> $r)?);
+        )*
+    }
 }

@@ -4,6 +4,7 @@ test-rust:
 	@cargo test --features=link -- --test-threads=1
 
 test-ocaml:
+	@dune clean --root=test
 	@dune runtest --root=test --force --no-buffer
 
 utop:
@@ -16,6 +17,7 @@ clean:
 publish:
 	cd sys && cargo package && cargo publish && sleep 20
 	cd derive && cargo package && cargo publish && sleep 20
+	cd build && cargo package && cargo publish && sleep 20
 	cargo package && cargo publish
 
 .PHONY: test clean

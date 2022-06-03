@@ -32,7 +32,7 @@ fn variant_attrs(attrs: &[syn::Attribute]) -> Attrs {
                                     }
                                     acc.unboxed = true;
                                     acc
-                                } else if ident == "floats_array" {
+                                } else if ident == "float_array" {
                                     if acc.unboxed {
                                         panic!("in ocaml attrs a variant cannot be both float array and unboxed")
                                     }
@@ -91,11 +91,11 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
             if variant.bindings().len() > 1 {
                 panic!("ocaml cannot unboxed record with multiple fields")
             }
-            variant.each(|field| quote!(#field.into_value(gc)))
+            variant.each(|field| quote!(#field.to_value(gc)))
         } else {
             let mut idx = 0usize;
             let ghost = (0..arity)
-                .map(|idx| quote!(unsafe { value.store_field(gc, #idx, ocaml::Value::unit()) }));
+                .map(|idx| quote!(unsafe { value.store_field(gc, #idx, &ocaml::Value::unit()) }));
             let init = quote!(
                 value = unsafe { ocaml::Value::alloc(#arity, ocaml::Tag(#tag)) };
                 #(#ghost);*;
@@ -108,9 +108,10 @@ pub fn intovalue_derive(mut s: synstructure::Structure) -> proc_macro::TokenStre
         }
     });
 
+    let g = &s.ast().generics;
     s.gen_impl(quote! {
-        gen unsafe impl ocaml::IntoValue for @Self {
-            fn into_value(self, gc: &ocaml::Runtime) -> ocaml::Value {
+        gen unsafe impl #g ocaml::ToValue for @Self {
+            fn to_value(&self, gc: &ocaml::Runtime) -> ocaml::Value {
                 let mut value = ocaml::Value::unit();
                 match self {
                     #(#body),*
@@ -131,6 +132,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     } else {
         Attrs::default()
     };
+    let g = &s.ast().generics;
     let body = s.variants().iter().map(|variant| {
         let arity = variant.bindings().len();
         let tag_ref = if arity > 0 {
@@ -167,7 +169,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
     });
     if attrs.unboxed {
         s.gen_impl(quote! {
-            gen unsafe impl<'from_value_lifetime> ocaml::FromValue<'from_value_lifetime> for @Self {
+            gen unsafe impl #g ocaml::FromValue for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     #(#body),*
                 }
@@ -186,7 +188,7 @@ pub fn fromvalue_derive(s: synstructure::Structure) -> proc_macro::TokenStream {
             })
         };
         s.gen_impl(quote! {
-            gen unsafe impl<'from_value_lifetime> ocaml::FromValue<'from_value_lifetime> for @Self {
+            gen unsafe impl #g ocaml::FromValue for @Self {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         let is_block = value.is_block();

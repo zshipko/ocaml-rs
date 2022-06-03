@@ -62,7 +62,7 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Features
 
 - `derive`
-  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `IntoValue`
+  * enabled by default, adds `#[ocaml::func]` and friends and `derive` implementations for `FromValue` and `ToValue`
 - `link`
   * link the native OCaml runtime, this should only be used when no OCaml code will be linked statically
 - `no-std`
@@ -75,8 +75,9 @@ Defining the `OCAML_VERSION` and `OCAML_WHERE_PATH` variables is useful for savi
 ### Examples
 
 ```rust
-// Automatically derive `IntoValue` and `FromValue`
-#[derive(ocaml::IntoValue, ocaml::FromValue)]
+// Automatically derive `ToValue` and `FromValue`
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+#[ocaml::sig("{name: string; i: int}")]
 struct Example<'a> {
     name: &'a str,
     i: ocaml::Int,
@@ -84,22 +85,25 @@ struct Example<'a> {
 
 
 #[ocaml::func]
+#[ocaml::sig("example -> example")]
 pub fn incr_example(mut e: Example) -> Example {
     e.i += 1;
     e
 }
 
 #[ocaml::func]
+#[ocaml::sig("int -> int * int * int")]
 pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
     (i + 1, i + 2, i + 3)
 }
 
 #[ocaml::func]
+#[ocaml::sig("float array -> f64")]
 pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
     let mut sum = 0f64;
 
     for i in 0..arr.len() {
-        sum += arr.get_double(i)?;
+        sum += arr.get_f64(i)?;
     }
 
     Ok(sum / arr.len() as f64)
@@ -159,39 +163,42 @@ external incr2: int -> int = "incr2"
 external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 ```
 
+Excluding the `incrf` example, these can also be generated using [ocaml-build](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
+
 For more examples see [test/src](https://github.com/zshipko/ocaml-rs/blob/master/test/src) or [ocaml-vec](https://github.com/zshipko/ocaml-vec).
 
 ### Type conversion
 
 This chart contains the mapping between Rust and OCaml types used by `ocaml::func`
 
-| Rust type        | OCaml type           |
-| ---------------- | -------------------- |
-| `()`             | `unit`               |
-| `isize`          | `int`                |
-| `usize`          | `int`                |
-| `i8`             | `int`                |
-| `u8`             | `int`                |
-| `i16`            | `int`                |
-| `u16`            | `int`                |
-| `i32`            | `int32`              |
-| `u32`            | `int32`              |
-| `i64`            | `int64`              |
-| `u64`            | `int64`              |
-| `f32`            | `float`              |
-| `f64`            | `float`              |
-| `str`            | `string`             |
-| `[u8]`           | `bytes`              |
-| `String`         | `string`             |
-| `Option<A>`      | `'a option`          |
-| `Result<A, B>`   | `exception`          |
-| `(A, B, C)`      | `'a * 'b * 'c`       |
-| `&[Value]`       | `'a array` (no copy) |
-| `Vec<A>`, `&[A]` | `'a array`           |
-| `BTreeMap<A, B>` | `('a, 'b) list`      |
-| `LinkedList<A>`  | `'a list`            |
+| Rust type                 | OCaml type           |
+| ------------------------- | -------------------- |
+| `()`                      | `unit`               |
+| `isize`                   | `int`                |
+| `usize`                   | `int`                |
+| `i8`                      | `int`                |
+| `u8`                      | `int`                |
+| `i16`                     | `int`                |
+| `u16`                     | `int`                |
+| `i32`                     | `int32`              |
+| `u32`                     | `int32`              |
+| `i64`                     | `int64`              |
+| `u64`                     | `int64`              |
+| `f32`                     | `float`              |
+| `f64`                     | `float`              |
+| `str`                     | `string`             |
+| `[u8]`                    | `bytes`              |
+| `String`                  | `string`             |
+| `Option<A>`               | `'a option`          |
+| `Result<A, ocaml::Error>` | `exception`          |
+| `Result<A, B>`            | `('a, 'b) Result.t`  |
+| `(A, B, C)`               | `'a * 'b * 'c`       |
+| `&[Value]`                | `'a array` (no copy) |
+| `Vec<A>`, `&[A]`          | `'a array`           |
+| `BTreeMap<A, B>`          | `('a, 'b) list`      |
+| `LinkedList<A>`           | `'a list`            |
 
-NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `IntoValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
+NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
 
 If you're concerned with minimizing allocations/conversions you should use `Value` type directly.
 
@@ -240,21 +247,25 @@ let () = Callback.register_exception "Rust_error" (Rust "")
 
 It must take a single `string` argument.
 
-## Upgrading
+#### Using `import!` macro
 
-Since 0.10 and later have a much different API compared to earlier version, here is are some major differences that should be considered when upgrading:
+The `ocaml::import!` macro can be used to call OCaml functions that have been registered using `Callback.register` from Rust:
 
-- `FromValue` and `IntoValue` have been marked `unsafe` because converting OCaml values to Rust and back also depends on the OCaml type signature.
-  * A possible solution to this would be a `cbindgen` like tool that generates the correct OCaml types from the Rust code
-- `IntoValue` now takes ownership of the value being converted
-- The `caml!` macro has been rewritten as a procedural macro called `ocaml::func`, which performs automatic type conversion
-  * `ocaml::native_func` and `ocaml::bytecode_func` were also added to create functions at a slightly lower level
-  * `derive` feature required
-- Added `derive` implementations for `IntoValue` and `FromValue` for stucts and enums
-  * `derive` feature required
-- `i32` and `u32` now map to OCaml's `int32` type rather than the `int` type
-  * Use `ocaml::Int`/`ocaml::Uint` to refer to the OCaml's `int` types now
-- `Array` and `List` now take generic types
-- Strings are converted to `str` or `String`, rather than using the `Str` type
-- Tuples are converted to Rust tuples (up to 20 items), rather than using the `Tuple` type
-- The `core` module has been renamed to `sys` and is now just an alias for the `ocaml-sys` crate and all sub-module have been removed
+```rust
+ocaml::import! {
+  fn my_function(i: ocaml::Int) -> ocaml::Int;
+}
+```
+
+Which can then be called directly:
+
+```rust
+my_function(&rt, 123)
+```
+
+### `ocaml::sig` macro
+
+The `ocaml::sig` macro in combination with `ocaml-build` can be used to write signatures for OCaml functions and types in-line.
+
+See [build/README.md](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
+

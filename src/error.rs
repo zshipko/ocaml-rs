@@ -1,4 +1,4 @@
-use crate::{FromValue, IntoValue, Runtime, Value};
+use crate::{FromValue, Runtime, ToValue, Value};
 
 /// Errors that are translated directly into OCaml exceptions
 #[derive(Debug)]
@@ -158,23 +158,21 @@ impl Error {
     }
 }
 
-#[cfg(not(feature = "no-std"))]
-unsafe impl<T: IntoValue, E: 'static + std::error::Error> IntoValue for Result<T, E> {
-    fn into_value(self, rt: &Runtime) -> Value {
-        match self {
-            Ok(x) => x.into_value(rt),
-            Err(y) => {
-                let e: Result<T, Error> = Err(Error::Error(Box::new(y)));
-                e.into_value(rt)
+unsafe impl<T: ToValue, E: ToValue> ToValue for Result<T, E> {
+    fn to_value(&self, rt: &Runtime) -> Value {
+        unsafe {
+            match self {
+                Ok(x) => Value::result_ok(rt, x),
+                Err(e) => Value::result_error(rt, e),
             }
         }
     }
 }
 
-unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
-    fn into_value(self, rt: &Runtime) -> Value {
+unsafe impl<T: ToValue> ToValue for Result<T, Error> {
+    fn to_value(&self, rt: &Runtime) -> Value {
         match self {
-            Ok(x) => return x.into_value(rt),
+            Ok(x) => return x.to_value(rt),
             Err(Error::Caml(CamlError::Exception(e))) => unsafe {
                 crate::sys::caml_raise(e.raw().0);
             },
@@ -185,7 +183,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
                 crate::sys::caml_array_bound_error();
             },
             Err(Error::Caml(CamlError::OutOfMemory)) => unsafe {
-                crate::sys::caml_array_bound_error();
+                crate::sys::caml_raise_out_of_memory();
             },
             Err(Error::Caml(CamlError::EndOfFile)) => unsafe {
                 crate::sys::caml_raise_end_of_file()
@@ -201,7 +199,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             },
             Err(Error::Caml(CamlError::InvalidArgument(s))) => {
                 unsafe {
-                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    let s = crate::util::CString::new(*s).expect("Invalid C string");
                     crate::sys::caml_invalid_argument(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
@@ -213,13 +211,13 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
             }
             Err(Error::Message(s)) => {
                 unsafe {
-                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    let s = crate::util::CString::new(*s).expect("Invalid C string");
                     crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
             Err(Error::Caml(CamlError::Failure(s))) => {
                 unsafe {
-                    let s = crate::util::CString::new(s).expect("Invalid C string");
+                    let s = crate::util::CString::new(*s).expect("Invalid C string");
                     crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char)
                 };
             }
@@ -242,7 +240,7 @@ unsafe impl<T: IntoValue> IntoValue for Result<T, Error> {
     }
 }
 
-unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
+unsafe impl<T: FromValue> FromValue for Result<T, crate::Error> {
     fn from_value(value: Value) -> Result<T, crate::Error> {
         unsafe {
             if value.is_exception_result() {
@@ -251,5 +249,11 @@ unsafe impl<'a, T: FromValue<'a>> FromValue<'a> for Result<T, crate::Error> {
 
             Ok(T::from_value(value))
         }
+    }
+}
+
+unsafe impl<A: FromValue, B: FromValue> FromValue for Result<A, B> {
+    fn from_value(value: Value) -> Result<A, B> {
+        unsafe { value.result() }
     }
 }

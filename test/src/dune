@@ -1,7 +1,8 @@
 (include_subdirs unqualified)
 
 (rule
- (deps (glob_files *.rs))
+ (deps
+  (glob_files *.rs))
  (targets libocamlrs_test_stubs.a dllocamlrs_test_stubs.so)
  (action
   (progn
@@ -9,19 +10,19 @@
    (run cargo build --target-dir %{project_root}/../../target --release)
    ; This is needed to support Linux and macOS shared libraries
    (run sh -c
-     "mv %{project_root}/../../target/release/libocamlrs_test_stubs.so ./dllocamlrs_test_stubs.so 2> /dev/null || \
-      mv %{project_root}/../../target/release/libocamlrs_test_stubs.dylib ./dllocamlrs_test_stubs.so")
+     "mv %{project_root}/../../target/release/libocamlrs_test_stubs.so ./dllocamlrs_test_stubs.so 2> /dev/null || mv %{project_root}/../../target/release/libocamlrs_test_stubs.dylib ./dllocamlrs_test_stubs.so")
    ; Copy over the static library too
-   (run mv %{project_root}/../../target/release/libocamlrs_test_stubs.a libocamlrs_test_stubs.a))))
+   (run mv %{project_root}/../../target/release/libocamlrs_test_stubs.a
+     libocamlrs_test_stubs.a))))
 
 (library
  (name ocamlrs_test)
  (public_name ocamlrs-test)
- (modules conv types callbacks runtime custom util)
+ (modules conv types callbacks runtime custom util rust)
  (inline_tests)
- (preprocess (pps ppx_inline_test))
+ (preprocess
+  (pps ppx_inline_test))
  (libraries unix)
-
  ; Link the Rust library
  (foreign_archives ocamlrs_test_stubs)
  (c_library_flags

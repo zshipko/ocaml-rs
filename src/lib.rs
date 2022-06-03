@@ -15,9 +15,12 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//! // Automatically derive `IntoValue` and `FromValue`
+//! use ocaml::FromValue;
+//!
+//! // Automatically derive `ToValue` and `FromValue`
 //! #[cfg(feature = "derive")]
-//! #[derive(ocaml::IntoValue, ocaml::FromValue)]
+//! #[derive(ocaml::ToValue, ocaml::FromValue)]
+//! #[ocaml::sig("{name: string; i: int}")]
 //! struct Example {
 //!     name: String,
 //!     i: ocaml::Int,
@@ -25,6 +28,7 @@
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("example -> example")]
 //! pub fn incr_example(mut e: Example) -> Example {
 //!     e.i += 1;
 //!     e
@@ -32,6 +36,7 @@
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("int -> int * int * int")]
 //! pub fn build_tuple(i: ocaml::Int) -> (ocaml::Int, ocaml::Int, ocaml::Int) {
 //!     (i + 1, i + 2, i + 3)
 //! }
@@ -39,17 +44,19 @@
 //! /// A name for the garbage collector handle can also be specified:
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func(my_gc_handle)]
+//! #[ocaml::sig("unit -> string")]
 //! pub unsafe fn my_string() -> ocaml::Value {
 //!     ocaml::Value::string("My string")
 //! }
 //!
 //! #[cfg(feature = "derive")]
 //! #[ocaml::func]
+//! #[ocaml::sig("float array -> float")]
 //! pub fn average(arr: ocaml::Array<f64>) -> Result<f64, ocaml::Error> {
 //!     let mut sum = 0f64;
 //!
 //!     for i in 0..arr.len() {
-//!         sum += arr.get_double(i)?;
+//!         sum += arr.get_f64(i)?;
 //!     }
 //!
 //!     Ok(sum / arr.len() as f64)
@@ -60,8 +67,9 @@
 //! // `native_func` has minimal overhead compared to wrapping with `func`
 //! #[cfg(feature = "derive")]
 //! #[ocaml::native_func]
+//! #[ocaml::sig("int -> int")]
 //! pub unsafe fn incr(value: ocaml::Value) -> ocaml::Value {
-//!     let i = value.int_val();
+//!     let i = isize::from_value(value);
 //!     ocaml::Value::int(i + 1)
 //! }
 //!
@@ -69,7 +77,7 @@
 //! #[no_mangle]
 //! pub unsafe extern "C" fn incr2(value: ocaml::Value) -> ocaml::Value {
 //!     ocaml::body!(gc: {
-//!         let i = value.int_val();
+//!         let i = isize::from_value(value);
 //!         ocaml::Value::int( i + 1)
 //!     })
 //! }
@@ -108,6 +116,8 @@
 //! external incr2: int -> int = "incr2"
 //! external incrf: float -> float = "incrf_bytecode" "incrf" [@@unboxed] [@@noalloc]
 //! ```
+//!
+//! Excluding the `incrf` example, these can also be automatically generated using [ocaml-build](https://github.com/zshipko/ocaml-rs/blob/master/build/README.md)
 
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
@@ -120,7 +130,7 @@ pub use ocaml_sys as sys;
 #[cfg(feature = "derive")]
 pub use ocaml_derive::{
     ocaml_bytecode_func as bytecode_func, ocaml_func as func, ocaml_native_func as native_func,
-    FromValue, IntoValue,
+    ocaml_sig as sig, FromValue, ToValue,
 };
 
 #[macro_use]
@@ -128,6 +138,7 @@ mod macros;
 
 mod conv;
 mod error;
+mod pointer;
 mod tag;
 mod types;
 mod util;
@@ -144,13 +155,14 @@ pub mod custom;
 
 pub use crate::custom::Custom;
 pub use crate::error::{CamlError, Error};
+pub use crate::pointer::Pointer;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
-pub use crate::types::{bigarray, Array, List, Pointer};
-pub use crate::value::{FromValue, IntoValue, Raw, Value};
+pub use crate::types::{bigarray, Array, List};
+pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 #[cfg(not(feature = "no-std"))]
-pub use crate::macros::inital_setup;
+pub use crate::macros::initial_setup;
 
 /// OCaml `float`
 pub type Float = f64;

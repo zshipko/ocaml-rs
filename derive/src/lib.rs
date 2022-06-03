@@ -30,6 +30,114 @@ fn check_func(item_fn: &mut syn::ItemFn) {
     });
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum Mode {
+    Func,
+    Struct,
+    Enum,
+    Type,
+}
+
+#[proc_macro_attribute]
+pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
+    let (name, mode, n) = if let Ok(item) = syn::parse::<syn::ItemStruct>(item.clone()) {
+        let name = &item.ident;
+        let n_fields = match item.fields {
+            syn::Fields::Named(x) => x.named.iter().count(),
+            syn::Fields::Unit => 0,
+            syn::Fields::Unnamed(x) => x.unnamed.iter().count(),
+        };
+        (name.to_string().to_lowercase(), Mode::Struct, n_fields)
+    } else if let Ok(item) = syn::parse::<syn::ItemEnum>(item.clone()) {
+        let name = &item.ident;
+        let n = item.variants.iter().count();
+        (name.to_string().to_lowercase(), Mode::Enum, n)
+    } else if let Ok(item_fn) = syn::parse::<syn::ItemFn>(item.clone()) {
+        let name = &item_fn.sig.ident;
+        let n_args = item_fn.sig.inputs.iter().count();
+        (name.to_string(), Mode::Func, n_args)
+    } else if let Ok(item) = syn::parse::<syn::ItemType>(item.clone()) {
+        let name = &item.ident;
+        (name.to_string(), Mode::Type, 0)
+    } else {
+        panic!("Invalid use of ocaml::sig macro: {item}")
+    };
+
+    if attribute.is_empty() && mode != Mode::Func {
+        // Ok
+    } else if let Ok(sig) = syn::parse::<syn::LitStr>(attribute) {
+        let s = sig.value();
+        match mode {
+            Mode::Func => {
+                let mut n_args = 0;
+                let mut prev = None;
+                let mut paren_level = 0;
+                let iter = s.chars();
+                for ch in iter {
+                    if ch == '(' {
+                        paren_level += 1;
+                    } else if ch == ')' {
+                        paren_level -= 1;
+                    }
+
+                    if ch == '>' && prev == Some('-') && paren_level == 0 {
+                        n_args += 1;
+                    }
+
+                    prev = Some(ch);
+                }
+
+                if n == 0 && !s.trim().starts_with("unit") {
+                    panic!("{name}: Expected a single unit argument");
+                }
+
+                if n != n_args && (n == 0 && n_args > 1) {
+                    panic!(
+                        "{name}: Signature and function do not have the same number of arguments (expected: {n}, got {n_args})"
+                    );
+                }
+            }
+            Mode::Enum => {
+                if !s.is_empty() {
+                    let mut n_variants = 1;
+                    let mut bracket_level = 0;
+                    let iter = s.chars();
+                    for ch in iter {
+                        if ch == '[' {
+                            bracket_level += 1;
+                        } else if ch == ']' {
+                            bracket_level -= 1;
+                        }
+
+                        if ch == '|' && bracket_level == 0 {
+                            n_variants += 1;
+                        }
+                    }
+                    if s.trim().starts_with('|') {
+                        n_variants -= 1;
+                    }
+                    if n != n_variants {
+                        panic!("{name}: Signature and enum do not have the same number of variants (expected: {n}, got {n_variants})")
+                    }
+                }
+            }
+            Mode::Struct => {
+                if !s.is_empty() {
+                    let n_fields = s.matches(':').count();
+                    if n != n_fields {
+                        panic!("{name}: Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})")
+                    }
+                }
+            }
+            Mode::Type => {}
+        }
+    } else {
+        panic!("OCaml sig accepts a str literal");
+    }
+
+    item
+}
+
 /// `func` is used export Rust functions to OCaml, performing the necessary wrapping/unwrapping
 /// automatically.
 ///
@@ -48,6 +156,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let constness = &item_fn.sig.constness;
     let mut gc_name = syn::Ident::new("gc", name.span());
     let mut use_gc = quote!({let _ = &#gc_name;});
+
     if let Ok(ident) = syn::parse::<syn::Ident>(attribute) {
         gc_name = ident;
         use_gc = quote!();
@@ -143,7 +252,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 let res = inner(#gc_name, #param_names);
                 #[allow(unused_unsafe)]
                 let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
-                unsafe { ocaml::IntoValue::into_value(res, &gc_).raw() }
+                unsafe { ocaml::ToValue::to_value(&res, &gc_).raw() }
             })
         }
     };
@@ -151,6 +260,20 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     if ocaml_args.len() > 5 {
         let bytecode = {
             let mut bc = item_fn.clone();
+            bc.attrs = bc
+                .attrs
+                .into_iter()
+                .filter(|x| {
+                    let s = x
+                        .path
+                        .segments
+                        .iter()
+                        .map(|x| x.ident.to_string())
+                        .collect::<Vec<_>>()
+                        .join("::");
+                    s != "ocaml::sig" && s != "sig"
+                })
+                .collect();
             bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
             ocaml_bytecode_func_impl(bc, gc_name, use_gc, Some(name))
         };
@@ -390,7 +513,7 @@ fn ocaml_bytecode_func_impl(
                 let mut __ocaml_arg_index = 0;
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name).raw()
+                ocaml::ToValue::to_value(&res, &#gc_name).raw()
             }
         }
     } else {
@@ -417,11 +540,11 @@ fn ocaml_bytecode_func_impl(
 
                 #(#convert_params);*
                 let res = inner(#param_names);
-                ocaml::IntoValue::into_value(res, &#gc_name).raw()
+                ocaml::ToValue::to_value(&res, &#gc_name).raw()
             }
         }
     }
 }
 
-synstructure::decl_derive!([IntoValue, attributes(ocaml)] => derive::intovalue_derive);
+synstructure::decl_derive!([ToValue, attributes(ocaml)] => derive::intovalue_derive);
 synstructure::decl_derive!([FromValue, attributes(ocaml)] => derive::fromvalue_derive);
