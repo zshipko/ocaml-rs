@@ -34,8 +34,8 @@ pub fn testing_alloc(b: i64) -> ocaml::Pointer<Testing> {
 
 #[ocaml::func]
 #[ocaml::sig("testing -> string -> unit")]
-pub fn testing_set_c(mut testing: ocaml::Pointer<Testing>, v: String) {
-    testing.as_mut().c = v;
+pub fn testing_set_c(testing: &mut Testing, v: String) {
+    testing.c = v;
 }
 
 #[ocaml::func]
