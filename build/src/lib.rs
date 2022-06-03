@@ -56,6 +56,7 @@ fn handle(attrs: Vec<syn::Attribute>, mut f: impl FnMut(&str)) {
                         f(ty)
                     }
                 }
+                [] => f(""),
                 x => {
                     panic!("Invalid signature: {x:?}");
                 }

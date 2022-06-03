@@ -30,6 +30,7 @@ fn check_func(item_fn: &mut syn::ItemFn) {
     });
 }
 
+#[derive(Debug, PartialEq, Eq)]
 enum Mode {
     Func,
     Struct,
@@ -62,7 +63,9 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
         panic!("Invalid use of ocaml::sig macro: {item}")
     };
 
-    if let Ok(sig) = syn::parse::<syn::LitStr>(attribute) {
+    if attribute.is_empty() && mode != Mode::Func {
+        // Ok
+    } else if let Ok(sig) = syn::parse::<syn::LitStr>(attribute) {
         let s = sig.value();
         match mode {
             Mode::Func => {
@@ -122,7 +125,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 if !s.is_empty() {
                     let n_fields = s.matches(':').count();
                     if n != n_fields {
-                        panic!("{name} Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})")
+                        panic!("{name}: Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})")
                     }
                 }
             }

@@ -1,6 +1,6 @@
 use ocaml::Raw;
 
-#[ocaml::sig("")]
+#[ocaml::sig]
 struct Testing {
     a: ocaml::Float,
     b: i64,
@@ -56,7 +56,7 @@ pub fn testing_get_values(testing: ocaml::Pointer<Testing>) -> (ocaml::Float, i6
     (t.a, t.b, t.c.clone())
 }
 
-#[ocaml::sig("")]
+#[ocaml::sig]
 struct TestingCallback {
     func: ocaml::Value,
 }
@@ -87,7 +87,7 @@ pub unsafe fn testing_callback_call(
 
 use std::io::Read;
 
-#[ocaml::sig("")]
+#[ocaml::sig]
 type File = std::fs::File;
 
 #[ocaml::func]
