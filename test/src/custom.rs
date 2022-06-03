@@ -46,8 +46,7 @@ pub fn testing_set_a(mut testing: ocaml::Pointer<Testing>, v: ocaml::Float) {
 
 #[ocaml::func]
 #[ocaml::sig("testing -> (float * int64 * string)")]
-pub fn testing_get_values(testing: ocaml::Pointer<Testing>) -> (ocaml::Float, i64, String) {
-    let t = testing.as_ref();
+pub fn testing_get_values(t: &Testing) -> (ocaml::Float, i64, String) {
     (t.a, t.b, t.c.clone())
 }
 

@@ -192,6 +192,19 @@ macro_rules! custom {
     };
 }
 
+unsafe impl<T: Custom> FromValue for &T {
+    fn from_value(v: Value) -> Self {
+        let ptr = Pointer::from_value(v);
+        unsafe { &*ptr.as_ptr() }
+    }
+}
+
+unsafe impl<T: Custom> FromValue for &mut T {
+    fn from_value(v: Value) -> Self {
+        let mut ptr = Pointer::from_value(v);
+        unsafe { &mut *ptr.as_mut_ptr() }
+    }
+}
 /// Derives `Custom` with the given finalizer for a type
 ///
 /// ```rust,no_run
