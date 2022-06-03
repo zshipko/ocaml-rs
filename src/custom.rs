@@ -35,7 +35,8 @@ impl Default for CustomOps {
 ///
 /// A custom type can only be converted to a `Value` using `ToValue`, but can't be converted from a
 /// value. Once the Rust value is owned by OCaml it should be accessed using `ocaml::Pointer` to
-/// avoid reallocating the same value
+/// avoid reallocating the same value. By default the inner Rust value will be dropped when the
+/// finalizer runs on the OCaml side.
 ///
 /// ```rust
 /// struct Example(ocaml::Int);
@@ -54,7 +55,7 @@ impl Default for CustomOps {
 ///     x.as_ref().0
 /// }
 /// ```
-pub trait Custom {
+pub trait Custom: Sized {
     /// Custom type name
     const NAME: &'static str;
 
@@ -72,6 +73,12 @@ pub trait Custom {
     /// related to this custom type
     const MAX: usize = 1;
 
+    /// Automatically calls `Pointer::drop_in_place`
+    unsafe extern "C" fn finalize(v: Raw) {
+        let p = v.as_pointer::<Self>();
+        p.drop_in_place();
+    }
+
     /// Get a static reference the this type's `CustomOps` implementation
     fn ops() -> &'static CustomOps {
         &Self::OPS
@@ -88,10 +95,6 @@ pub trait Custom {
 /// struct MyType {
 ///     s: String,
 ///     i: i32,
-/// }
-///
-/// extern "C" fn mytype_finalizer(_: ocaml::Raw) {
-///     println!("This runs when the value gets garbage collected");
 /// }
 ///
 /// unsafe extern "C" fn mytype_compare(a: ocaml::Raw, b: ocaml::Raw) -> i32 {
@@ -113,7 +116,6 @@ pub trait Custom {
 /// }
 ///
 /// ocaml::custom!(MyType {
-///     finalize: mytype_finalizer,
 ///     compare: mytype_compare,
 /// });
 ///
@@ -123,12 +125,19 @@ pub trait Custom {
 ///     i: i32,
 /// }
 ///
+///
+/// // This is the default finalizer
+/// unsafe extern "C" fn mytype2_finalizer(v: ocaml::Raw) {
+///     let ptr = v.as_pointer::<MyType2>();
+///     ptr.drop_in_place();
+/// }
+///
 /// impl ocaml::Custom for MyType2 {
 ///     const NAME: &'static str = "rust.MyType\0";
 ///
 ///     const OPS: ocaml::custom::CustomOps = ocaml::custom::CustomOps {
 ///         identifier: Self::NAME.as_ptr() as *mut ocaml::sys::Char,
-///         finalize: Some(mytype_finalizer),
+///         finalize: Some(mytype2_finalizer),
 ///         compare: Some(mytype_compare),
 ///         .. ocaml::custom::DEFAULT_CUSTOM_OPS
 ///     };
@@ -175,19 +184,11 @@ macro_rules! custom {
         const OPS: $crate::custom::CustomOps = $crate::custom::CustomOps {
             identifier: Self::NAME.as_ptr() as *const $crate::sys::Char,
             $($($k: Some($v),)*)?
-            .. $crate::custom::DEFAULT_CUSTOM_OPS
+            ..$crate::custom::CustomOps {
+                finalize: Some(Self::finalize),
+                .. $crate::custom::DEFAULT_CUSTOM_OPS
+            }
         };
-    };
-}
-
-/// Creates a finalizer function that calls `Pointer::drop_in_place"
-#[macro_export]
-macro_rules! custom_drop_finalizer {
-    ($t: ty, $name: ident) => {
-        unsafe extern "C" fn $name(v: ocaml::Raw) {
-            let p = v.as_pointer::<$t>();
-            p.drop_in_place();
-        }
     };
 }
 
@@ -200,7 +201,13 @@ macro_rules! custom_drop_finalizer {
 ///     name: String
 /// }
 ///
-/// ocaml::custom_drop_finalizer!(MyType, mytype_finalizer);
+/// // NOTE: this is the default finalizer, no need to write this in
+/// // your own code
+/// unsafe extern "C" fn mytype_finalizer(v: ocaml::Raw) {
+///     let p = v.as_pointer::<MyType>();
+///     p.drop_in_place();
+/// }
+///
 /// ocaml::custom_finalize!(MyType, mytype_finalizer);
 ///
 /// // Which is a shortcut for:
@@ -225,7 +232,7 @@ macro_rules! custom_finalize {
     };
 }
 
-/// Default CustomOps
+/// Default `CustomOps` value
 pub const DEFAULT_CUSTOM_OPS: CustomOps = CustomOps {
     identifier: core::ptr::null(),
     fixed_length: core::ptr::null_mut(),

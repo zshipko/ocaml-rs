@@ -17,10 +17,7 @@ unsafe extern "C" fn testing_compare(a: Raw, b: Raw) -> i32 {
     }
 }
 
-ocaml::custom_drop_finalizer!(Testing, testing_finalize);
-
 ocaml::custom!(Testing {
-    finalize: testing_finalize,
     compare: testing_compare,
 });
 

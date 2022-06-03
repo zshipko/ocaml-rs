@@ -12,6 +12,7 @@
 - Renamed `Value::float` to `Value::double` and `Value::float_val` to `Value::double_val`
 - Added `Value::alloc_double_array`, `Value::double_field` and `Value::store_double_field`
 - Improved support for float arrays in ocaml-sys
+- `Custom` values have a new default `finalize` implementation that will drop the inner Rust value
 
 ## 0.22.4
 
