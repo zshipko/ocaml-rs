@@ -32,7 +32,7 @@ fn variant_attrs(attrs: &[syn::Attribute]) -> Attrs {
                                     }
                                     acc.unboxed = true;
                                     acc
-                                } else if ident == "floats_array" {
+                                } else if ident == "float_array" {
                                     if acc.unboxed {
                                         panic!("in ocaml attrs a variant cannot be both float array and unboxed")
                                     }
