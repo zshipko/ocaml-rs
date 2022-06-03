@@ -51,8 +51,8 @@ impl Default for CustomOps {
 ///
 /// #[cfg(feature = "derive")]
 /// #[ocaml::func]
-/// pub unsafe fn example_value(x: ocaml::Pointer<Example>) -> ocaml::Int {
-///     x.as_ref().0
+/// pub unsafe fn example_value(x: &Example) -> ocaml::Int {
+///     x.0
 /// }
 /// ```
 pub trait Custom: Sized {
@@ -205,6 +205,7 @@ unsafe impl<T: Custom> FromValue for &mut T {
         unsafe { &mut *ptr.as_mut_ptr() }
     }
 }
+
 /// Derives `Custom` with the given finalizer for a type
 ///
 /// ```rust,no_run
