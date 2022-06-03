@@ -17,10 +17,7 @@ unsafe extern "C" fn testing_compare(a: Raw, b: Raw) -> i32 {
     }
 }
 
-unsafe extern "C" fn testing_finalize(a: Raw) {
-    let t0 = a.as_pointer::<Testing>();
-    t0.drop_in_place();
-}
+ocaml::custom_drop_finalizer!(Testing, testing_finalize);
 
 ocaml::custom!(Testing {
     finalize: testing_finalize,
@@ -30,11 +27,12 @@ ocaml::custom!(Testing {
 #[ocaml::func]
 #[ocaml::sig("int64 -> testing")]
 pub fn testing_alloc(b: i64) -> ocaml::Pointer<Testing> {
-    ocaml::Pointer::alloc_custom(Testing {
+    Testing {
         a: 0.0,
         b,
         c: String::new(),
-    })
+    }
+    .into()
 }
 
 #[ocaml::func]
@@ -71,7 +69,7 @@ ocaml::custom_finalize!(TestingCallback, testing_callback_finalize);
 #[ocaml::func]
 #[ocaml::sig("(int -> float) -> testing_callback")]
 pub fn testing_callback_alloc(func: ocaml::Value) -> ocaml::Pointer<TestingCallback> {
-    ocaml::Pointer::alloc_custom(TestingCallback { func })
+    TestingCallback { func }.into()
 }
 
 #[ocaml::func]

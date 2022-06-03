@@ -180,6 +180,17 @@ macro_rules! custom {
     };
 }
 
+/// Creates a finalizer function that calls `Pointer::drop_in_place"
+#[macro_export]
+macro_rules! custom_drop_finalizer {
+    ($t: ty, $name: ident) => {
+        unsafe extern "C" fn $name(v: ocaml::Raw) {
+            let p = v.as_pointer::<$t>();
+            p.drop_in_place();
+        }
+    };
+}
+
 /// Derives `Custom` with the given finalizer for a type
 ///
 /// ```rust,no_run
@@ -189,11 +200,7 @@ macro_rules! custom {
 ///     name: String
 /// }
 ///
-/// unsafe extern "C" fn mytype_finalizer(v: ocaml::Raw) {
-///     let p = v.as_pointer::<MyType>();
-///     p.drop_in_place()
-/// }
-///
+/// ocaml::custom_drop_finalizer!(MyType, mytype_finalizer);
 /// ocaml::custom_finalize!(MyType, mytype_finalizer);
 ///
 /// // Which is a shortcut for:
@@ -202,8 +209,13 @@ macro_rules! custom {
 ///     name: String
 /// }
 ///
+/// unsafe extern "C" fn mytype2_finalizer(v: ocaml::Raw) {
+///     let p = v.as_pointer::<MyType>();
+///     p.drop_in_place()
+/// }
+///
 /// ocaml::custom!(MyType2 {
-///     finalize: mytype_finalizer
+///     finalize: mytype2_finalizer
 /// });
 /// ```
 #[macro_export]
