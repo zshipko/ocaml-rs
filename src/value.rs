@@ -691,7 +691,8 @@ impl Value {
     }
 
     /// Convert an OCaml exception value to the string representation
-    pub unsafe fn exception_to_string(&self) -> Result<String, std::str::Utf8Error> {
+    #[cfg(not(feature = "no-std"))]
+    pub unsafe fn exception_to_string(&self) -> Result<String, core::str::Utf8Error> {
         let ptr = ocaml_sys::caml_format_exception(self.raw().0);
         std::ffi::CStr::from_ptr(ptr).to_str().map(|x| x.to_owned())
     }

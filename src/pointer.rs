@@ -1,7 +1,7 @@
 #![allow(unknown_lints)]
 #![allow(clippy::derive_partial_eq_without_eq)]
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::{Custom, FromValue, Raw, Runtime, ToValue, Value};
 

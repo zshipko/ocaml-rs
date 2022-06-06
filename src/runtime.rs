@@ -38,9 +38,3 @@ pub unsafe fn gc_full_major() {
 pub unsafe fn gc_compact() {
     ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
 }
-
-/// Initialize the OCaml runtime when
-pub fn startup() -> Runtime {
-    crate::macros::initial_setup();
-    Runtime::init()
-}
