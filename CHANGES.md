@@ -1,4 +1,4 @@
-## Unreleased
+## 1.0.0-beta
 
 - Removed `IntoValue` and added `ToValue` because it now accepts a reference to self
 - `Custom` types now have to be wrapped in a `Pointer<T>`

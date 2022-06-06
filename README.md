@@ -19,7 +19,7 @@ NOTE: While `ocaml-rs` *can* be used safely, it does not prevent a wide range of
 
 ### Getting started
 
-Take a look at the [ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) project for a basic example to help get started with `ocaml-rs`.
+[ocaml-rust-starter](http://github.com/zshipko/ocaml-rust-starter) is a basic example to help get started with `ocaml-rs`.
 
 On the Rust side, you will need to add the following to your `Cargo.toml`:
 
