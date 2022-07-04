@@ -260,20 +260,16 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     if ocaml_args.len() > 5 {
         let bytecode = {
             let mut bc = item_fn.clone();
-            bc.attrs = bc
-                .attrs
-                .into_iter()
-                .filter(|x| {
-                    let s = x
-                        .path
-                        .segments
-                        .iter()
-                        .map(|x| x.ident.to_string())
-                        .collect::<Vec<_>>()
-                        .join("::");
-                    s != "ocaml::sig" && s != "sig"
-                })
-                .collect();
+            bc.attrs.retain(|x| {
+                let s = x
+                    .path
+                    .segments
+                    .iter()
+                    .map(|x| x.ident.to_string())
+                    .collect::<Vec<_>>()
+                    .join("::");
+                s != "ocaml::sig" && s != "sig"
+            });
             bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
             ocaml_bytecode_func_impl(bc, gc_name, use_gc, Some(name))
         };
