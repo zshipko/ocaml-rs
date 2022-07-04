@@ -89,6 +89,18 @@ unsafe impl FromValue for i32 {
     }
 }
 
+unsafe impl ToValue for u32 {
+    fn to_value(&self, _rt: &Runtime) -> crate::Value {
+        unsafe { Value::int32(*self as i32) }
+    }
+}
+
+unsafe impl FromValue for u32 {
+    fn from_value(v: Value) -> u32 {
+        unsafe { v.int32_val() as u32 }
+    }
+}
+
 struct Incr(usize);
 
 impl Incr {
