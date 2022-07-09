@@ -1,4 +1,8 @@
-## 1.0.0-beta
+## Unreleased
+
+- Add `ToValue`/`FromValue` implementations for `u32`
+
+## 1.0.0-beta.0
 
 - Removed `IntoValue` and added `ToValue` because it now accepts a reference to self
 - `Custom` types now have to be wrapped in a `Pointer<T>`
