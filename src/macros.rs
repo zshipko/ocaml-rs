@@ -1,16 +1,14 @@
-#[cfg(not(feature = "no-std"))]
-static PANIC_HANDLER_INIT: std::sync::atomic::AtomicBool =
-    std::sync::atomic::AtomicBool::new(false);
+static PANIC_HANDLER_INIT: core::sync::atomic::AtomicBool =
+    core::sync::atomic::AtomicBool::new(false);
 
-#[cfg(not(feature = "no-std"))]
 #[doc(hidden)]
 pub fn initial_setup() {
     if PANIC_HANDLER_INIT
         .compare_exchange(
             false,
             true,
-            std::sync::atomic::Ordering::Relaxed,
-            std::sync::atomic::Ordering::Relaxed,
+            core::sync::atomic::Ordering::Relaxed,
+            core::sync::atomic::Ordering::Relaxed,
         )
         .is_err()
     {
@@ -21,22 +19,25 @@ pub fn initial_setup() {
         ocaml_boxroot_sys::boxroot_setup();
     }
 
-    ::std::panic::set_hook(Box::new(|info| unsafe {
-        let err = info.payload();
-        let msg = if err.is::<&str>() {
-            err.downcast_ref::<&str>().unwrap().to_string()
-        } else if err.is::<String>() {
-            err.downcast_ref::<String>().unwrap().clone()
-        } else {
-            format!("{:?}", err)
-        };
+    #[cfg(not(feature = "no-std"))]
+    {
+        ::std::panic::set_hook(Box::new(|info| unsafe {
+            let err = info.payload();
+            let msg = if err.is::<&str>() {
+                err.downcast_ref::<&str>().unwrap().to_string()
+            } else if err.is::<String>() {
+                err.downcast_ref::<String>().unwrap().clone()
+            } else {
+                format!("{:?}", err)
+            };
 
-        if let Some(err) = crate::Value::named("Rust_exception") {
-            crate::Error::raise_value(err, &msg);
-        }
+            if let Some(err) = crate::Value::named("Rust_exception") {
+                crate::Error::raise_value(err, &msg);
+            }
 
-        crate::Error::raise_failure(&msg)
-    }))
+            crate::Error::raise_failure(&msg)
+        }))
+    }
 }
 
 /// `body!` is needed to help the OCaml runtime to manage garbage collection, it should

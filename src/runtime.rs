@@ -3,18 +3,16 @@ use crate::Runtime;
 /// Initialize the OCaml runtime, the runtime will be
 /// freed when the value goes out of scope
 pub fn init() -> Runtime {
-    #[cfg(not(feature = "no-std"))]
+    let rt = Runtime::init();
     crate::initial_setup();
-
-    Runtime::init()
+    rt
 }
 
 /// Initialize the OCaml runtime
 pub fn init_persistent() {
-    #[cfg(not(feature = "no-std"))]
+    let rt = Runtime::init_persistent();
     crate::initial_setup();
-
-    Runtime::init_persistent()
+    rt
 }
 
 /// Run minor GC collection
