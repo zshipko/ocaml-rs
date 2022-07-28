@@ -127,5 +127,5 @@ pub unsafe fn abstract_pointer_value(f: Value) -> ocaml::OCaml<ocaml::interop::O
 #[ocaml::func]
 pub unsafe fn abstract_pointer_free(f: Value) {
     let f = f.abstract_ptr_val_mut::<Abstract>();
-    Box::from_raw(f);
+    drop(Box::from_raw(f));
 }
