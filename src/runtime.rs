@@ -10,9 +10,8 @@ pub fn init() -> Runtime {
 
 /// Initialize the OCaml runtime
 pub fn init_persistent() {
-    let rt = Runtime::init_persistent();
+    Runtime::init_persistent();
     crate::initial_setup();
-    rt
 }
 
 /// Run minor GC collection
