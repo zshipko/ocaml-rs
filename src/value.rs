@@ -690,6 +690,20 @@ impl Value {
         Some(Value::new(v))
     }
 
+    /// Returns the next item and the next `Seq.t` if available, otherwise `Ok(None)`
+    pub unsafe fn seq_next(&self) -> Result<Option<(Value, Value)>, Error> {
+        let x = self.call_n(&[Value::unit().raw()])?;
+
+        if !x.is_block() {
+            return Ok(None);
+        }
+
+        let v = x.field(0);
+        let next = x.field(1);
+
+        Ok(Some((v, next)))
+    }
+
     /// Convert an OCaml exception value to the string representation
     #[cfg(not(feature = "no-std"))]
     pub unsafe fn exception_to_string(&self) -> Result<String, core::str::Utf8Error> {

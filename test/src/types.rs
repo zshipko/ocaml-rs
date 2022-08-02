@@ -129,3 +129,14 @@ pub unsafe fn abstract_pointer_free(f: Value) {
     let f = f.abstract_ptr_val_mut::<Abstract>();
     drop(Box::from_raw(f));
 }
+
+#[ocaml::func]
+#[ocaml::sig("int Seq.t -> int")]
+pub unsafe fn seq_sum(seq: ocaml::Seq<ocaml::Int>) -> Result<ocaml::Int, ocaml::Error> {
+    let mut sum = 0;
+    for i in seq {
+        let i = i?;
+        sum += i;
+    }
+    Ok(sum)
+}

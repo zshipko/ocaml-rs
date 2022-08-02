@@ -30,6 +30,7 @@ Below is a list of types that implement these traits in `ocaml-rs` and their cor
 | `Vec<A>`, `&[A]`          | `'a array`           |
 | `BTreeMap<A, B>`          | `('a, 'b) list`      |
 | `LinkedList<A>`           | `'a list`            |
+| `Seq<A>`                  | `'a Seq.t`           |
 
 NOTE: Even though `&[Value]` is specifically marked as no copy, any type like `Option<Value>` would also qualify since the inner value is not converted to a Rust type. However, `Option<String>` will do full unmarshaling into Rust types. Another thing to note: `FromValue` for `str` and `&[u8]` is zero-copy, however `ToValue` for `str` and `&[u8]` creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.
 

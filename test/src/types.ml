@@ -93,3 +93,11 @@ let%test "abstract pointer" = Util.check_leaks (fun () ->
   Util.gc ();
   abstract_pointer_free a; f = 1.5
 )
+
+let%test "seq sum" = Util.check_leaks (fun () ->
+  let l = List.init 100 Fun.id in
+  let s = List.to_seq l in
+  let sum = seq_sum s in
+  let sum' = List.fold_left ( + ) 0 l in
+  sum = sum'
+)

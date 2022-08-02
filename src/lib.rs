@@ -160,7 +160,7 @@ pub use crate::error::{CamlError, Error};
 pub use crate::pointer::Pointer;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
-pub use crate::types::{bigarray, Array, List};
+pub use crate::types::{bigarray, Array, List, Seq};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 #[cfg(not(feature = "no-std"))]

@@ -1,3 +1,7 @@
+## 1.0.0-beta.2
+
+- Added `Seq` type
+
 ## 1.0.0-beta.1
 
 - Add `ToValue`/`FromValue` implementations for `u32`

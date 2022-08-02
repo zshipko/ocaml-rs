@@ -13,6 +13,40 @@ use core::{
 
 use crate::value::{FromValue, Size, ToValue, Value};
 
+#[derive(Clone, PartialEq, Eq)]
+#[repr(transparent)]
+/// Seq<A> wraps `'a Seq.t` without converting it to Rust
+pub struct Seq<T: FromValue>(Value, PhantomData<T>);
+
+unsafe impl<T: FromValue> ToValue for Seq<T> {
+    fn to_value(&self, _rt: &Runtime) -> Value {
+        self.0.clone()
+    }
+}
+
+unsafe impl<T: FromValue> FromValue for Seq<T> {
+    fn from_value(value: Value) -> Self {
+        Seq(value, PhantomData)
+    }
+}
+
+impl<T: FromValue> std::iter::Iterator for Seq<T> {
+    type Item = Result<T, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            match self.0.seq_next() {
+                Ok(Some((x, next))) => {
+                    self.0 = next;
+                    Some(Ok(T::from_value(x)))
+                }
+                Ok(None) => None,
+                Err(e) => Some(Err(e)),
+            }
+        }
+    }
+}
+
 /// `Array<A>` wraps an OCaml `'a array` without converting it to Rust
 #[derive(Clone, PartialEq, Eq)]
 #[repr(transparent)]
