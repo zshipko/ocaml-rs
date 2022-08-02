@@ -95,7 +95,7 @@ let%test "abstract pointer" = Util.check_leaks (fun () ->
 )
 
 let%test "seq sum" = Util.check_leaks (fun () ->
-  let l = List.init 100 Fun.id in
+  let l = List.init 100 (fun x -> x) in
   let s = List.to_seq l in
   let sum = seq_sum s in
   let sum' = List.fold_left ( + ) 0 l in
