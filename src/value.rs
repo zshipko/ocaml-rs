@@ -56,7 +56,7 @@ impl From<Raw> for sys::Value {
 
 impl From<sys::Value> for Value {
     fn from(v: sys::Value) -> Self {
-        unsafe { Value::Root(Root::new(v.into())) }
+        unsafe { Value::Root(Root::new(v)) }
     }
 }
 
