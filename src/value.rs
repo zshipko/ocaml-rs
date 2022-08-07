@@ -24,6 +24,8 @@ pub struct Raw(pub sys::Value);
 impl Raw {
     /// Convert a `Raw` value to `Value`, this should only be used in custom value destructors
     /// and other cases where you know the underlying `sys::Value` was created using `Value::new`
+    /// or it is not possible for the value to be garbage collected (i.e. inside of a `@@noalloc`
+    /// function or in a custom type finalizer)
     pub unsafe fn as_value(&self) -> Value {
         Value::Raw(self.0)
     }
@@ -49,6 +51,18 @@ impl From<sys::Value> for Raw {
 impl From<Raw> for sys::Value {
     fn from(x: Raw) -> sys::Value {
         x.0
+    }
+}
+
+impl From<sys::Value> for Value {
+    fn from(v: sys::Value) -> Self {
+        unsafe { Value::Root(Root::new(v.into())) }
+    }
+}
+
+impl From<Raw> for Value {
+    fn from(v: Raw) -> Self {
+        Value::Raw(v.into())
     }
 }
 
@@ -235,8 +249,8 @@ impl Value {
 
     #[inline]
     /// Create a new Value from an existing OCaml `value`
-    pub unsafe fn new<T: Into<sys::Value>>(v: T) -> Value {
-        Value::Root(Root::new(v.into()))
+    pub unsafe fn new<T: Into<Value>>(v: T) -> Value {
+        v.into()
     }
 
     /// Get array length
