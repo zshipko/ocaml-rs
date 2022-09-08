@@ -139,9 +139,10 @@ macro_rules! import {
 /// }
 /// ```
 macro_rules! function {
-    ($x:expr, ($($argname:ident: $arg:ty),*) $(-> $r:ty)?) => {
-        |gc: &$crate::Runtime, $($argname: &$arg),*| -> Result<($($r)?), $crate::Error> {
+    ($x:expr, ($($argname:ident: $arg:ty),*) -> $r:ty) => {
+        |gc: &$crate::Runtime, $($argname: &$arg),*| -> Result<$r, $crate::Error> {
             let args = [$($crate::ToValue::to_value($argname, gc)),*];
+            #[allow(unused_unsafe)]
             unsafe { $crate::Value::call(&$x, gc, args) }
         }
     };
