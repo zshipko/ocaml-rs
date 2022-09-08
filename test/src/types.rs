@@ -75,7 +75,7 @@ pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<
 #[ocaml::func]
 #[ocaml::sig("unit -> (float, float32_elt, c_layout) Array1.t")]
 pub unsafe fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
-    ocaml::bigarray::Array1::from_slice(&[1f32, 2f32, 3f32, 4f32, 5f32])
+    ocaml::bigarray::Array1::from_slice([1f32, 2f32, 3f32, 4f32, 5f32])
 }
 
 #[ocaml::func]

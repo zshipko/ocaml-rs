@@ -706,7 +706,7 @@ impl Value {
 
     /// Returns the next item and the next `Seq.t` if available, otherwise `Ok(None)`
     pub unsafe fn seq_next(&self) -> Result<Option<(Value, Value)>, Error> {
-        let x = self.call_n(&[Value::unit().raw()])?;
+        let x = self.call_n([Value::unit().raw()])?;
 
         if !x.is_block() {
             return Ok(None);

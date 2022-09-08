@@ -50,7 +50,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     write!(f, "")?;
 
     assert!(std::process::Command::new(&ocamlopt)
-        .args(&["-output-complete-obj", "-o"])
+        .args(["-output-complete-obj", "-o"])
         .arg(out_dir.join("rt.o"))
         .arg(out_dir.join("runtime.ml"))
         .status()?
