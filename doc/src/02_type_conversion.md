@@ -77,6 +77,7 @@ There are several types that work directly on OCaml values, these don't perform 
 | ------------------------------ | -------------------------------------- |
 | `ocaml::Array<T>`              | `'a array`                             |
 | `ocaml::List<T>`               | `'a list`                              |
+| `ocaml::Seq<T>`                | `'a Seq.t`                             |
 | `ocaml::bigarray::Array1<T>`   | `('a, 'b, c_layout) Bigarray.Array1.t` |
 | `ocaml::bigarray::Array2<T>`   | `('a, 'b, c_layout) Bigarray.Array2.t` |
 | `ocaml::bigarray::Array3<T>`   | `('a, 'b, c_layout) Bigarray.Array3.t` |

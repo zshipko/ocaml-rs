@@ -1,3 +1,7 @@
+## 1.0.0-beta.4
+
+- Added `ocaml::function` macro for calling OCaml values
+
 ## 1.0.0-beta.2
 
 - Added `Seq` type

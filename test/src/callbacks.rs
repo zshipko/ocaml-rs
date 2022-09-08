@@ -3,15 +3,17 @@ use ocaml::{Error, Value};
 #[ocaml::func]
 #[ocaml::sig("('a -> 'b) -> 'a -> 'b")]
 pub unsafe fn apply1(f: Value, x: Value) -> Result<Value, Error> {
-    f.call1(gc, x)
+    let f = ocaml::function!(f, (a: Value) -> Value);
+    f(gc, &x)
 }
 
 #[ocaml::func]
 #[ocaml::sig("('a -> 'b) -> 'a -> 'b")]
 pub unsafe fn apply3(f: Value, x: Value) -> Result<Value, Error> {
-    let a = f.call1(gc, x)?;
-    let b = f.call1(gc, a)?;
-    f.call1(gc, b)
+    let f = ocaml::function!(f, (a: Value) -> Value);
+    let a = f(gc, &x)?;
+    let b = f(gc, &a)?;
+    f(gc, &b)
 }
 
 #[ocaml::func]
@@ -23,5 +25,6 @@ pub unsafe fn apply_range(f: Value, start: ocaml::Int, stop: ocaml::Int) -> Resu
         l = l.add(gc, &v)
     }
 
-    f.call1(gc, l)
+    let f = ocaml::function!(f, (a: ocaml::List<ocaml::Int>) -> Value);
+    f(gc, &l)
 }

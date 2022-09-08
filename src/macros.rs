@@ -124,3 +124,25 @@ macro_rules! import {
         )*
     }
 }
+
+#[macro_export]
+/// Convert OCaml value into a callable closure
+///
+/// For example, if you have an OCaml closure stored in `f` that accepts two `int` parameters,
+/// and returns a string, then you can create a Rust closure like this:
+/// ```rust
+/// #[ocaml::func]
+/// #[ocaml::sig("(int -> int -> string) -> int -> int -> string")]
+/// pub fn call_function(f: ocaml::Value, a: ocaml::Int, b: ocaml::Int) -> Result<String, ocaml::Error> {
+///     let f = ocaml::function!(f, (a: ocaml::Int, b: ocaml::Int) -> String);
+///     f(gc, &a, &b)
+/// }
+/// ```
+macro_rules! function {
+    ($x:expr, ($($argname:ident: $arg:ty),*) $(-> $r:ty)?) => {
+        |gc: &$crate::Runtime, $($argname: &$arg),*| -> Result<($($r)?), $crate::Error> {
+            let args = [$($crate::ToValue::to_value($argname, gc)),*];
+            unsafe { $crate::Value::call(&$x, gc, args) }
+        }
+    };
+}

@@ -89,6 +89,19 @@ A few things to note:
 - When calling the [import!](https://docs.rs/ocaml/latest/ocaml/macro.import.html)ed function you will need to pass the OCaml runtime handle as the first parameter
 - The return value of the function will be wrapped in `Result<T, ocaml::Error>` because the function may raise an exception
 
+For functions that aren't registered using `Callback.register` you can use the `ocaml::function!` macro to convert them into a typed closure:
+
+```rust
+# extern crate ocaml;
+
+#[ocaml::func]
+#[ocaml::sig("(int -> int) -> int -> int")]
+pub unsafe fn call_incr(incr: ocaml::Value, a: ocaml::Int) -> Result<ocaml::Int, ocaml::Error> {
+  let incr = ocaml::function!(incr, (a: ocaml::Int) -> ocaml::Int);
+  incr(gc, &a)
+}
+```
+
 ## Opaque types
 
 This example shows how to wrap a Rust type using the [Custom](https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html) trait and [ocaml::Pointer](https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html)

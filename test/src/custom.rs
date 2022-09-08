@@ -74,7 +74,8 @@ pub unsafe fn testing_callback_call(
     t: ocaml::Pointer<TestingCallback>,
     x: ocaml::Int,
 ) -> Result<ocaml::Float, ocaml::Error> {
-    t.as_ref().func.call(gc, [&x])
+    let f = ocaml::function!(t.as_ref().func, (x: ocaml::Int) -> ocaml::Float);
+    f(gc, &x)
 }
 
 // Abstract
