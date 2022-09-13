@@ -69,6 +69,12 @@ Next you will need to add setup a [dune](https://dune.build) project to handle c
   (-lpthread -lc -lm)))
 ```
 
+You should also add the following stanza to a `dune` file at the root of your project to ignore the `target` directory:
+
+```ignore
+(dirs :standard \ target)
+```
+
 It can take a little trial and error to get this right depending on the specifics of your project!
 
 Additionally, if you plan on releasing to [opam](https://github.com/ocaml/opam), you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:
