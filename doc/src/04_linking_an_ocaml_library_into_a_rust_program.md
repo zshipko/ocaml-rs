@@ -17,7 +17,7 @@ Add the following to your `Cargo.toml`:
 [dependencies]
 ocaml = "*"
 
-[build-dependecies]
+[build-dependencies]
 ocaml-build = {version = "*", features=["dune"]}
 ```
 
