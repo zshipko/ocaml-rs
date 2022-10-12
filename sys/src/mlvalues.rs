@@ -68,11 +68,11 @@ pub unsafe fn wosize_val(val: Value) -> Size {
 
 /// `(((intnat)(x) << 1) + 1)`
 pub const unsafe fn val_int(i: isize) -> Value {
-    ((i as isize) << 1) + 1
+    (i << 1) + 1
 }
 
 pub const unsafe fn int_val(val: Value) -> isize {
-    ((val as isize) >> 1) as isize
+    val >> 1
 }
 
 pub fn is_block(v: Value) -> bool {
