@@ -64,7 +64,7 @@ pub unsafe fn array1_of_string(x: String) -> ocaml::bigarray::Array1<u8> {
 #[ocaml::func]
 #[ocaml::sig("int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t")]
 pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
-    let mut ba = ocaml::bigarray::Array1::<u8>::create(len as usize);
+    let mut ba = ocaml::bigarray::Array1::<u8>::create(len);
     let data = ba.data_mut();
     for i in data {
         *i = init;
