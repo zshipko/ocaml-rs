@@ -163,7 +163,6 @@ pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Seq};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
-#[cfg(not(feature = "no-std"))]
 pub use crate::macros::initial_setup;
 
 /// OCaml `float`
