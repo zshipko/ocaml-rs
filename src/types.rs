@@ -30,7 +30,7 @@ unsafe impl<T: FromValue> FromValue for Seq<T> {
     }
 }
 
-impl<T: FromValue> std::iter::Iterator for Seq<T> {
+impl<T: FromValue> core::iter::Iterator for Seq<T> {
     type Item = Result<T, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
