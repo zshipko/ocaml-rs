@@ -55,13 +55,11 @@ pub fn initial_setup() {
 /// }
 /// ```
 #[macro_export]
-#[cfg(not(feature = "no-std"))]
 macro_rules! body {
     ($gc:ident: $code:block) => {{
         let $gc = unsafe { $crate::Runtime::recover_handle() };
 
         // Ensure panic handler is initialized
-        #[cfg(not(feature = "no-std"))]
         $crate::initial_setup();
 
         {
