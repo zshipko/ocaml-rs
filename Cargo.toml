@@ -28,7 +28,6 @@ link = ["ocaml-sys/link"]
 without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
   "ocaml-interop/without-ocamlopt",
-  "ocaml-boxroot-sys/without-ocamlopt"
 ]
 caml-state = ["ocaml-sys/caml-state"]
 no-std = ["cstr_core/alloc", "no-panic-hook"]
