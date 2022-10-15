@@ -19,7 +19,7 @@ pub fn initial_setup() {
         ocaml_boxroot_sys::boxroot_setup();
     }
 
-    #[cfg(not(feature = "no-std"))]
+    #[cfg(not(feature = "no-panic-hook"))]
     {
         ::std::panic::set_hook(Box::new(|info| unsafe {
             let err = info.payload();
