@@ -2,21 +2,38 @@ name: Clippy
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
+  stylecheck:
+    name: Stylecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain with rustfmt and run cargo format in check mode
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt
+          override: true
+
+      - run: cargo fmt --all -- --check
+
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Nightly
-      run: rustup toolchain install nightly --profile=default
+      - name: Nightly
+        run: rustup toolchain install nightly --profile=default
 
-    - name: Run clippy
-      env:
-        OCAML_VERSION: 4.13.1
-        OCAML_WHERE_PATH: /ignored
-      run: sudo apt install ocaml && cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings
+      - name: Run clippy
+        env:
+          OCAML_VERSION: 4.13.1
+          OCAML_WHERE_PATH: /ignored
+        run: sudo apt install ocaml && cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings
