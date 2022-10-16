@@ -2,9 +2,9 @@ name: Rust tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   run:
@@ -14,31 +14,54 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-latest, ubuntu-latest]
-        ocaml-compiler: ["4.14.0", "4.13.1", "4.12.1", "4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0"]
+        ocaml-compiler:
+          [
+            "4.14.0",
+            "4.13.1",
+            "4.12.1",
+            "4.11.0",
+            "4.10.0",
+            "4.09.1",
+            "4.08.1",
+            "4.07.0",
+          ]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: OCaml/Opam cache
         id: ocaml-rs-opam-cache
         uses: actions/cache@v2
         with:
           path: "~/.opam"
           key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
+
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
         uses: avsm/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
       - name: Set Opam env
         run: opam env | tr '\n' ' ' >> $GITHUB_ENV
+
       - name: Add Opam switch to PATH
         run: opam var bin >> $GITHUB_PATH
+
       - name: Install mdbook
         run: cargo install mdbook
+
       - name: Build
         run: cargo build --tests --features=link
+
       - name: Build build
         run: cargo build --package ocaml-build --features=dune
+
       - name: Run Rust tests
         run: cargo test --features=link -- --test-threads=1
+
       - name: Check mdbook
         run: mdbook test doc -L ./target/debug/deps
+
+      - name: Test `no_std`
+        run: cargo build --tests --features=no-std
