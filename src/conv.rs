@@ -310,6 +310,13 @@ unsafe impl<const N: usize> ToValue for [u8; N] {
 }
 
 #[cfg(not(feature = "no-std"))]
+unsafe impl<V: FromValue> FromValue for Box<V> {
+    fn from_value(v: Value) -> Box<V> {
+        Box::new(V::from_value(v))
+    }
+}
+
+#[cfg(not(feature = "no-std"))]
 unsafe impl<V: 'static + ToValue> ToValue for Vec<V> {
     fn to_value(&self, rt: &Runtime) -> Value {
         let len = self.len();
