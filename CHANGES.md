@@ -1,6 +1,11 @@
 ## 1.0.0-beta.4
 
 - Added `ocaml::function` macro for calling OCaml values
+- Fix spelling in book by @fmckeogh in https://github.com/zshipko/ocaml-rs/pull/98
+- Fixes no_std by @fmckeogh in https://github.com/zshipko/ocaml-rs/pull/99
+- Feature gate panic hook by @fmckeogh in https://github.com/zshipko/ocaml-rs/pull/100
+- Test `no_std` feature in CI by @fmckeogh in https://github.com/zshipko/ocaml-rs/pull/101
+- Implement `FromValue` for `Box<T>` by @fmckeogh in https://github.com/zshipko/ocaml-rs/pull/105
 
 ## 1.0.0-beta.2
 

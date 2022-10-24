@@ -23,8 +23,10 @@ clean:
 	dune clean --root=test
 	mdbook clean doc || :
 
-publish:
+publish-sys:
 	cd sys && cargo package && cargo publish && sleep 20
+
+publish:
 	cd derive && cargo package && cargo publish && sleep 20
 	cd build && cargo package && cargo publish && sleep 20
 	cargo package && cargo publish
