@@ -35,7 +35,7 @@ This is because macOS doesn't allow undefined symbols in dynamic libraries by de
 If you plan on using `ocaml-build`:
 
 ```toml
-[build-depdencies]
+[build-dependencies]
 ocaml-build = "*"
 ```
 
