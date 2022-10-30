@@ -30,10 +30,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Nightly
-        run: rustup toolchain install nightly --profile=default
+        run: rustup toolchain install stable --profile=default
 
       - name: Run clippy
         env:
           OCAML_VERSION: 4.13.1
           OCAML_WHERE_PATH: /ignored
-        run: sudo apt install ocaml && cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings
+        run: sudo apt install ocaml && cargo clippy --features=without-ocamlopt --all -- -D warnings

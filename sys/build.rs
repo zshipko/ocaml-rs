@@ -49,7 +49,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     let mut f = std::fs::File::create(out_dir.join("runtime.ml")).unwrap();
     write!(f, "")?;
 
-    assert!(std::process::Command::new(&ocamlopt)
+    assert!(std::process::Command::new(ocamlopt)
         .args(["-output-complete-obj", "-o"])
         .arg(out_dir.join("rt.o"))
         .arg(out_dir.join("runtime.ml"))
@@ -57,7 +57,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
         .success());
 
     let ar = std::env::var("AR").unwrap_or_else(|_| "ar".to_string());
-    assert!(std::process::Command::new(&ar)
+    assert!(std::process::Command::new(ar)
         .arg("rcs")
         .arg(out_dir.join("libruntime.a"))
         .arg(out_dir.join("rt.o"))
