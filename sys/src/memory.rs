@@ -75,7 +75,7 @@ extern "C" {
 /// ```
 ///
 /// # Example
-/// ```norun
+/// ```rust,ignore
 /// // stores some_value in the first field in the given block
 /// store_field!(some_block, 1, some_value)
 /// ```

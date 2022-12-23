@@ -149,6 +149,10 @@ fn run() -> std::io::Result<()> {
         println!("cargo:rustc-cfg=caml_state");
     }
 
+    if major >= 5 || cfg!(feature = "ocaml5") {
+        println!("cargo:rustc-cfg=ocaml5");
+    }
+
     #[cfg(feature = "link")]
     link(out_dir, bin_path, ocaml_path.as_ref())?;
 
