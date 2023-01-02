@@ -31,9 +31,11 @@ jobs:
 
       - name: Nightly
         run: rustup toolchain install stable --profile=default
+      
+      - name: Use OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.13.1
 
       - name: Run clippy
-        env:
-          OCAML_VERSION: 4.13.1
-          OCAML_WHERE_PATH: /ignored
         run: cargo clippy --features=without-ocamlopt --all -- -D warnings
