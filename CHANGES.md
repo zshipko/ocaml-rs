@@ -1,3 +1,7 @@
+## Unreleased
+
+- Implement `ToValue` for `Box<T>` by @fmckeogh https://github.com/zshipko/ocaml-rs/pull/107
+
 ## 1.0.0-beta.4
 
 - Added `ocaml::function` macro for calling OCaml values
