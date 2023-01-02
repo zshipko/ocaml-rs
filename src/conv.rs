@@ -317,6 +317,13 @@ unsafe impl<V: FromValue> FromValue for Box<V> {
 }
 
 #[cfg(not(feature = "no-std"))]
+unsafe impl<V: ToValue> ToValue for Box<V> {
+    fn to_value(&self, rt: &Runtime) -> Value {
+        (**self).to_value(rt)
+    }
+}
+
+#[cfg(not(feature = "no-std"))]
 unsafe impl<V: 'static + ToValue> ToValue for Vec<V> {
     fn to_value(&self, rt: &Runtime) -> Value {
         let len = self.len();
