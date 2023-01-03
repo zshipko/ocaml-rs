@@ -29,11 +29,11 @@ without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
   "ocaml-interop/without-ocamlopt",
 ]
-caml-state = ["ocaml-sys/caml-state"]
 no-std = ["cstr_core/alloc", "no-panic-hook"]
 bigarray-ext = ["ndarray"]
 no-caml-startup = ["ocaml-interop/no-caml-startup"]
 no-panic-hook = []
+ocaml5 = ["ocaml-sys/ocaml5"]
 
 [workspace]
 members = [

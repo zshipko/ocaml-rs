@@ -23,8 +23,6 @@ jobs:
             "4.12.1",
             "4.11.0",
             "4.10.0",
-            "4.09.1",
-            "4.08.1",
           ]
 
     steps:
@@ -42,12 +40,6 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-
-      - name: Set Opam env
-        run: opam env | tr '\n' ' ' >> $GITHUB_ENV
-
-      - name: Add Opam switch to PATH
-        run: opam var bin >> $GITHUB_PATH
 
       - name: Install mdbook
         uses: baptiste0928/cargo-install@v2

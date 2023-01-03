@@ -5,6 +5,7 @@ extern "C" {
     pub fn caml_startup(argv: *const *const Char);
     pub fn caml_shutdown();
     pub fn caml_named_value(name: *const Char) -> *const Value;
+
 }
 
 // GC control
@@ -13,4 +14,17 @@ extern "C" {
     pub fn caml_gc_major(v: Value);
     pub fn caml_gc_full_major(v: Value);
     pub fn caml_gc_compaction(v: Value);
+}
+
+#[cfg(ocaml5)]
+extern "C" {
+    pub fn caml_init_domain_self(i: core::ffi::c_int);
+    pub fn caml_interrupt_self();
+    pub fn caml_reset_domain_lock();
+    pub fn caml_acquire_domain_lock();
+    pub fn caml_release_domain_lock();
+    pub fn caml_enter_blocking_section();
+    pub fn caml_leave_blocking_section();
+    pub fn caml_release_runtime_system();
+    pub fn caml_acquire_runtime_system();
 }

@@ -98,8 +98,6 @@ pub unsafe fn store_field(block: Value, offset: Size, value: Value) {
 }
 
 extern "C" {
-    pub fn caml_enter_blocking_section();
-    pub fn caml_leave_blocking_section();
     pub fn caml_register_global_root(value: *mut Value);
     pub fn caml_remove_global_root(value: *mut Value);
     pub fn caml_register_generational_global_root(value: *mut Value);

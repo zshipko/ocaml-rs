@@ -4,35 +4,30 @@ use crate::{Char, Value};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(caml_state)]
 pub struct caml_ref_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(caml_state)]
 pub struct caml_ephe_ref_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(caml_state)]
 pub struct caml_custom_table {
     pub _address: u8,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-#[cfg(caml_state)]
 pub struct longjmp_buffer {
     pub _address: u8,
 }
 
-#[cfg(any(caml_state, ocaml5))]
 pub type backtrace_slot = *mut ::core::ffi::c_void;
 
 #[repr(C)]
 #[derive(Debug)]
-#[cfg(all(caml_state, not(ocaml5)))]
+#[cfg(not(ocaml5))]
 pub struct caml_domain_state {
     pub _young_ptr: *mut Value,
     pub _young_limit: *mut Value,
@@ -145,39 +140,17 @@ pub struct caml_domain_state {
     pub _extra_params_area: [u8; 0],
 }
 
-#[cfg(any(caml_state, ocaml5))]
 extern "C" {
     #[doc(hidden)]
     pub static mut Caml_state: *mut caml_domain_state;
 }
 
-#[cfg(not(caml_state))]
-extern "C" {
-
-    #[doc(hidden)]
-    pub static mut caml_local_roots: *mut crate::memory::CamlRootsBlock;
-}
-
-#[cfg(caml_state)]
 #[doc(hidden)]
 pub unsafe fn local_roots() -> *mut crate::memory::CamlRootsBlock {
     (*Caml_state)._local_roots
 }
 
-#[cfg(caml_state)]
 #[doc(hidden)]
 pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
     (*Caml_state)._local_roots = x
-}
-
-#[cfg(not(caml_state))]
-#[doc(hidden)]
-pub unsafe fn local_roots() -> *mut crate::memory::CamlRootsBlock {
-    caml_local_roots
-}
-
-#[cfg(not(caml_state))]
-#[doc(hidden)]
-pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
-    caml_local_roots = x
 }

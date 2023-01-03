@@ -143,12 +143,6 @@ fn run() -> std::io::Result<()> {
     let major = split[0].parse::<usize>().unwrap();
     let minor = split[1].parse::<usize>().unwrap();
 
-    if major >= 4 && minor >= 10 || cfg!(feature = "caml-state") {
-        // This feature determines whether or not caml_local_roots should
-        // use the caml_state struct or the caml_local_roots global
-        println!("cargo:rustc-cfg=caml_state");
-    }
-
     if major >= 5 || cfg!(feature = "ocaml5") {
         println!("cargo:rustc-cfg=ocaml5");
     }
