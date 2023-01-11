@@ -84,6 +84,7 @@ fn run() -> std::io::Result<()> {
     println!("cargo:rerun-if-env-changed=OCAMLOPT");
     println!("cargo:rerun-if-env-changed=OCAML_VERSION");
     println!("cargo:rerun-if-env-changed=OCAML_WHERE_PATH");
+    println!("cargo:rerun-if-env-changed=OPAM_SWITCH_PREFIX");
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
     let ocaml_version = std::env::var("OCAML_VERSION");
