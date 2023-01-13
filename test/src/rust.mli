@@ -12,6 +12,7 @@ external apply_range: (int list -> 'a) -> int -> int -> 'a = "apply_range"
 
 type enum1 = Empty | First of int | Second of string array
 type struct1 = {a: int; b: float; mutable c: string option; d: string array option;}
+type all_float_struct = {float_a: float; float_b: float}
 external enum1_empty: unit -> enum1 = "enum1_empty"
 external enum1_first: int -> enum1 = "enum1_first"
 external enum1_make_second: string -> enum1 = "enum1_make_second"
@@ -32,6 +33,7 @@ external result_ok: 'a -> ('a, 'b) result = "result_ok"
 external result_error: 'a -> ('b, 'a) result = "result_error"
 external result_get_ok: ('a, 'b) result -> 'a option = "result_get_ok"
 external result_get_error: ('a, 'b) result -> 'b option = "result_get_error"
+external all_float_struct_inc_both: all_float_struct -> all_float_struct = "all_float_struct_inc_both"
 
 (* file: custom.rs *)
 

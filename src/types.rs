@@ -64,7 +64,7 @@ unsafe impl<T: ToValue + FromValue> FromValue for Array<T> {
     }
 }
 
-impl Array<f64> {
+impl Array<crate::Float> {
     /// Set value to double array
     pub fn set_double(&mut self, i: usize, f: f64) -> Result<(), Error> {
         if i >= self.len() {

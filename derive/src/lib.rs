@@ -540,6 +540,8 @@ fn ocaml_bytecode_func_impl(
     }
 }
 
+// Derive macros for ToValue/FromValue
+
 fn is_double_array_struct(fields: &syn::Fields) -> bool {
     fields.iter().all(|field| match &field.ty {
         syn::Type::Path(p) => {
@@ -564,6 +566,7 @@ fn is_double_array_struct(fields: &syn::Fields) -> bool {
 #[derive(Default)]
 struct Attrs {
     float_array: bool,
+    unboxed: bool,
 }
 
 fn attrs(attrs: &[syn::Attribute]) -> Attrs {
@@ -574,7 +577,15 @@ fn attrs(attrs: &[syn::Attribute]) -> Attrs {
             syn::Meta::Path(p) => {
                 if let Some(ident) = p.get_ident() {
                     if ident == "float_array" {
+                        if acc.unboxed {
+                            panic!("cannot use float_array and unboxed");
+                        }
                         acc.float_array = true;
+                    } else if ident == "unboxed" {
+                        if acc.float_array {
+                            panic!("cannot use float_array and unboxed");
+                        }
+                        acc.unboxed = true;
                     }
                 }
             }
@@ -593,6 +604,9 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
             || item_struct.fields.iter().take(1).all(|x| x.ident.is_none());
         let is_double_array_struct =
             attrs.float_array || is_double_array_struct(&item_struct.fields);
+        if attrs.unboxed && item_struct.fields.len() > 1 {
+            panic!("cannot unbox structs with more than 1 field")
+        }
         let fields =
             item_struct
                 .fields
@@ -603,6 +617,8 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                         if is_double_array_struct {
                             let ty = &field.ty;
                             quote!(#name: value.double_field(#index) as #ty)
+                        } else if attrs.unboxed {
+                            quote!(#name: ocaml::FromValue::from_value(value))
                         } else {
                             quote!(#name: ocaml::FromValue::from_value(value.field(#index)))
                         }
@@ -611,6 +627,8 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                         if is_double_array_struct {
                             let ty = &field.ty;
                             quote!(value.double_field(#index) as #ty)
+                        } else if attrs.unboxed {
+                            quote!(ocaml::FromValue::from_value(value))
                         } else {
                             quote!(ocaml::FromValue::from_value(value.field(#index)))
                         }
@@ -621,8 +639,13 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
         } else {
             quote!(Self{#(#fields),*})
         };
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
         quote! {
-            unsafe impl #g ocaml::FromValue for #name {
+            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         #inner
@@ -634,10 +657,12 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
     } else if let Ok(item_enum) = syn::parse::<syn::ItemEnum>(item) {
         let g = item_enum.generics;
         let name = item_enum.ident;
-
+        let attrs = attrs(&item_enum.attrs);
         let mut unit_tag = 0u8;
         let mut non_unit_tag = 0u8;
-
+        if attrs.unboxed && item_enum.variants.len() > 1 {
+            panic!("cannot unbox enums with more than 1 variant")
+        }
         let variants =
             item_enum.variants.iter().map(|variant| {
                 let arity = variant.fields.len();
@@ -661,17 +686,24 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                         }
                     }
                 } else {
-                    let fields =
-                        variant.fields.iter().enumerate().map(|(index, field)| {
-                            match &field.ident {
-                                Some(name) => {
+                    let fields = variant.fields.iter().enumerate().map(
+                        |(index, field)| match &field.ident {
+                            Some(name) => {
+                                if attrs.unboxed {
+                                    quote!(#name: ocaml::FromValue::from_value(value))
+                                } else {
                                     quote!(#name: ocaml::FromValue::from_value(value.field(#index)))
                                 }
-                                None => {
+                            }
+                            None => {
+                                if attrs.unboxed {
+                                    quote!(#name: ocaml::FromValue::from_value(value))
+                                } else {
                                     quote!(ocaml::FromValue::from_value(value.field(#index)))
                                 }
                             }
-                        });
+                        },
+                    );
                     let inner = if tuple_enum {
                         quote!(#name::#v_name(#(#fields),*))
                     } else {
@@ -685,8 +717,12 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                 }
             });
 
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
         quote! {
-           unsafe impl #g ocaml::FromValue for #name {
+            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         let is_block = value.is_block();
@@ -713,6 +749,9 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
         let name = item_struct.ident;
         let is_double_array_struct =
             attrs.float_array || is_double_array_struct(&item_struct.fields);
+        if attrs.unboxed && item_struct.fields.len() > 1 {
+            panic!("cannot unbox structs with more than 1 field")
+        }
         let fields: Vec<_> = item_struct
             .fields
             .iter()
@@ -721,6 +760,8 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                 Some(name) => {
                     if is_double_array_struct {
                         quote!(value.store_double_field(#index, self.#name as f64))
+                    } else if attrs.unboxed {
+                        quote!(value = self.#name.to_value(rt))
                     } else {
                         quote!(value.store_field(rt, #index, &self.#name))
                     }
@@ -728,6 +769,8 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                 None => {
                     if is_double_array_struct {
                         quote!(value.store_double_field(#index, self.#index as f64))
+                    } else if attrs.unboxed {
+                        quote!(value = self.#index.to_value(rt))
                     } else {
                         quote!(value.store_field(rt, #index, &self.#index))
                     }
@@ -740,24 +783,48 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             quote!(0.into())
         };
         let n = fields.len();
-        quote! {
-            unsafe impl #g ocaml::ToValue for #name {
-                fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
-                    unsafe {
-                        let mut value = ocaml::Value::alloc(#n, #tag);
-                        #(#fields);*;
-                        value
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
+        if attrs.unboxed {
+            quote! {
+                unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+                    fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                        unsafe {
+                            let mut value = ocaml::Value::unit();
+                            #(#fields);*;
+                            value
+                        }
                     }
                 }
             }
+            .into()
+        } else {
+            quote! {
+                unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+                    fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                        unsafe {
+                            let mut value = ocaml::Value::alloc(#n, #tag);
+                            #(#fields);*;
+                            value
+                        }
+                    }
+                }
+            }
+            .into()
         }
-        .into()
     } else if let Ok(item_enum) = syn::parse::<syn::ItemEnum>(item) {
         let g = item_enum.generics;
         let name = item_enum.ident;
-
+        let attrs = attrs(&item_enum.attrs);
         let mut unit_tag = 0u8;
         let mut non_unit_tag = 0u8;
+
+        if attrs.unboxed && item_enum.variants.len() != 1 {
+            panic!("cannot unbox enums with more than 1 variant")
+        }
 
         let variants = item_enum.variants.iter().map(|variant| {
             let arity = variant.fields.len();
@@ -786,15 +853,24 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                     .enumerate()
                     .map(|(index, field)| match &field.ident {
                         Some(name) => {
-                            quote!(value.store_field(rt, #index, #name))
+                            if attrs.unboxed {
+                                quote!(value = #name.to_value(rt);)
+                            } else {
+                                quote!(value.store_field(rt, #index, #name))
+                            }
                         }
                         None => {
                             let x = format!("x{index}");
                             let x = syn::Ident::new(&x, proc_macro2::Span::call_site());
-                            quote!(value.store_field(rt, #index, #x))
+                            if attrs.unboxed {
+                                quote!(value = #x.to_value(rt);)
+                            } else {
+                                quote!(value.store_field(rt, #index, #x))
+                            }
                         }
                     })
                     .collect();
+
                 let n = variant.fields.len();
                 let tuple_enum = variant.fields.len() == 0
                     || variant.fields.iter().take(1).all(|x| x.ident.is_none());
@@ -817,16 +893,28 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                     quote!(#name::#v_name{#v})
                 };
 
-                quote!(#match_fields => {
-                    let mut value = ocaml::Value::alloc(#n, #tag.into());
-                    #(#fields);*;
-                    value
-                })
+                if attrs.unboxed {
+                    quote!(#match_fields => {
+                        let mut value = ocaml::Value::unit();
+                        #(#fields);*;
+                        value
+                    })
+                } else {
+                    quote!(#match_fields => {
+                        let mut value = ocaml::Value::alloc(#n, #tag.into());
+                        #(#fields);*;
+                        value
+                    })
+                }
             }
         });
 
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
         quote! {
-           unsafe impl #g ocaml::ToValue for #name {
+            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
                     unsafe {
                         match self {
