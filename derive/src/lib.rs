@@ -594,7 +594,7 @@ fn attrs(attrs: &[syn::Attribute]) -> Attrs {
     acc
 }
 
-#[proc_macro_derive(FromValue, attributes(float_array))]
+#[proc_macro_derive(FromValue, attributes(float_array, unboxed))]
 pub fn derive_from_value(item: TokenStream) -> TokenStream {
     if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
         let attrs = attrs(&item_struct.attrs);
@@ -741,7 +741,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
     }
 }
 
-#[proc_macro_derive(ToValue, attributes(float_array))]
+#[proc_macro_derive(ToValue, attributes(float_array, unboxed))]
 pub fn derive_to_value(item: TokenStream) -> TokenStream {
     if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
         let attrs = attrs(&item_struct.attrs);
