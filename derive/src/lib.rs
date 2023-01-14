@@ -569,6 +569,7 @@ struct Attrs {
     unboxed: bool,
 }
 
+// Get struct-level attributes
 fn attrs(attrs: &[syn::Attribute]) -> Attrs {
     let mut acc = Attrs::default();
     attrs
@@ -594,19 +595,26 @@ fn attrs(attrs: &[syn::Attribute]) -> Attrs {
     acc
 }
 
+/// Derive `ocaml::FromValue`
 #[proc_macro_derive(FromValue, attributes(float_array, unboxed))]
 pub fn derive_from_value(item: TokenStream) -> TokenStream {
     if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
         let attrs = attrs(&item_struct.attrs);
         let g = item_struct.generics;
         let name = item_struct.ident;
+
+        // Tuple structs have unnamed fields
         let tuple_struct = item_struct.fields.len() == 0
             || item_struct.fields.iter().take(1).all(|x| x.ident.is_none());
+
+        // This is true when all struct fields are `float`s
         let is_double_array_struct =
             attrs.float_array || is_double_array_struct(&item_struct.fields);
+
         if attrs.unboxed && item_struct.fields.len() > 1 {
             panic!("cannot unbox structs with more than 1 field")
         }
+
         let fields =
             item_struct
                 .fields
@@ -614,6 +622,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                 .enumerate()
                 .map(|(index, field)| match &field.ident {
                     Some(name) => {
+                        // Named fields
                         if is_double_array_struct {
                             let ty = &field.ty;
                             quote!(#name: value.double_field(#index) as #ty)
@@ -624,6 +633,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                         }
                     }
                     None => {
+                        // Unnamed fields, tuple struct
                         if is_double_array_struct {
                             let ty = &field.ty;
                             quote!(value.double_field(#index) as #ty)
@@ -634,6 +644,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                         }
                     }
                 });
+
         let inner = if tuple_struct {
             quote!(Self(#(#fields),*))
         } else {
@@ -644,6 +655,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
         let tp = g.type_params();
         let wh = &g.where_clause;
 
+        // Generate FromValue for structs
         quote! {
             unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn from_value(value: ocaml::Value) -> Self {
@@ -672,13 +684,21 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                 } else {
                     &mut unit_tag
                 };
+
+                // Get current tag index
                 let tag = *tag_ref;
+
+                // Increment the tag for next time
                 *tag_ref += 1;
 
                 let v_name = &variant.ident;
                 let n_fields = variant.fields.len();
+
+                // Tuple enums have unnamed fields
                 let tuple_enum = variant.fields.len() == 0
                     || variant.fields.iter().take(1).all(|x| x.ident.is_none());
+
+                // Handle enums with no fields first
                 if n_fields == 0 {
                     quote! {
                         (#is_block, #tag) => {
@@ -689,6 +709,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                     let fields = variant.fields.iter().enumerate().map(
                         |(index, field)| match &field.ident {
                             Some(name) => {
+                                // Struct enum variant
                                 if attrs.unboxed {
                                     quote!(#name: ocaml::FromValue::from_value(value))
                                 } else {
@@ -696,6 +717,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                                 }
                             }
                             None => {
+                                // Tuple enum variant
                                 if attrs.unboxed {
                                     quote!(#name: ocaml::FromValue::from_value(value))
                                 } else {
@@ -709,6 +731,8 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                     } else {
                         quote!(#name::#v_name{#(#fields),*})
                     };
+
+                    // Generate match case
                     quote! {
                         (#is_block, #tag) => {
                             #inner
@@ -721,6 +745,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
         let tp = g.type_params();
         let wh = &g.where_clause;
 
+        // Generate FromValue for enums
         quote! {
             unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn from_value(value: ocaml::Value) -> Self {
@@ -741,12 +766,15 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
     }
 }
 
+/// Derive `ocaml::ToValue`
 #[proc_macro_derive(ToValue, attributes(float_array, unboxed))]
 pub fn derive_to_value(item: TokenStream) -> TokenStream {
     if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
         let attrs = attrs(&item_struct.attrs);
         let g = item_struct.generics;
         let name = item_struct.ident;
+
+        // Double array structs occur when all fields are `float`s
         let is_double_array_struct =
             attrs.float_array || is_double_array_struct(&item_struct.fields);
         if attrs.unboxed && item_struct.fields.len() > 1 {
@@ -758,6 +786,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             .enumerate()
             .map(|(index, field)| match &field.ident {
                 Some(name) => {
+                    // Named fields
                     if is_double_array_struct {
                         quote!(value.store_double_field(#index, self.#name as f64))
                     } else if attrs.unboxed {
@@ -767,6 +796,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                     }
                 }
                 None => {
+                    // Tuple struct
                     if is_double_array_struct {
                         quote!(value.store_double_field(#index, self.#index as f64))
                     } else if attrs.unboxed {
@@ -777,6 +807,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                 }
             })
             .collect();
+
         let tag = if is_double_array_struct {
             quote!(ocaml::Tag::DOUBLE_ARRAY)
         } else {
@@ -788,33 +819,30 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
         let tp = g.type_params();
         let wh = &g.where_clause;
 
-        if attrs.unboxed {
-            quote! {
-                unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
-                    fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
-                        unsafe {
-                            let mut value = ocaml::Value::unit();
-                            #(#fields);*;
-                            value
-                        }
-                    }
-                }
-            }
-            .into()
+        let value_decl = if attrs.unboxed {
+            // Only allocate a singlue value for unboxed structs
+            quote!(
+                let mut value = ocaml::Value::unit();
+            )
         } else {
-            quote! {
-                unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
-                    fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
-                        unsafe {
-                            let mut value = ocaml::Value::alloc(#n, #tag);
-                            #(#fields);*;
-                            value
-                        }
+            quote!(
+                let mut value = ocaml::Value::alloc(#n, #tag);
+            )
+        };
+
+        // Generate ToValue for structs
+        quote! {
+            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+                fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                    unsafe {
+                        #value_decl
+                        #(#fields);*;
+                        value
                     }
                 }
             }
-            .into()
         }
+        .into()
     } else if let Ok(item_enum) = syn::parse::<syn::ItemEnum>(item) {
         let g = item_enum.generics;
         let name = item_enum.ident;
@@ -833,6 +861,8 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             } else {
                 &mut unit_tag
             };
+
+            // Get current tag and increment for next iteration
             let tag = *tag_ref;
             *tag_ref += 1;
 
@@ -841,18 +871,21 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             let n_fields = variant.fields.len();
 
             if n_fields == 0 {
+                // A variant with no fields is represented by an int value
                 quote! {
                     #name::#v_name => {
                         ocaml::Value::int(#tag as ocaml::Int)
                     }
                 }
             } else {
+                // Generate conversion for the fields of each variant
                 let fields: Vec<_> = variant
                     .fields
                     .iter()
                     .enumerate()
                     .map(|(index, field)| match &field.ident {
                         Some(name) => {
+                            // Struct-like variant
                             if attrs.unboxed {
                                 quote!(value = #name.to_value(rt);)
                             } else {
@@ -860,6 +893,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                             }
                         }
                         None => {
+                            // Tuple-like variant
                             let x = format!("x{index}");
                             let x = syn::Ident::new(&x, proc_macro2::Span::call_site());
                             if attrs.unboxed {
@@ -875,6 +909,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                 let tuple_enum = variant.fields.len() == 0
                     || variant.fields.iter().take(1).all(|x| x.ident.is_none());
 
+                // Generate fields
                 let mut v = quote!();
                 for (index, field) in variant.fields.iter().enumerate() {
                     let xindex = format!("x{index}");
@@ -893,19 +928,18 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                     quote!(#name::#v_name{#v})
                 };
 
-                if attrs.unboxed {
-                    quote!(#match_fields => {
-                        let mut value = ocaml::Value::unit();
-                        #(#fields);*;
-                        value
-                    })
+                let value_decl = if attrs.unboxed {
+                    quote!(let mut value = ocaml::Value::unit())
                 } else {
-                    quote!(#match_fields => {
+                    quote!(
                         let mut value = ocaml::Value::alloc(#n, #tag.into());
-                        #(#fields);*;
-                        value
-                    })
-                }
+                    )
+                };
+                quote!(#match_fields => {
+                    #value_decl
+                    #(#fields);*;
+                    value
+                })
             }
         });
 
@@ -913,6 +947,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
         let tp = g.type_params();
         let wh = &g.where_clause;
 
+        // Generate ToValue implementation for enums
         quote! {
             unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
                 fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
