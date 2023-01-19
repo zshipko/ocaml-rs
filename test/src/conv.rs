@@ -186,3 +186,16 @@ pub fn all_float_struct_inc_both(mut t: AllFloatStruct) -> AllFloatStruct {
     t.float_b += 1.0;
     t
 }
+
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+#[ocaml::sig("{fa: floatarray} [@@unboxed]")]
+#[unboxed]
+pub struct FloatArrayT {
+    arr: Vec<f64>,
+}
+
+#[ocaml::func]
+#[ocaml::sig("float_array_t -> floatarray")]
+pub fn float_array_t_inner(f: FloatArrayT) -> Vec<f64> {
+    f.arr
+}
