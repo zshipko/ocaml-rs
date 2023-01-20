@@ -6,7 +6,7 @@
 
 `ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was originally forked from [raml](https://crates.io/crates/raml), but has been almost entirely re-written thanks to support from the [OCaml Software Foundation](http://ocaml-sf.org/).
 
-Works with OCaml versions `4.07.0` and up
+Works with OCaml versions `4.08.0` and up
 
 Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
