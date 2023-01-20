@@ -548,7 +548,7 @@ fn is_double_array_struct(fields: &syn::Fields) -> bool {
             let s = p.path.segments.iter().map(|x| x.ident.to_string()).fold(
                 String::new(),
                 |mut acc, x| {
-                    if acc.len() > 0 {
+                    if !acc.is_empty() {
                         acc += "::";
                         acc += &x;
                         acc
@@ -572,26 +572,23 @@ struct Attrs {
 // Get struct-level attributes
 fn attrs(attrs: &[syn::Attribute]) -> Attrs {
     let mut acc = Attrs::default();
-    attrs
-        .iter()
-        .for_each(|attr| match attr.parse_meta().unwrap() {
-            syn::Meta::Path(p) => {
-                if let Some(ident) = p.get_ident() {
-                    if ident == "float_array" {
-                        if acc.unboxed {
-                            panic!("cannot use float_array and unboxed");
-                        }
-                        acc.float_array = true;
-                    } else if ident == "unboxed" {
-                        if acc.float_array {
-                            panic!("cannot use float_array and unboxed");
-                        }
-                        acc.unboxed = true;
+    attrs.iter().for_each(|attr| {
+        if let syn::Meta::Path(p) = attr.parse_meta().unwrap() {
+            if let Some(ident) = p.get_ident() {
+                if ident == "float_array" {
+                    if acc.unboxed {
+                        panic!("cannot use float_array and unboxed");
                     }
+                    acc.float_array = true;
+                } else if ident == "unboxed" {
+                    if acc.float_array {
+                        panic!("cannot use float_array and unboxed");
+                    }
+                    acc.unboxed = true;
                 }
             }
-            _ => (),
-        });
+        }
+    });
     acc
 }
 
@@ -604,7 +601,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
         let name = item_struct.ident;
 
         // Tuple structs have unnamed fields
-        let tuple_struct = item_struct.fields.len() == 0
+        let tuple_struct = item_struct.fields.is_empty()
             || item_struct.fields.iter().take(1).all(|x| x.ident.is_none());
 
         // This is true when all struct fields are `float`s
@@ -695,7 +692,7 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                 let n_fields = variant.fields.len();
 
                 // Tuple enums have unnamed fields
-                let tuple_enum = variant.fields.len() == 0
+                let tuple_enum = variant.fields.is_empty()
                     || variant.fields.iter().take(1).all(|x| x.ident.is_none());
 
                 // Handle enums with no fields first
@@ -906,7 +903,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                     .collect();
 
                 let n = variant.fields.len();
-                let tuple_enum = variant.fields.len() == 0
+                let tuple_enum = variant.fields.is_empty()
                     || variant.fields.iter().take(1).all(|x| x.ident.is_none());
 
                 // Generate fields
@@ -914,7 +911,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                 for (index, field) in variant.fields.iter().enumerate() {
                     let xindex = format!("x{index}");
                     let i = syn::Ident::new(&xindex, proc_macro2::Span::call_site());
-                    let f_name = field.ident.as_ref().unwrap_or_else(|| &i);
+                    let f_name = field.ident.as_ref().unwrap_or(&i);
                     if index == 0 {
                         v = quote!(#f_name)
                     } else {
