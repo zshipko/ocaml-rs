@@ -171,3 +171,31 @@ pub fn result_get_error(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::
         Err(x) => Some(x),
     }
 }
+
+#[derive(ocaml::ToValue, ocaml::FromValue, Debug)]
+#[ocaml::sig("{float_a: float; float_b: float}")]
+pub struct AllFloatStruct {
+    float_a: ocaml::Float,
+    float_b: ocaml::Float,
+}
+
+#[ocaml::func]
+#[ocaml::sig("all_float_struct -> all_float_struct")]
+pub fn all_float_struct_inc_both(mut t: AllFloatStruct) -> AllFloatStruct {
+    t.float_a += 1.0;
+    t.float_b += 1.0;
+    t
+}
+
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+#[ocaml::sig("{fa: floatarray} [@@unboxed]")]
+#[unboxed]
+pub struct FloatArrayT {
+    arr: Vec<f64>,
+}
+
+#[ocaml::func]
+#[ocaml::sig("float_array_t -> floatarray")]
+pub fn float_array_t_inner(f: FloatArrayT) -> Vec<f64> {
+    f.arr
+}

@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-derive"
-version = "1.0.0-beta.4"
+version = "1.0.0-beta.5"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 license = "ISC"
 keywords = ["ocaml-rs", "proc-macro"]
@@ -16,5 +16,4 @@ proc-macro = true
 [dependencies]
 syn = {version = "1", features = ["full"]}
 proc-macro2 = {version = "1"}
-synstructure = "0.12"
 quote = "1"

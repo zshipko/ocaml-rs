@@ -4,8 +4,6 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 
-mod derive;
-
 fn check_func(item_fn: &mut syn::ItemFn) {
     if item_fn.sig.asyncness.is_some() {
         panic!("OCaml functions cannot be async");
@@ -542,5 +540,424 @@ fn ocaml_bytecode_func_impl(
     }
 }
 
-synstructure::decl_derive!([ToValue, attributes(ocaml)] => derive::intovalue_derive);
-synstructure::decl_derive!([FromValue, attributes(ocaml)] => derive::fromvalue_derive);
+// Derive macros for ToValue/FromValue
+
+fn is_double_array_struct(fields: &syn::Fields) -> bool {
+    fields.iter().all(|field| match &field.ty {
+        syn::Type::Path(p) => {
+            let s = p.path.segments.iter().map(|x| x.ident.to_string()).fold(
+                String::new(),
+                |mut acc, x| {
+                    if !acc.is_empty() {
+                        acc += "::";
+                        acc += &x;
+                        acc
+                    } else {
+                        x
+                    }
+                },
+            );
+            s == "ocaml::Float" || s == "Float" || s == "f64" || s == "f32"
+        }
+        _ => false,
+    })
+}
+
+#[derive(Default)]
+struct Attrs {
+    float_array: bool,
+    unboxed: bool,
+}
+
+// Get struct-level attributes
+fn attrs(attrs: &[syn::Attribute]) -> Attrs {
+    let mut acc = Attrs::default();
+    attrs.iter().for_each(|attr| {
+        if let syn::Meta::Path(p) = attr.parse_meta().unwrap() {
+            if let Some(ident) = p.get_ident() {
+                if ident == "float_array" {
+                    if acc.unboxed {
+                        panic!("cannot use float_array and unboxed");
+                    }
+                    acc.float_array = true;
+                } else if ident == "unboxed" {
+                    if acc.float_array {
+                        panic!("cannot use float_array and unboxed");
+                    }
+                    acc.unboxed = true;
+                }
+            }
+        }
+    });
+    acc
+}
+
+/// Derive `ocaml::FromValue`
+#[proc_macro_derive(FromValue, attributes(float_array, unboxed))]
+pub fn derive_from_value(item: TokenStream) -> TokenStream {
+    if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
+        let attrs = attrs(&item_struct.attrs);
+        let g = item_struct.generics;
+        let name = item_struct.ident;
+
+        // Tuple structs have unnamed fields
+        let tuple_struct = item_struct.fields.is_empty()
+            || item_struct.fields.iter().take(1).all(|x| x.ident.is_none());
+
+        // This is true when all struct fields are `float`s
+        let is_double_array_struct =
+            attrs.float_array || is_double_array_struct(&item_struct.fields);
+
+        if attrs.unboxed && item_struct.fields.len() > 1 {
+            panic!("cannot unbox structs with more than 1 field")
+        }
+
+        let fields =
+            item_struct
+                .fields
+                .iter()
+                .enumerate()
+                .map(|(index, field)| match &field.ident {
+                    Some(name) => {
+                        // Named fields
+                        if is_double_array_struct {
+                            let ty = &field.ty;
+                            quote!(#name: value.double_field(#index) as #ty)
+                        } else if attrs.unboxed {
+                            quote!(#name: ocaml::FromValue::from_value(value))
+                        } else {
+                            quote!(#name: ocaml::FromValue::from_value(value.field(#index)))
+                        }
+                    }
+                    None => {
+                        // Unnamed fields, tuple struct
+                        if is_double_array_struct {
+                            let ty = &field.ty;
+                            quote!(value.double_field(#index) as #ty)
+                        } else if attrs.unboxed {
+                            quote!(ocaml::FromValue::from_value(value))
+                        } else {
+                            quote!(ocaml::FromValue::from_value(value.field(#index)))
+                        }
+                    }
+                });
+
+        let inner = if tuple_struct {
+            quote!(Self(#(#fields),*))
+        } else {
+            quote!(Self{#(#fields),*})
+        };
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
+        // Generate FromValue for structs
+        quote! {
+            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
+                fn from_value(value: ocaml::Value) -> Self {
+                    unsafe {
+                        #inner
+                    }
+                }
+            }
+        }
+        .into()
+    } else if let Ok(item_enum) = syn::parse::<syn::ItemEnum>(item) {
+        let g = item_enum.generics;
+        let name = item_enum.ident;
+        let attrs = attrs(&item_enum.attrs);
+        let mut unit_tag = 0u8;
+        let mut non_unit_tag = 0u8;
+        if attrs.unboxed && item_enum.variants.len() > 1 {
+            panic!("cannot unbox enums with more than 1 variant")
+        }
+        let variants =
+            item_enum.variants.iter().map(|variant| {
+                let arity = variant.fields.len();
+                let is_block = arity != 0;
+                let tag_ref = if arity > 0 {
+                    &mut non_unit_tag
+                } else {
+                    &mut unit_tag
+                };
+
+                // Get current tag index
+                let tag = *tag_ref;
+
+                // Increment the tag for next time
+                *tag_ref += 1;
+
+                let v_name = &variant.ident;
+                let n_fields = variant.fields.len();
+
+                // Tuple enums have unnamed fields
+                let tuple_enum = variant.fields.is_empty()
+                    || variant.fields.iter().take(1).all(|x| x.ident.is_none());
+
+                // Handle enums with no fields first
+                if n_fields == 0 {
+                    quote! {
+                        (#is_block, #tag) => {
+                            #name::#v_name
+                        }
+                    }
+                } else {
+                    let fields = variant.fields.iter().enumerate().map(
+                        |(index, field)| match &field.ident {
+                            Some(name) => {
+                                // Struct enum variant
+                                if attrs.unboxed {
+                                    quote!(#name: ocaml::FromValue::from_value(value))
+                                } else {
+                                    quote!(#name: ocaml::FromValue::from_value(value.field(#index)))
+                                }
+                            }
+                            None => {
+                                // Tuple enum variant
+                                if attrs.unboxed {
+                                    quote!(#name: ocaml::FromValue::from_value(value))
+                                } else {
+                                    quote!(ocaml::FromValue::from_value(value.field(#index)))
+                                }
+                            }
+                        },
+                    );
+                    let inner = if tuple_enum {
+                        quote!(#name::#v_name(#(#fields),*))
+                    } else {
+                        quote!(#name::#v_name{#(#fields),*})
+                    };
+
+                    // Generate match case
+                    quote! {
+                        (#is_block, #tag) => {
+                            #inner
+                        }
+                    }
+                }
+            });
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
+        // Generate FromValue for enums
+        quote! {
+            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
+                fn from_value(value: ocaml::Value) -> Self {
+                    unsafe {
+                        let is_block = value.is_block();
+                        let tag = if !is_block { value.int_val() as u8 } else { value.tag().0 as u8 };
+                        match (is_block, tag) {
+                            #(#variants),*,
+                            _ => panic!("invalid variant, tag: {}", tag)
+                        }
+                    }
+                }
+           }
+        }
+        .into()
+    } else {
+        panic!("invalid type for FromValue");
+    }
+}
+
+/// Derive `ocaml::ToValue`
+#[proc_macro_derive(ToValue, attributes(float_array, unboxed))]
+pub fn derive_to_value(item: TokenStream) -> TokenStream {
+    if let Ok(item_struct) = syn::parse::<syn::ItemStruct>(item.clone()) {
+        let attrs = attrs(&item_struct.attrs);
+        let g = item_struct.generics;
+        let name = item_struct.ident;
+
+        // Double array structs occur when all fields are `float`s
+        let is_double_array_struct =
+            attrs.float_array || is_double_array_struct(&item_struct.fields);
+        if attrs.unboxed && item_struct.fields.len() > 1 {
+            panic!("cannot unbox structs with more than 1 field")
+        }
+        let fields: Vec<_> = item_struct
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(index, field)| match &field.ident {
+                Some(name) => {
+                    // Named fields
+                    if is_double_array_struct {
+                        quote!(value.store_double_field(#index, self.#name as f64))
+                    } else if attrs.unboxed {
+                        quote!(value = self.#name.to_value(rt))
+                    } else {
+                        quote!(value.store_field(rt, #index, &self.#name))
+                    }
+                }
+                None => {
+                    // Tuple struct
+                    if is_double_array_struct {
+                        quote!(value.store_double_field(#index, self.#index as f64))
+                    } else if attrs.unboxed {
+                        quote!(value = self.#index.to_value(rt))
+                    } else {
+                        quote!(value.store_field(rt, #index, &self.#index))
+                    }
+                }
+            })
+            .collect();
+
+        let tag = if is_double_array_struct {
+            quote!(ocaml::Tag::DOUBLE_ARRAY)
+        } else {
+            quote!(0.into())
+        };
+        let n = fields.len();
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
+        let value_decl = if attrs.unboxed {
+            // Only allocate a singlue value for unboxed structs
+            quote!(
+                let mut value = ocaml::Value::unit();
+            )
+        } else {
+            quote!(
+                let mut value = ocaml::Value::alloc(#n, #tag);
+            )
+        };
+
+        // Generate ToValue for structs
+        quote! {
+            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+                fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                    unsafe {
+                        #value_decl
+                        #(#fields);*;
+                        value
+                    }
+                }
+            }
+        }
+        .into()
+    } else if let Ok(item_enum) = syn::parse::<syn::ItemEnum>(item) {
+        let g = item_enum.generics;
+        let name = item_enum.ident;
+        let attrs = attrs(&item_enum.attrs);
+        let mut unit_tag = 0u8;
+        let mut non_unit_tag = 0u8;
+
+        if attrs.unboxed && item_enum.variants.len() != 1 {
+            panic!("cannot unbox enums with more than 1 variant")
+        }
+
+        let variants = item_enum.variants.iter().map(|variant| {
+            let arity = variant.fields.len();
+            let tag_ref = if arity > 0 {
+                &mut non_unit_tag
+            } else {
+                &mut unit_tag
+            };
+
+            // Get current tag and increment for next iteration
+            let tag = *tag_ref;
+            *tag_ref += 1;
+
+            let v_name = &variant.ident;
+
+            let n_fields = variant.fields.len();
+
+            if n_fields == 0 {
+                // A variant with no fields is represented by an int value
+                quote! {
+                    #name::#v_name => {
+                        ocaml::Value::int(#tag as ocaml::Int)
+                    }
+                }
+            } else {
+                // Generate conversion for the fields of each variant
+                let fields: Vec<_> = variant
+                    .fields
+                    .iter()
+                    .enumerate()
+                    .map(|(index, field)| match &field.ident {
+                        Some(name) => {
+                            // Struct-like variant
+                            if attrs.unboxed {
+                                quote!(value = #name.to_value(rt);)
+                            } else {
+                                quote!(value.store_field(rt, #index, #name))
+                            }
+                        }
+                        None => {
+                            // Tuple-like variant
+                            let x = format!("x{index}");
+                            let x = syn::Ident::new(&x, proc_macro2::Span::call_site());
+                            if attrs.unboxed {
+                                quote!(value = #x.to_value(rt);)
+                            } else {
+                                quote!(value.store_field(rt, #index, #x))
+                            }
+                        }
+                    })
+                    .collect();
+
+                let n = variant.fields.len();
+                let tuple_enum = variant.fields.is_empty()
+                    || variant.fields.iter().take(1).all(|x| x.ident.is_none());
+
+                // Generate fields
+                let mut v = quote!();
+                for (index, field) in variant.fields.iter().enumerate() {
+                    let xindex = format!("x{index}");
+                    let i = syn::Ident::new(&xindex, proc_macro2::Span::call_site());
+                    let f_name = field.ident.as_ref().unwrap_or(&i);
+                    if index == 0 {
+                        v = quote!(#f_name)
+                    } else {
+                        v = quote!(#v, #f_name);
+                    }
+                }
+
+                let match_fields = if tuple_enum {
+                    quote!(#name::#v_name(#v))
+                } else {
+                    quote!(#name::#v_name{#v})
+                };
+
+                let value_decl = if attrs.unboxed {
+                    quote!(let mut value = ocaml::Value::unit())
+                } else {
+                    quote!(
+                        let mut value = ocaml::Value::alloc(#n, #tag.into());
+                    )
+                };
+                quote!(#match_fields => {
+                    #value_decl
+                    #(#fields);*;
+                    value
+                })
+            }
+        });
+
+        let lt = g.lifetimes();
+        let tp = g.type_params();
+        let wh = &g.where_clause;
+
+        // Generate ToValue implementation for enums
+        quote! {
+            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+                fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                    unsafe {
+                        match self {
+                            #(#variants),*,
+                        }
+                    }
+                }
+           }
+        }
+        .into()
+    } else {
+        panic!("invalid type for ToValue");
+    }
+}

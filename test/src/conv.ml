@@ -96,3 +96,13 @@ let%test "result" = Util.check_leaks (fun () -> (
   let err = result_error (`Test 123) in
   result_get_ok ok = Some "123" && result_get_error err = Some (`Test 123) && result_get_ok err = None && result_get_error ok = None
 ))
+
+let%test "all float struct" = Util.check_leaks (fun() ->
+  let s = Rust.{float_a = 1.0; float_b = 2.0} in
+  let t = Rust.all_float_struct_inc_both s in
+  t.float_a = 2.0 && t.float_b = 3.0)
+
+let%test "floatarray_t" = Util.check_leaks (fun () ->
+  let a = Rust.{fa = Float.Array.of_list [ 1.0; 2.0; 3.0; ]} in
+  let b = Rust.float_array_t_inner a in
+  a.fa = b)
