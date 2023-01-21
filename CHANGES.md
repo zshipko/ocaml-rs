@@ -1,6 +1,8 @@
-## Unreleased
+## 1.0.0-beta.5
 
 - Implement `ToValue` for `Box<T>` by @fmckeogh https://github.com/zshipko/ocaml-rs/pull/107
+- Refactor derive macros for `FromValue` and `ToValue`
+- Drop support for OCaml 4.07
 
 ## 1.0.0-beta.4
 
