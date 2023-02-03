@@ -15,10 +15,6 @@ pub fn initial_setup() {
         return;
     }
 
-    unsafe {
-        ocaml_boxroot_sys::boxroot_setup();
-    }
-
     #[cfg(not(feature = "no-panic-hook"))]
     {
         ::std::panic::set_hook(Box::new(|info| unsafe {
