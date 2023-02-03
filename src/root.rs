@@ -1,13 +1,32 @@
 use crate::sys;
-
-#[derive(Debug, PartialEq, PartialOrd, Eq)]
 /// Wraps rooted values
 pub struct Root(pub ocaml_boxroot_sys::BoxRoot);
+
+impl PartialEq for Root {
+    fn eq(&self, other: &Self) -> bool {
+        ocaml_boxroot_sys::boxroot_get_ref(self.0) == ocaml_boxroot_sys::boxroot_get_ref(other.0)
+    }
+}
+
+impl PartialOrd for Root {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        ocaml_boxroot_sys::boxroot_get_ref(self.0)
+            .partial_cmp(&ocaml_boxroot_sys::boxroot_get_ref(other.0))
+    }
+}
+
+impl std::fmt::Debug for Root {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+        ocaml_boxroot_sys::boxroot_get_ref(self.0).fmt(f)
+    }
+}
+
+impl Eq for Root {}
 
 impl Root {
     /// Create a new root
     pub unsafe fn new(v: sys::Value) -> Root {
-        Root(ocaml_boxroot_sys::boxroot_create(v).expect("Unable to allocate boxroot"))
+        Root(ocaml_boxroot_sys::boxroot_create(v).expect("boxroot_create failed"))
     }
 
     /// Get value from root
@@ -17,7 +36,9 @@ impl Root {
 
     /// Modify root
     pub unsafe fn modify(&mut self, v: sys::Value) {
-        ocaml_boxroot_sys::boxroot_modify(&mut self.0, v);
+        if !ocaml_boxroot_sys::boxroot_modify(&mut self.0, v) {
+            panic!("boxroot_modify failed")
+        }
     }
 }
 
