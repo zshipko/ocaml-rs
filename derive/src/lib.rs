@@ -648,13 +648,11 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
             quote!(Self{#(#fields),*})
         };
 
-        let lt = g.lifetimes();
-        let tp = g.type_params();
-        let wh = &g.where_clause;
+        let (g_impl, g_ty, g_wh) = g.split_for_impl();
 
         // Generate FromValue for structs
         quote! {
-            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
+            unsafe impl #g_impl ocaml::FromValue for #name #g_ty #g_wh {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         #inner
@@ -738,13 +736,11 @@ pub fn derive_from_value(item: TokenStream) -> TokenStream {
                 }
             });
 
-        let lt = g.lifetimes();
-        let tp = g.type_params();
-        let wh = &g.where_clause;
+        let (g_impl, g_ty, g_wh) = g.split_for_impl();
 
         // Generate FromValue for enums
         quote! {
-            unsafe impl #g ocaml::FromValue for #name<#(#lt),* #(#tp),*> #wh {
+            unsafe impl #g_impl ocaml::FromValue for #name #g_ty #g_wh {
                 fn from_value(value: ocaml::Value) -> Self {
                     unsafe {
                         let is_block = value.is_block();
@@ -814,10 +810,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             quote!(0.into())
         };
         let n = fields.len();
-
-        let lt = g.lifetimes();
-        let tp = g.type_params();
-        let wh = &g.where_clause;
+        let (g_impl, g_ty, g_wh) = g.split_for_impl();
 
         let value_decl = if attrs.unboxed {
             // Only allocate a singlue value for unboxed structs
@@ -832,7 +825,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
 
         // Generate ToValue for structs
         quote! {
-            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+            unsafe impl #g_impl ocaml::ToValue for #name #g_ty #g_wh {
                 fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
                     unsafe {
                         #value_decl
@@ -943,13 +936,11 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             }
         });
 
-        let lt = g.lifetimes();
-        let tp = g.type_params();
-        let wh = &g.where_clause;
+        let (g_impl, g_ty, g_wh) = g.split_for_impl();
 
         // Generate ToValue implementation for enums
         quote! {
-            unsafe impl #g ocaml::ToValue for #name<#(#lt),* #(#tp),*> #wh {
+            unsafe impl #g_impl ocaml::ToValue for #name #g_ty #g_wh {
                 fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
                     unsafe {
                         match self {
