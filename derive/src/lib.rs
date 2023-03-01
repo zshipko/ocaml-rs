@@ -781,25 +781,28 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
             .fields
             .iter()
             .enumerate()
-            .map(|(index, field)| match &field.ident {
-                Some(name) => {
-                    // Named fields
-                    if is_double_array_struct {
-                        quote!(value.store_double_field(#index, self.#name as f64))
-                    } else if attrs.unboxed {
-                        quote!(value = self.#name.to_value(rt))
-                    } else {
-                        quote!(value.store_field(rt, #index, &self.#name))
+            .map(|(index, field)| {
+                let index = syn::Index::from(index);
+                match &field.ident {
+                    Some(name) => {
+                        // Named fields
+                        if is_double_array_struct {
+                            quote!(value.store_double_field(#index, self.#name as f64))
+                        } else if attrs.unboxed {
+                            quote!(value = self.#name.to_value(rt))
+                        } else {
+                            quote!(value.store_field(rt, #index, &self.#name))
+                        }
                     }
-                }
-                None => {
-                    // Tuple struct
-                    if is_double_array_struct {
-                        quote!(value.store_double_field(#index, self.#index as f64))
-                    } else if attrs.unboxed {
-                        quote!(value = self.#index.to_value(rt))
-                    } else {
-                        quote!(value.store_field(rt, #index, &self.#index))
+                    None => {
+                        // Tuple struct
+                        if is_double_array_struct {
+                            quote!(value.store_double_field(#index, self.#index as f64))
+                        } else if attrs.unboxed {
+                            quote!(value = self.#index.to_value(rt))
+                        } else {
+                            quote!(value.store_field(rt, #index, &self.#index))
+                        }
                     }
                 }
             })
@@ -886,7 +889,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                             if attrs.unboxed {
                                 quote!(value = #name.to_value(rt);)
                             } else {
-                                quote!(value.store_field(rt, #index, #name))
+                                quote!(value.store_field(rt, #index, &#name))
                             }
                         }
                         None => {
@@ -896,7 +899,7 @@ pub fn derive_to_value(item: TokenStream) -> TokenStream {
                             if attrs.unboxed {
                                 quote!(value = #x.to_value(rt);)
                             } else {
-                                quote!(value.store_field(rt, #index, #x))
+                                quote!(value.store_field(rt, #index, &#x))
                             }
                         }
                     })
