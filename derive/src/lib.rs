@@ -260,7 +260,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
             let mut bc = item_fn.clone();
             bc.attrs.retain(|x| {
                 let s = x
-                    .path
+                    .path()
                     .segments
                     .iter()
                     .map(|x| x.ident.to_string())
@@ -573,7 +573,7 @@ struct Attrs {
 fn attrs(attrs: &[syn::Attribute]) -> Attrs {
     let mut acc = Attrs::default();
     attrs.iter().for_each(|attr| {
-        if let syn::Meta::Path(p) = attr.parse_meta().unwrap() {
+        if let syn::Meta::Path(p) = &attr.meta {
             if let Some(ident) = p.get_ident() {
                 if ident == "float_array" {
                     if acc.unboxed {
