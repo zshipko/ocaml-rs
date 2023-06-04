@@ -49,7 +49,9 @@ jobs:
         run: opam var bin >> $GITHUB_PATH
 
       - name: Install mdbook
-        run: cargo install mdbook
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: mdbook
 
       - name: Build
         run: cargo build --tests --features=link

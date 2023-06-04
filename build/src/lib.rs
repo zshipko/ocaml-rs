@@ -6,6 +6,8 @@ mod dune;
 
 #[cfg(feature = "dune")]
 pub use dune::Dune;
+use syn::MetaList;
+use syn::__private::ToTokens;
 
 struct Source {
     path: PathBuf,
@@ -37,29 +39,33 @@ fn snake_case(s: &str) -> String {
 fn handle(attrs: Vec<syn::Attribute>, mut f: impl FnMut(&str)) {
     for attr in attrs {
         let attr_name = attr
-            .path
+            .path()
             .segments
             .iter()
             .map(|x| x.ident.to_string())
             .collect::<Vec<_>>()
             .join("::");
         if attr_name == "sig" || attr_name == "ocaml::sig" {
-            match &attr.tokens.into_iter().collect::<Vec<_>>()[..] {
-                [proc_macro2::TokenTree::Group(g)] => {
-                    let v = g.stream().into_iter().collect::<Vec<_>>();
-                    if v.len() != 1 {
-                        panic!("Invalid signature: {g}");
-                    }
-                    if let [proc_macro2::TokenTree::Literal(ref sig)] = v[..] {
+            match &attr.meta {
+                // #[sig] or #[ocaml::sig]
+                syn::Meta::Path(_) => f(""),
+                // #[ocaml::sig("...")]
+                syn::Meta::List(MetaList {
+                    path: _,
+                    delimiter: _,
+                    tokens,
+                }) => match &tokens.clone().into_iter().collect::<Vec<_>>()[..] {
+                    [proc_macro2::TokenTree::Literal(ref sig)] => {
                         let s = sig.to_string();
                         let ty = strip_quotes(&s);
                         f(ty)
                     }
-                }
-                [] => f(""),
-                x => {
-                    panic!("Invalid signature: {x:?}");
-                }
+                    [] => f(""),
+                    x => {
+                        panic!("Invalid signature: {x:?}");
+                    }
+                },
+                syn::Meta::NameValue(x) => panic!("Invalid signature: {}", x.into_token_stream()),
             }
         }
     }
