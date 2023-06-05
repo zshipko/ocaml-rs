@@ -791,4 +791,12 @@ impl Value {
         let slice0 = self.slice();
         Value::new(slice0.as_ptr().offset(1) as isize)
     }
+
+    /// Ensure a value is rooted
+    pub fn root(self) -> Value {
+        match self {
+            Value::Raw(raw) => unsafe { Value::Root(Root::new(raw)) },
+            _ => self,
+        }
+    }
 }
