@@ -12,26 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install stable toolchain with rustfmt and run cargo format in check mode
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
-          components: rustfmt
-          override: true
 
       - run: cargo fmt --all -- --check
 
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Nightly
+      - name: Stable
         run: rustup toolchain install stable --profile=default
-      
+
       - name: Use OCaml
         uses: ocaml/setup-ocaml@v2
         with:

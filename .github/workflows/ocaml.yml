@@ -18,10 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: OCaml/Opam cache
         id: ocaml-rs-opam-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: "~/.opam"
           key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
@@ -63,4 +63,3 @@ jobs:
         #      - run: opam install dune ppx_inline_test notty bechamel-notty
         #      - name: Run OCaml tests
         #        run: opam exec -- dune exec --root=./test src/bench.exe
-
