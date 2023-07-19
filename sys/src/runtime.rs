@@ -18,12 +18,3 @@ extern "C" {
     pub fn caml_gc_full_major(v: Value);
     pub fn caml_gc_compaction(v: Value);
 }
-
-#[cfg(ocaml5)]
-extern "C" {
-    pub fn caml_init_domain_self(i: core::ffi::c_int);
-    pub fn caml_interrupt_self();
-    pub fn caml_reset_domain_lock();
-    pub fn caml_acquire_domain_lock();
-    pub fn caml_release_domain_lock();
-}
