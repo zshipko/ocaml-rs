@@ -328,7 +328,10 @@ unsafe impl<V: 'static + ToValue> ToValue for Vec<V> {
     fn to_value(&self, rt: &Runtime) -> Value {
         let len = self.len();
 
-        if core::any::TypeId::of::<f64>() == core::any::TypeId::of::<V>() && sys::FLAT_FLOAT_ARRAY {
+        if (core::any::TypeId::of::<f32>() == core::any::TypeId::of::<V>()
+            || core::any::TypeId::of::<f64>() == core::any::TypeId::of::<V>())
+            && sys::FLAT_FLOAT_ARRAY
+        {
             let mut arr = unsafe { Value::alloc_double_array(len) };
             for (i, v) in self.iter().enumerate() {
                 unsafe {
