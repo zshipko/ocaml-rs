@@ -36,6 +36,11 @@ external result_get_ok: ('a, 'b) result -> 'a option = "result_get_ok"
 external result_get_error: ('a, 'b) result -> 'b option = "result_get_error"
 external all_float_struct_inc_both: all_float_struct -> all_float_struct = "all_float_struct_inc_both"
 external float_array_t_inner: float_array_t -> floatarray = "float_array_t_inner"
+external make_int32_array_012: unit -> int32 array = "make_int32_array_012"
+external make_float_array_f32_012: unit -> float array = "make_float_array_f32_012"
+external make_floatarray_f32_012: unit -> floatarray = "make_floatarray_f32_012"
+external make_float_array_f64_012: unit -> float array = "make_float_array_f64_012"
+external make_floatarray_f64_012: unit -> floatarray = "make_floatarray_f64_012"
 
 (* file: custom.rs *)
 

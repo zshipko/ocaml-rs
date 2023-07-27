@@ -106,3 +106,24 @@ let%test "floatarray_t" = Util.check_leaks (fun () ->
   let a = Rust.{fa = Float.Array.of_list [ 1.0; 2.0; 3.0; ]} in
   let b = Rust.float_array_t_inner a in
   a.fa = b)
+
+(* Tests that arrays generated in rust can be indexed into from ocaml *)
+let%test "index into int array" = Util.check_leaks (fun () ->
+  let arr = Rust.make_int32_array_012 () in
+  List.for_all (fun i -> Int32.to_int (Array.get arr i) = i) [0; 1; 2])
+
+let%test "index float array f32" = Util.check_leaks (fun () ->
+  let arr = Rust.make_float_array_f32_012 () in
+  List.for_all (fun i -> Array.get arr i = Float.of_int i) [0; 1; 2])
+
+let%test "index floatarray f32" = Util.check_leaks (fun () ->
+  let arr = Rust.make_floatarray_f32_012 () in
+  List.for_all (fun i -> Float.Array.get arr i = Float.of_int i) [0; 1; 2])
+
+let%test "index float array f64" = Util.check_leaks (fun () ->
+  let arr = Rust.make_float_array_f64_012 () in
+  List.for_all (fun i -> Array.get arr i = Float.of_int i) [0; 1; 2])
+
+let%test "index floatarray f64" = Util.check_leaks (fun () ->
+  let arr = Rust.make_floatarray_f64_012 () in
+  List.for_all (fun i -> Float.Array.get arr i = Float.of_int i) [0; 1; 2])
