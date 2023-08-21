@@ -21,6 +21,13 @@ pub struct Bigarray {
     pub dim: [Intnat; 0],
 }
 
+impl Bigarray {
+    /// Returns true if array is Fortran contiguous
+    pub fn is_fortran(&self) -> bool {
+        (self.flags & Layout::FORTRAN_LAYOUT as isize) != 0
+    }
+}
+
 #[allow(non_camel_case_types)]
 pub enum Managed {
     EXTERNAL = 0,         /* Data is not allocated by OCaml */
@@ -45,6 +52,12 @@ pub enum Kind {
     COMPLEX64 = 0x0b,  /* Double-precision complex */
     CHAR = 0x0c,       /* Characters */
     KIND_MASK = 0xFF,  /* Mask for kind in flags field */
+}
+
+#[allow(non_camel_case_types)]
+pub enum Layout {
+    C_LAYOUT = 0,           /* Row major, indices start at 0 */
+    FORTRAN_LAYOUT = 0x100, /* Column major, indices start at 1 */
 }
 
 extern "C" {
