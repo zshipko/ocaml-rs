@@ -468,7 +468,9 @@ pub mod bigarray {
 
 #[cfg(all(feature = "bigarray-ext", not(feature = "no-std")))]
 pub(crate) mod bigarray_ext {
-    use ndarray::{ArrayView2, ArrayView3, ArrayViewMut2, ArrayViewMut3, Dimension};
+    use ndarray::{
+        ArrayView2, ArrayView3, ArrayViewMut2, ArrayViewMut3, Dimension, Shape, ShapeBuilder,
+    };
 
     use core::{marker::PhantomData, mem, ptr, slice};
 
@@ -488,13 +490,17 @@ pub(crate) mod bigarray_ext {
         /// Returns array view
         pub fn view(&self) -> ArrayView2<T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe { ArrayView2::from_shape_ptr(self.shape(), (*ba).data as *const T) }
+            unsafe {
+                ArrayView2::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *const T)
+            }
         }
 
         /// Returns mutable array view
         pub fn view_mut(&mut self) -> ArrayViewMut2<T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe { ArrayViewMut2::from_shape_ptr(self.shape(), (*ba).data as *mut T) }
+            unsafe {
+                ArrayViewMut2::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *mut T)
+            }
         }
 
         /// Returns the shape of `self`
@@ -568,13 +574,17 @@ pub(crate) mod bigarray_ext {
         /// Returns array view
         pub fn view(&self) -> ArrayView3<T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe { ArrayView3::from_shape_ptr(self.shape(), (*ba).data as *const T) }
+            unsafe {
+                ArrayView3::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *const T)
+            }
         }
 
         /// Returns mutable array view
         pub fn view_mut(&mut self) -> ArrayViewMut3<T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
-            unsafe { ArrayViewMut3::from_shape_ptr(self.shape(), (*ba).data as *mut T) }
+            unsafe {
+                ArrayViewMut3::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *mut T)
+            }
         }
 
         /// Returns the shape of `self`
@@ -636,6 +646,17 @@ pub(crate) mod bigarray_ext {
                 ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
             }
             array
+        }
+    }
+
+    fn build_shape<S: ShapeBuilder>(
+        ba: *const bigarray::Bigarray,
+        shape: S,
+    ) -> Shape<<S as ShapeBuilder>::Dim> {
+        if unsafe { (*ba).is_fortran() } {
+            shape.f()
+        } else {
+            shape.into_shape()
         }
     }
 }
