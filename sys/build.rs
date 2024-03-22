@@ -11,7 +11,7 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut output = Vec::new();
 
-    for line in f.lines().flatten() {
+    for line in f.lines().map_while(Result::ok) {
         if line.starts_with(CC_LIB_PREFIX) {
             let line: Vec<_> = line.split('=').collect();
             let line = line[1].split(' ');
@@ -35,7 +35,7 @@ fn flat_float_array(ocaml_path: &str) -> std::io::Result<String> {
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut flat_float_array = String::new();
 
-    for line in f.lines().flatten() {
+    for line in f.lines().map_while(Result::ok) {
         if line.starts_with(FLAT_FLOAT_ARRAY) {
             let line: Vec<_> = line.split('=').collect();
             flat_float_array = line[1].to_string();
