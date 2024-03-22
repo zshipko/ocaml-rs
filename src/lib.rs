@@ -156,6 +156,7 @@ pub mod custom;
 pub use crate::custom::Custom;
 pub use crate::error::{CamlError, Error};
 pub use crate::pointer::Pointer;
+pub use crate::runtime::Runtime;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Seq};
@@ -176,55 +177,4 @@ pub type Uint = sys::Uintnat;
 #[cfg(not(any(feature = "no-std", feature = "without-ocamlopt")))]
 pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
-}
-
-/// OCaml runtime handle
-pub struct Runtime {
-    _private: (),
-}
-
-static RUNTIME_INIT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
-
-impl Runtime {
-    /// Initialize the OCaml runtime.
-    pub fn init() -> Self {
-        Self::init_persistent();
-        Self { _private: () }
-    }
-
-    /// Initializes the OCaml runtime.
-    ///
-    /// After the first invocation, this method does nothing.
-    pub fn init_persistent() {
-        #[cfg(not(feature = "no-caml-startup"))]
-        {
-            if RUNTIME_INIT
-                .compare_exchange(
-                    false,
-                    true,
-                    core::sync::atomic::Ordering::Relaxed,
-                    core::sync::atomic::Ordering::Relaxed,
-                )
-                .is_err()
-            {
-                return;
-            }
-
-            let arg0 = "ocaml\0".as_ptr() as *const ocaml_sys::Char;
-            let c_args = [arg0, core::ptr::null()];
-            unsafe {
-                ocaml_sys::caml_startup(c_args.as_ptr());
-                assert!(ocaml_boxroot_sys::boxroot_setup());
-            }
-        }
-        #[cfg(feature = "no-caml-startup")]
-        panic!("Rust code that is called from an OCaml program should not try to initialize the runtime.");
-    }
-
-    #[doc(hidden)]
-    #[inline(always)]
-    pub unsafe fn recover_handle() -> &'static Self {
-        static RUNTIME: Runtime = Runtime { _private: () };
-        &RUNTIME
-    }
 }
