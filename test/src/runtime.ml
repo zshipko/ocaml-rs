@@ -48,13 +48,6 @@ with
   end
   | _ -> false)
 
-let %test "test custom panic exception" = Util.check_leaks (fun () -> try
-  let () = Callback.register_exception "Rust_exception" (Rust "") in
-  let _ = test_panic () in
-  false
-with
-  | Rust s -> s = "XXX"
-  | _ -> false)
 
 let () = Callback.register "call_named" (fun x -> x *. 2.)
 

@@ -124,8 +124,6 @@
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
 
-pub use ocaml_interop::{self as interop, OCaml, OCamlRef, OCamlRuntime as Runtime};
-
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
 
@@ -183,3 +181,44 @@ pub fn ocamlopt() -> std::process::Command {
 #[cfg(feature = "link")]
 #[cfg(test)]
 mod tests;
+
+/// OCaml runtime handle
+pub struct Runtime {
+    _private: (),
+}
+
+impl Runtime {
+    /// Initialize the OCaml runtime.
+    pub fn init() -> Self {
+        Self::init_persistent();
+        Self { _private: () }
+    }
+
+    /// Initializes the OCaml runtime.
+    ///
+    /// After the first invocation, this method does nothing.
+    pub fn init_persistent() {
+        #[cfg(not(feature = "no-caml-startup"))]
+        {
+            static INIT: std::sync::Once = std::sync::Once::new();
+
+            INIT.call_once(|| {
+                let arg0 = "ocaml\0".as_ptr() as *const ocaml_sys::Char;
+                let c_args = [arg0, core::ptr::null()];
+                unsafe {
+                    ocaml_sys::caml_startup(c_args.as_ptr());
+                    assert!(ocaml_boxroot_sys::boxroot_setup());
+                }
+            })
+        }
+        #[cfg(feature = "no-caml-startup")]
+        panic!("Rust code that is called from an OCaml program should not try to initialize the runtime.");
+    }
+
+    #[doc(hidden)]
+    #[inline(always)]
+    pub unsafe fn recover_handle() -> &'static mut Self {
+        static mut RUNTIME: Runtime = Runtime { _private: () };
+        &mut RUNTIME
+    }
+}
