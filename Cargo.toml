@@ -40,3 +40,6 @@ members = [
   "test",
   "build"
 ]
+
+[dev-dependencies]
+serial_test = "3.0.0"
