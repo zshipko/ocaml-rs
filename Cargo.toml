@@ -43,3 +43,7 @@ members = [
 
 [dev-dependencies]
 serial_test = "3.0.0"
+
+[[example]]
+name = "rust"
+required-features = ["link"]

@@ -1,14 +1,7 @@
-use crate as ocaml;
+use ocaml::{Error, FromValue, ToValue, Value};
 
-use crate::{Error, FromValue, ToValue, Value};
-
-#[cfg(test)]
-use serial_test::serial;
-
-#[test]
-#[serial]
 fn test_basic_array() -> Result<(), Error> {
-    ocaml::runtime::init_persistent();
+    ocaml::runtime::init();
     let gc = unsafe { ocaml::Runtime::recover_handle() };
     unsafe {
         let mut a: ocaml::Array<&str> = ocaml::Array::alloc(2);
@@ -16,17 +9,12 @@ fn test_basic_array() -> Result<(), Error> {
         a.set(gc, 1, &"123")?;
         let b: Vec<&str> = FromValue::from_value(a.to_value(gc));
         assert!(b.as_slice() == &["testing", "123"]);
-        unsafe {
-            ocaml::sys::caml_enter_blocking_section();
-        }
         Ok(())
     }
 }
 
-#[test]
-#[serial]
 fn test_basic_list() {
-    ocaml::runtime::init_persistent();
+    ocaml::runtime::init();
     let gc = unsafe { ocaml::Runtime::recover_handle() };
     let mut list = ocaml::List::empty();
     let a = 3i64.to_value(gc);
@@ -50,8 +38,6 @@ fn test_basic_list() {
     }
 }
 
-#[test]
-#[serial]
 fn test_int() {
     ocaml::runtime::init_persistent();
     let gc = unsafe { ocaml::Runtime::recover_handle() };
@@ -78,13 +64,8 @@ pub fn make_tuple(a: Value, b: Value) -> (Value, Value) {
     (a, b)
 }
 
-#[test]
-#[serial]
 fn test_tuple_of_tuples() {
     ocaml::runtime::init_persistent();
-    unsafe {
-        ocaml::sys::caml_leave_blocking_section();
-    }
     let gc = unsafe { ocaml::Runtime::recover_handle() };
 
     let x = (1f64, 2f64, 3f64, 4f64, 5f64, 6f64, 7f64, 8f64, 9f64).to_value(gc);
@@ -104,4 +85,11 @@ fn test_tuple_of_tuples() {
     assert!(g == l);
     assert!(h == k);
     assert!(i == j);
+}
+
+fn main() {
+    test_basic_array().unwrap();
+    test_basic_list();
+    test_int();
+    test_tuple_of_tuples();
 }

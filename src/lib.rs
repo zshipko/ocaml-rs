@@ -178,10 +178,6 @@ pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }
 
-#[cfg(feature = "link")]
-#[cfg(test)]
-mod tests;
-
 /// OCaml runtime handle
 pub struct Runtime {
     _private: (),
