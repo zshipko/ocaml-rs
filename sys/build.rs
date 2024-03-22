@@ -50,7 +50,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     write!(f, "")?;
 
     assert!(std::process::Command::new(ocamlopt)
-        .args(["-output-complete-obj", "-o"])
+        .args(["-output-complete-obj", "-I", "+threads", "-o"])
         .arg(out_dir.join("rt.o"))
         .arg(out_dir.join("runtime.ml"))
         .status()?
@@ -74,6 +74,7 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
     println!("cargo:rustc-link-search={}", ocaml_path);
 
     println!("cargo:rustc-link-lib=static=asmrun");
+    println!("cargo:rustc-link-lib=static=threadsnat");
 
     Ok(())
 }
