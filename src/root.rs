@@ -15,8 +15,8 @@ impl PartialOrd for Root {
     }
 }
 
-impl std::fmt::Debug for Root {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for Root {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         ocaml_boxroot_sys::boxroot_get_ref(self.0).fmt(f)
     }
 }

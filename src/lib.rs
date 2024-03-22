@@ -183,6 +183,8 @@ pub struct Runtime {
     _private: (),
 }
 
+static RUNTIME_INIT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
 impl Runtime {
     /// Initialize the OCaml runtime.
     pub fn init() -> Self {
@@ -196,16 +198,24 @@ impl Runtime {
     pub fn init_persistent() {
         #[cfg(not(feature = "no-caml-startup"))]
         {
-            static INIT: std::sync::Once = std::sync::Once::new();
+            if RUNTIME_INIT
+                .compare_exchange(
+                    false,
+                    true,
+                    core::sync::atomic::Ordering::Relaxed,
+                    core::sync::atomic::Ordering::Relaxed,
+                )
+                .is_err()
+            {
+                return;
+            }
 
-            INIT.call_once(|| {
-                let arg0 = "ocaml\0".as_ptr() as *const ocaml_sys::Char;
-                let c_args = [arg0, core::ptr::null()];
-                unsafe {
-                    ocaml_sys::caml_startup(c_args.as_ptr());
-                    assert!(ocaml_boxroot_sys::boxroot_setup());
-                }
-            })
+            let arg0 = "ocaml\0".as_ptr() as *const ocaml_sys::Char;
+            let c_args = [arg0, core::ptr::null()];
+            unsafe {
+                ocaml_sys::caml_startup(c_args.as_ptr());
+                assert!(ocaml_boxroot_sys::boxroot_setup());
+            }
         }
         #[cfg(feature = "no-caml-startup")]
         panic!("Rust code that is called from an OCaml program should not try to initialize the runtime.");

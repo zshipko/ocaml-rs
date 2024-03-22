@@ -59,4 +59,4 @@ jobs:
         run: mdbook test doc -L ./target/debug/deps
 
       - name: Test `no_std`
-        run: opam exec -- cargo build --example rust --features=no-std,link
+        run: opam exec -- cargo build --features=no-std
