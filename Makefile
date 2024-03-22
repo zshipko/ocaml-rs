@@ -1,7 +1,7 @@
 test: test-rust test-ocaml
 
 test-rust:
-	@cargo test -- --test-threads=1
+	@cargo test --features=link -- --test-threads=1
 
 test-ocaml:
 	@dune clean --root=test

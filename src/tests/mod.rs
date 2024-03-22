@@ -4,9 +4,6 @@ use crate::{Error, FromValue, ToValue, Value};
 
 #[test]
 fn test_basic_array() -> Result<(), Error> {
-    unsafe {
-        ocaml_sys::caml_acquire_runtime_system();
-    }
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         unsafe {
@@ -27,9 +24,6 @@ pub fn make_tuple(a: Value, b: Value) -> (Value, Value) {
 
 #[test]
 fn test_tuple_of_tuples() {
-    unsafe {
-        ocaml_sys::caml_acquire_runtime_system();
-    }
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let x = (1f64, 2f64, 3f64, 4f64, 5f64, 6f64, 7f64, 8f64, 9f64).to_value(gc);
@@ -54,9 +48,6 @@ fn test_tuple_of_tuples() {
 
 #[test]
 fn test_basic_list() {
-    unsafe {
-        ocaml_sys::caml_acquire_runtime_system();
-    }
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let mut list = ocaml::List::empty();
@@ -82,9 +73,6 @@ fn test_basic_list() {
 
 #[test]
 fn test_int() {
-    unsafe {
-        ocaml_sys::caml_acquire_runtime_system();
-    }
     ocaml::runtime::init_persistent();
     ocaml::body!(gc: {
         let a = (-123isize).to_value(gc);
