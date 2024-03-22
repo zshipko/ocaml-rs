@@ -223,8 +223,8 @@ impl Runtime {
 
     #[doc(hidden)]
     #[inline(always)]
-    pub unsafe fn recover_handle() -> &'static mut Self {
-        static mut RUNTIME: Runtime = Runtime { _private: () };
-        &mut RUNTIME
+    pub unsafe fn recover_handle() -> &'static Self {
+        static RUNTIME: Runtime = Runtime { _private: () };
+        &RUNTIME
     }
 }

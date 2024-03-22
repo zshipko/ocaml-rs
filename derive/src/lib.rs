@@ -219,7 +219,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let inner = if returns {
         quote! {
             #[inline(always)]
-            #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
+            #constness #unsafety fn inner(#gc_name: &ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
                 #use_gc
                 #body
             }
@@ -227,7 +227,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     } else {
         quote! {
             #[inline(always)]
-            #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*)  {
+            #constness #unsafety fn inner(#gc_name: &ocaml::Runtime, #(#rust_args),*)  {
                 #use_gc
                 #body
             }
