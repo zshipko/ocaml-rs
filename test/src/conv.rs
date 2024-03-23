@@ -1,4 +1,4 @@
-use ocaml::{interop::ToOCaml, FromValue, ToValue};
+use ocaml::{FromValue, ToValue};
 
 #[derive(ToValue, FromValue)]
 #[ocaml::sig("Empty | First of int | Second of string array")]
@@ -16,9 +16,8 @@ pub fn enum1_empty() -> Enum1 {
 
 #[ocaml::func]
 #[ocaml::sig("int -> enum1")]
-pub unsafe fn enum1_first(i: ocaml::Value) -> Enum1 {
-    let i: ocaml::interop::OCaml<ocaml::Int> = i.to_ocaml(gc);
-    Enum1::First(i.to_i64() as ocaml::Int)
+pub unsafe fn enum1_first(i: ocaml::Int) -> Enum1 {
+    Enum1::First(i)
 }
 
 #[ocaml::func(test)]

@@ -2,7 +2,6 @@
 
 * [ocaml-sys](https://crates.io/crates/ocaml-sys) - Low level bindings to the OCaml runtime
 * [ocaml-boxroot-sys](https://crates.io/crates/ocaml-boxroot-sys) - Bindings to [ocaml-boxroot](https://gitlab.com/ocaml-rust/ocaml-boxroot/), which handles safe allocation of OCaml values
-* [ocaml-interop](https://crates.io/crates/ocaml-interop) - Interactions with the OCaml runtime
 * [ocaml-derive](https://crates.io/crates/ocaml-derive) - Procedural macros: `ocaml::func`, `ocaml::sig`, `derive(FromValue)`, `derive(ToValue)`
 * [ocaml-build](https://crates.io/crates/ocaml-build) - Generate OCaml interfaces from `ocaml::sig` definitions
 * [ocaml](https://crates.io/crates/ocaml) - Higher level bindings built using the crates listed above

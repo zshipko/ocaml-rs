@@ -141,12 +141,9 @@ impl Error {
     }
 
     #[doc(hidden)]
-    pub fn raise_value(v: Value, s: &str) -> ! {
+    pub fn raise_value(v: Value, x: Value) -> ! {
         unsafe {
-            let st = crate::sys::caml_alloc_string(s.len());
-            let ptr = crate::sys::string_val(st);
-            core::ptr::copy_nonoverlapping(s.as_ptr(), ptr, s.len());
-            crate::sys::caml_raise_with_arg(v.raw().0, st);
+            crate::sys::caml_raise_with_arg(v.root().raw().0, x.root().raw().0);
         }
         #[allow(clippy::empty_loop)]
         loop {}

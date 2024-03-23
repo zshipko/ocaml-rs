@@ -124,8 +124,6 @@
 #[cfg(all(feature = "link", feature = "no-std"))]
 std::compile_error!("Cannot use link and no-std features");
 
-pub use ocaml_interop::{self as interop, OCaml, OCamlRef, OCamlRuntime as Runtime};
-
 /// The `sys` module contains the low-level implementation of the OCaml runtime
 pub use ocaml_sys as sys;
 
@@ -158,6 +156,7 @@ pub mod custom;
 pub use crate::custom::Custom;
 pub use crate::error::{CamlError, Error};
 pub use crate::pointer::Pointer;
+pub use crate::runtime::Runtime;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Seq};
@@ -179,7 +178,3 @@ pub type Uint = sys::Uintnat;
 pub fn ocamlopt() -> std::process::Command {
     std::process::Command::new(sys::COMPILER)
 }
-
-#[cfg(feature = "link")]
-#[cfg(test)]
-mod tests;

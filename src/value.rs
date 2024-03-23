@@ -1,6 +1,6 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{interop::BoxRoot, root::Root, sys, util, OCaml, OCamlRef, Pointer, Runtime};
+use crate::{root::Root, sys, util, Pointer, Runtime};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
@@ -108,51 +108,6 @@ unsafe impl FromValue for Raw {
     #[inline]
     fn from_value(v: Value) -> Raw {
         v.raw()
-    }
-}
-
-unsafe impl<'a, T> ToValue for OCaml<'a, T> {
-    fn to_value(&self, _rt: &Runtime) -> Value {
-        unsafe { Value::new(self.raw()) }
-    }
-}
-
-unsafe impl<'a, T> ToValue for OCamlRef<'a, T> {
-    fn to_value(&self, _rt: &Runtime) -> Value {
-        unsafe { Value::new(self.get_raw()) }
-    }
-}
-
-unsafe impl<T> ToValue for BoxRoot<T> {
-    fn to_value(&self, _rt: &Runtime) -> Value {
-        unsafe { Value::new(self.get_raw()) }
-    }
-}
-
-unsafe impl<T> FromValue for BoxRoot<T> {
-    fn from_value(v: Value) -> BoxRoot<T> {
-        let ocaml: OCaml<T> = FromValue::from_value(v);
-        ocaml.root()
-    }
-}
-
-unsafe impl<'a, T> FromValue for OCaml<'a, T> {
-    fn from_value<'b>(v: Value) -> OCaml<'a, T> {
-        // NOTE: this should only be used after the runtime is initialized
-        let rt = unsafe { Runtime::recover_handle() };
-        unsafe { OCaml::new(rt, v.raw().into()) }
-    }
-}
-
-unsafe impl<T> crate::interop::ToOCaml<T> for Value {
-    fn to_ocaml<'a>(&self, gc: &'a mut Runtime) -> OCaml<'a, T> {
-        unsafe { OCaml::new(gc, self.raw().into()) }
-    }
-}
-
-unsafe impl<T> crate::interop::FromOCaml<T> for Value {
-    fn from_ocaml(v: OCaml<T>) -> Value {
-        unsafe { Value::new(v.raw()) }
     }
 }
 
@@ -790,5 +745,13 @@ impl Value {
         }
         let slice0 = self.slice();
         Value::new(slice0.as_ptr().offset(1) as isize)
+    }
+
+    /// Ensure a value is rooted
+    pub fn root(self) -> Value {
+        match self {
+            Value::Raw(raw) => unsafe { Value::Root(Root::new(raw)) },
+            _ => self,
+        }
     }
 }

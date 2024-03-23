@@ -204,7 +204,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         .filter_map(|arg| match arg {
             Some(ident) => {
                 let ident = ident.ident.clone();
-                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
+                Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident).root() }); })
             }
             None => None,
         })
@@ -219,7 +219,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let inner = if returns {
         quote! {
             #[inline(always)]
-            #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
+            #constness #unsafety fn inner(#gc_name: &ocaml::Runtime, #(#rust_args),*) -> #rust_return_type {
                 #use_gc
                 #body
             }
@@ -227,7 +227,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     } else {
         quote! {
             #[inline(always)]
-            #constness #unsafety fn inner(#gc_name: &mut ocaml::Runtime, #(#rust_args),*)  {
+            #constness #unsafety fn inner(#gc_name: &ocaml::Runtime, #(#rust_args),*)  {
                 #use_gc
                 #body
             }
@@ -485,7 +485,7 @@ fn ocaml_bytecode_func_impl(
                 Some(ident) => Some(quote! {
                     #[allow(clippy::not_unsafe_ptr_arg_deref)]
                     let #ident = ocaml::FromValue::from_value(unsafe {
-                        core::ptr::read(__ocaml_argv.add(__ocaml_arg_index as usize))
+                        Value::new(core::ptr::read(__ocaml_argv.add(__ocaml_arg_index as usize))).root()
                     });
                     __ocaml_arg_index += 1 ;
                 }),
@@ -497,7 +497,7 @@ fn ocaml_bytecode_func_impl(
             #(
                 #attr
             )*
-            pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Value, __ocaml_argc: i32) -> ocaml::Raw #where_clause {
+            pub #constness unsafe extern "C" fn #name(__ocaml_argv: *mut ocaml::Raw, __ocaml_argc: i32) -> ocaml::Raw #where_clause {
                 assert!(#len <= __ocaml_argc as usize, "len: {}, argc: {}", #len, __ocaml_argc);
 
                 let #gc_name = unsafe { ocaml::Runtime::recover_handle() };
@@ -516,7 +516,7 @@ fn ocaml_bytecode_func_impl(
             .filter_map(|arg| match arg {
                 Some(ident) => {
                     let ident = ident.ident.clone();
-                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident) }); })
+                    Some(quote! { let #ident = ocaml::FromValue::from_value(unsafe { ocaml::Value::new(#ident).root() }); })
                 }
                 None => None,
             })
