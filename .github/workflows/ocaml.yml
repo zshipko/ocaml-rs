@@ -16,6 +16,7 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         ocaml-compiler:
           [
+            "5.1.0",
             "5.0.0",
             "4.14.1",
             "4.13.1",
