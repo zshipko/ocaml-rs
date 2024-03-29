@@ -11,7 +11,7 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut output = Vec::new();
 
-    for line in f.lines().flatten() {
+    for line in f.lines().map_while(Result::ok) {
         if line.starts_with(CC_LIB_PREFIX) {
             let line: Vec<_> = line.split('=').collect();
             let line = line[1].split(' ');
@@ -35,7 +35,7 @@ fn flat_float_array(ocaml_path: &str) -> std::io::Result<String> {
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut flat_float_array = String::new();
 
-    for line in f.lines().flatten() {
+    for line in f.lines().map_while(Result::ok) {
         if line.starts_with(FLAT_FLOAT_ARRAY) {
             let line: Vec<_> = line.split('=').collect();
             flat_float_array = line[1].to_string();
@@ -84,6 +84,7 @@ fn run() -> std::io::Result<()> {
     println!("cargo:rerun-if-env-changed=OCAMLOPT");
     println!("cargo:rerun-if-env-changed=OCAML_VERSION");
     println!("cargo:rerun-if-env-changed=OCAML_WHERE_PATH");
+    println!("cargo:rerun-if-env-changed=OPAM_SWITCH_PREFIX");
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
     let ocaml_version = std::env::var("OCAML_VERSION");
@@ -143,10 +144,8 @@ fn run() -> std::io::Result<()> {
     let major = split[0].parse::<usize>().unwrap();
     let minor = split[1].parse::<usize>().unwrap();
 
-    if major >= 4 && minor >= 10 || cfg!(feature = "caml-state") {
-        // This feature determines whether or not caml_local_roots should
-        // use the caml_state struct or the caml_local_roots global
-        println!("cargo:rustc-cfg=caml_state");
+    if major >= 5 || cfg!(feature = "ocaml5") {
+        println!("cargo:rustc-cfg=ocaml5");
     }
 
     #[cfg(feature = "link")]

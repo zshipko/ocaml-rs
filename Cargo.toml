@@ -14,9 +14,8 @@ edition = "2021"
 features = [ "without-ocamlopt", "derive", "link" ]
 
 [dependencies]
-ocaml-interop = "0.8.8"
 ocaml-sys = {path = "./sys", version = ">=0.23"}
-ocaml-boxroot-sys = {version = "0.2"}
+ocaml-boxroot-sys = {version = "0.3.1"}
 ocaml-derive = {path = "./derive", optional = true, version = "^1.0.0-beta.5"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.15.1", optional = true}
@@ -27,14 +26,12 @@ derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
-  "ocaml-interop/without-ocamlopt",
-  "ocaml-boxroot-sys/without-ocamlopt"
 ]
-caml-state = ["ocaml-sys/caml-state"]
 no-std = ["cstr_core/alloc", "no-panic-hook"]
 bigarray-ext = ["ndarray"]
-no-caml-startup = ["ocaml-interop/no-caml-startup"]
+no-caml-startup = []
 no-panic-hook = []
+ocaml5 = ["ocaml-sys/ocaml5"]
 
 [workspace]
 members = [
@@ -43,3 +40,10 @@ members = [
   "test",
   "build"
 ]
+
+[dev-dependencies]
+serial_test = "3.0.0"
+
+[[example]]
+name = "rust"
+required-features = ["link"]

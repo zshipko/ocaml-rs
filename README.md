@@ -6,11 +6,11 @@
 
 `ocaml-rs` allows for OCaml extensions to be written directly in Rust with no C stubs. It was originally forked from [raml](https://crates.io/crates/raml), but has been almost entirely re-written thanks to support from the [OCaml Software Foundation](http://ocaml-sf.org/).
 
-Works with OCaml versions `4.08.0` and up
+Works with OCaml versions `4.10.0` and up
 
 Please report any issues on [github](https://github.com/zshipko/ocaml-rs/issues)
 
-NOTE: While `ocaml-rs` *can* be used safely, it does not prevent a wide range of potential errors or mistakes. It should be thought of as a Rust implementation of the existing C API. [ocaml-interop](https://github.com/simplestaking/ocaml-interop) can be used to perform safe OCaml/Rust interop. `ocaml-rs` uses `ocaml-interop` behind the scenes to interact with the garbage collector. `ocaml-rs` also exports an `interop` module, which is an alias for `ocaml_interop` and the two interfaces can be combined if desired.
+NOTE: While `ocaml-rs` *can* be used safely, it does not prevent a wide range of potential errors or mistakes. It should be thought of as a Rust implementation of the existing C API. [ocaml-interop](https://github.com/simplestaking/ocaml-interop) can be used to perform safe OCaml/Rust interop. 
 
 ### Documentation
 

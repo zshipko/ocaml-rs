@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-sys"
-version = "0.23.0"
+version = "0.24.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 keywords = ["ocaml", "rust", "ffi"]
 repository = "https://github.com/zshipko/ocaml-rs"
@@ -14,7 +14,7 @@ links = "asmrun"
 cty = "0.2"
 
 [package.metadata.docs.rs]
-features = [ "without-ocamlopt", "caml-state" ]
+features = [ "without-ocamlopt", "ocaml5" ]
 
 [build-dependencies]
 cc = "1"
@@ -24,3 +24,4 @@ default = []
 link = []
 without-ocamlopt = []
 caml-state = []
+ocaml5 = []
