@@ -198,3 +198,34 @@ pub struct FloatArrayT {
 pub fn float_array_t_inner(f: FloatArrayT) -> Vec<f64> {
     f.arr
 }
+
+#[ocaml::func]
+#[ocaml::sig("unit -> int32 array")]
+pub fn make_int32_array_012() -> Vec<i32> {
+    println!("make_int32_012");
+    vec![0, 1, 2]
+}
+
+#[ocaml::func]
+#[ocaml::sig("unit -> float array")]
+pub fn make_float_array_f32_012() -> Vec<f32> {
+    vec![0.0, 1.0, 2.0]
+}
+
+#[ocaml::func]
+#[ocaml::sig("unit -> floatarray")]
+pub fn make_floatarray_f32_012() -> Vec<f32> {
+    vec![0.0, 1.0, 2.0]
+}
+
+#[ocaml::func]
+#[ocaml::sig("unit -> float array")]
+pub fn make_float_array_f64_012() -> Vec<f64> {
+    vec![0.0, 1.0, 2.0]
+}
+
+#[ocaml::func]
+#[ocaml::sig("unit -> floatarray")]
+pub fn make_floatarray_f64_012() -> Vec<f64> {
+    vec![0.0, 1.0, 2.0]
+}
