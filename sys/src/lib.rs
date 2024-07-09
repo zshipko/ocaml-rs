@@ -38,6 +38,7 @@ mod custom;
 mod fail;
 mod printexc;
 mod runtime;
+#[cfg(feature = "caml-state")]
 mod state;
 mod tag;
 
@@ -51,5 +52,6 @@ pub use memory::*;
 pub use mlvalues::*;
 pub use printexc::*;
 pub use runtime::*;
+#[cfg(feature = "caml-state")]
 pub use state::*;
 pub use tag::*;
