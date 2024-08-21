@@ -142,7 +142,7 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
 /// - Wraps the function body using `ocaml::body`
 /// - Automatic type conversion for arguments/return value (including Result types)
 /// - Defines a bytecode function automatically for functions that take more than 5 arguments. The
-/// bytecode function for `my_func` would be `my_func_bytecode`
+///   bytecode function for `my_func` would be `my_func_bytecode`
 /// - Allows for an optional ident argument specifying the name of the `gc` handle parameter
 #[proc_macro_attribute]
 pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
