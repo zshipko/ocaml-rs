@@ -145,7 +145,7 @@ fn run() -> std::io::Result<()> {
     let minor = split[1].parse::<usize>().unwrap();
 
     if major >= 5 || cfg!(feature = "ocaml5") {
-        println!("cargo:rustc-cfg=ocaml5");
+        println!("cargo:rustc-cfg=feature=\"ocaml5\"");
     }
 
     #[cfg(feature = "link")]
