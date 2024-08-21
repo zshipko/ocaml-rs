@@ -23,7 +23,7 @@ jobs:
             "4.14.1",
             "4.13.1",
             "4.12.1",
-            "4.11.2",
+            #"4.11.2",
             "4.10.2",
           ]
 
@@ -42,6 +42,11 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - if: matrix.os == 'macos-latest'
+        run: brew install zstd
+      - if: matrix.os == 'ubuntu-latest'
+        run: apt install libzstd-dev
 
       - name: Install mdbook
         uses: baptiste0928/cargo-install@v2
