@@ -12,7 +12,7 @@ jobs:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
         ocaml-compiler:
