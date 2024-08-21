@@ -9,7 +9,7 @@ crate-type = ["staticlib", "cdylib"]
 [dependencies]
 ocaml-sys = { path = "../sys" }
 ocaml = { path = "..", features = ["bigarray-ext"] }
-ndarray = "^0.15.1"
+ndarray = "^0.16.1"
 
 [build-dependencies]
 ocaml-build = { path = "../build" }

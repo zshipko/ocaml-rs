@@ -12,17 +12,19 @@ jobs:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
         ocaml-compiler:
           [
+            "5.2.0",
+            "5.1.1",
             "5.0.0",
             "4.14.1",
             "4.13.1",
             "4.12.1",
-            "4.11.0",
-            "4.10.0",
+            #"4.11.2",
+            "4.10.2",
           ]
 
     steps:
@@ -37,9 +39,14 @@ jobs:
           key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
 
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - if: matrix.os == 'macos-latest'
+        run: brew install zstd
+      - if: matrix.os == 'ubuntu-latest'
+        run: sudo apt install libzstd-dev
 
       - name: Install mdbook
         uses: baptiste0928/cargo-install@v2

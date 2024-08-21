@@ -27,7 +27,7 @@ pub type backtrace_slot = *mut ::core::ffi::c_void;
 
 #[repr(C)]
 #[derive(Debug)]
-#[cfg(not(ocaml5))]
+#[cfg(not(feature = "ocaml5"))]
 pub struct caml_domain_state {
     pub _young_ptr: *mut Value,
     pub _young_limit: *mut Value,
@@ -78,7 +78,7 @@ pub struct caml_domain_state {
 
 #[repr(C)]
 #[derive(Debug)]
-#[cfg(ocaml5)]
+#[cfg(feature = "ocaml5")]
 pub struct caml_domain_state {
     pub _young_limit: core::sync::atomic::AtomicUsize,
     pub _young_ptr: *mut Value,

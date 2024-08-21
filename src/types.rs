@@ -656,7 +656,7 @@ pub(crate) mod bigarray_ext {
         if unsafe { (*ba).is_fortran() } {
             shape.f()
         } else {
-            shape.into_shape()
+            shape.into_shape_with_order()
         }
     }
 }

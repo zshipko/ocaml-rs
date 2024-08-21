@@ -175,6 +175,7 @@ impl Value {
         let (used, max) = cfg.unwrap_or((0, 1));
         Value::new(sys::caml_alloc_final(
             core::mem::size_of::<T>(),
+            #[allow(clippy::missing_transmute_annotations)]
             core::mem::transmute(finalizer),
             used,
             max,
