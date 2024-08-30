@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -11,17 +11,18 @@ documentation = "https://docs.rs/ocaml"
 edition = "2021"
 
 [package.metadata.docs.rs]
-features = [ "without-ocamlopt", "derive", "link" ]
+no-default-features = true
+features = [ "derive", "without-ocamlopt", "ocaml5", "docs-rs" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = ">=0.24"}
-ocaml-boxroot-sys = {version = "0.3.1"}
+ocaml-boxroot-sys = {version = "0.3.1", optional = true}
 ocaml-derive = {path = "./derive", optional = true, version = "^1.0.0"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.16.1", optional = true}
 
 [features]
-default = ["derive"]
+default = ["derive", "ocaml-boxroot-sys"]
 derive = ["ocaml-derive"]
 link = ["ocaml-sys/link"]
 without-ocamlopt = [
@@ -32,6 +33,7 @@ bigarray-ext = ["ndarray"]
 no-caml-startup = []
 no-panic-hook = []
 ocaml5 = ["ocaml-sys/ocaml5"]
+docs-rs = []
 
 [workspace]
 members = [
