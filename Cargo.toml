@@ -12,28 +12,27 @@ edition = "2021"
 
 [package.metadata.docs.rs]
 no-default-features = true
-features = [ "derive", "without-ocamlopt", "ocaml5", "docs-rs" ]
+features = [ "derive", "without-ocamlopt", "ocaml5" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = ">=0.24"}
-ocaml-boxroot-sys = {version = "0.3.1", optional = true}
+ocaml-boxroot-sys = {version = "0.3.1", default-features = false}
 ocaml-derive = {path = "./derive", optional = true, version = "^1.0.0"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.16.1", optional = true}
 
 [features]
-default = ["derive", "ocaml-boxroot-sys"]
+default = ["derive", "ocaml-boxroot-sys/bundle-boxroot"]
 derive = ["ocaml-derive"]
-link = ["ocaml-sys/link"]
+link = ["ocaml-sys/link", "ocaml-boxroot-sys/bundle-boxroot"]
 without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
 ]
-no-std = ["cstr_core/alloc", "no-panic-hook"]
+no-std = ["cstr_core/alloc", "no-panic-hook", "ocaml-boxroot-sys/bundle-boxroot"]
 bigarray-ext = ["ndarray"]
 no-caml-startup = []
 no-panic-hook = []
 ocaml5 = ["ocaml-sys/ocaml5"]
-docs-rs = []
 
 [workspace]
 members = [

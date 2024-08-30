@@ -34,7 +34,6 @@ impl Runtime {
             let c_args = [arg0, core::ptr::null()];
             unsafe {
                 ocaml_sys::caml_startup(c_args.as_ptr());
-                #[cfg(not(feature = "docs-rs"))]
                 assert!(ocaml_boxroot_sys::boxroot_setup());
             }
         }
