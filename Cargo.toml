@@ -22,13 +22,15 @@ cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.16.1", optional = true}
 
 [features]
-default = ["derive", "ocaml-boxroot-sys/bundle-boxroot"]
+default = ["derive", "boxroot"]
+# This is required for ocaml-rs to work correctly, it is only optional so docs.rs can build
+boxroot = ["ocaml-boxroot-sys/bundle-boxroot"]
 derive = ["ocaml-derive"]
-link = ["ocaml-sys/link", "ocaml-boxroot-sys/bundle-boxroot"]
+link = ["ocaml-sys/link", "boxroot"]
 without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
 ]
-no-std = ["cstr_core/alloc", "no-panic-hook", "ocaml-boxroot-sys/bundle-boxroot"]
+no-std = ["cstr_core/alloc", "no-panic-hook", "boxroot"]
 bigarray-ext = ["ndarray"]
 no-caml-startup = []
 no-panic-hook = []
