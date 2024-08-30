@@ -1,6 +1,6 @@
 [package]
 name = "ocaml-build"
-version = "1.0.0-beta.5"
+version = "1.0.0"
 edition = "2021"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 license = "ISC"

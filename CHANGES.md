@@ -1,3 +1,9 @@
+## 1.0.0
+
+- Minor improvements https://github.com/zshipko/ocaml-rs/pull/154
+- Fortran bigarray layout by @crackcomm https://github.com/zshipko/ocaml-rs/pull/145
+- Fix conversion of `Vec<f32>` by @gridbugs https://github.com/zshipko/ocaml-rs/pull/144
+
 ## 1.0.0-beta.5
 
 - Implement `ToValue` for `Box<T>` by @fmckeogh https://github.com/zshipko/ocaml-rs/pull/107
