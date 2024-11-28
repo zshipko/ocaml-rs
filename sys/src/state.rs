@@ -142,15 +142,15 @@ pub struct caml_domain_state {
 
 extern "C" {
     #[doc(hidden)]
-    pub static mut Caml_state: *mut caml_domain_state;
+    pub fn caml_sys_get_domain_state() -> *mut caml_domain_state;
 }
 
 #[doc(hidden)]
 pub unsafe fn local_roots() -> *mut crate::memory::CamlRootsBlock {
-    (*Caml_state)._local_roots
+    (*caml_sys_get_domain_state())._local_roots
 }
 
 #[doc(hidden)]
 pub unsafe fn set_local_roots(x: *mut crate::memory::CamlRootsBlock) {
-    (*Caml_state)._local_roots = x
+    (*caml_sys_get_domain_state())._local_roots = x
 }
