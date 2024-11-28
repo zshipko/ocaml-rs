@@ -30,7 +30,7 @@ impl Runtime {
                 return;
             }
 
-            let arg0 = "ocaml\0".as_ptr() as *const ocaml_sys::Char;
+            let arg0 = c"ocaml".as_ptr() as *const ocaml_sys::Char;
             let c_args = [arg0, core::ptr::null()];
             unsafe {
                 ocaml_sys::caml_startup(c_args.as_ptr());
