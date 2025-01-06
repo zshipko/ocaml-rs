@@ -21,7 +21,7 @@ jobs:
           components: rustfmt
      
       - name: Use OCaml
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 4.14.1
 
@@ -36,7 +36,7 @@ jobs:
         run: rustup toolchain install stable --profile=default
 
       - name: Use OCaml
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 4.14.1
 
