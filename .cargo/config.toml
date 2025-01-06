@@ -1,2 +1,2 @@
 [build]
-rustflags = ["-Crelocation-model=dynamic-no-pic"]
+rustflags = []
