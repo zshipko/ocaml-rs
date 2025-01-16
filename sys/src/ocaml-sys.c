@@ -12,9 +12,3 @@ void caml_sys_store_double_field(value x, mlsize_t index, double d) {
 caml_domain_state *caml_sys_get_domain_state() { return Caml_state; }
 
 CAMLprim value caml_thread_initialize(value unit) __attribute__((weak));
-
-// Define the weak function
-CAMLprim value caml_thread_initialize(value unit) {
-  (void)unit;
-  return Val_unit;
-}
