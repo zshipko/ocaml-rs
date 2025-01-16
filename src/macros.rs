@@ -16,7 +16,6 @@ pub fn initial_setup() {
     }
 
     unsafe {
-        ocaml_sys::caml_thread_initialize(ocaml_sys::UNIT);
         ocaml_boxroot_sys::boxroot_setup();
     };
 
