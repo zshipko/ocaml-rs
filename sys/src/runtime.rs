@@ -7,6 +7,7 @@ extern "C" {
     pub fn caml_named_value(name: *const Char) -> *const Value;
     pub fn caml_enter_blocking_section();
     pub fn caml_leave_blocking_section();
+    pub fn caml_thread_initialize(unit: Value) -> Value;
 }
 
 // GC control
