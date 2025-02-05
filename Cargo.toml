@@ -16,7 +16,7 @@ features = [ "derive", "without-ocamlopt", "ocaml5" ]
 
 [dependencies]
 ocaml-sys = {path = "./sys", version = ">=0.25"}
-ocaml-boxroot-sys = {version = "0.4.0-rc1", default-features = false}
+ocaml-boxroot-sys = {version = "0.4.0", default-features = false}
 ocaml-derive = {path = "./derive", optional = true, version = "^1.0.0"}
 cstr_core = {version = "0.2", optional = true}
 ndarray = {version = "^0.16.1", optional = true}
