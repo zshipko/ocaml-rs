@@ -3,9 +3,7 @@ pub struct Runtime {
     _panic_guard: PanicGuard,
 }
 
-thread_local! {
-    static RUNTIME_INIT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
-}
+static RUNTIME_INIT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
 impl Runtime {
     /// Initialize the OCaml runtime.
@@ -22,15 +20,15 @@ impl Runtime {
     pub fn init_persistent() {
         #[cfg(not(feature = "no-caml-startup"))]
         {
-            if RUNTIME_INIT.with(|x| {
-                x.compare_exchange(
+            if RUNTIME_INIT
+                .compare_exchange(
                     false,
                     true,
                     core::sync::atomic::Ordering::Relaxed,
                     core::sync::atomic::Ordering::Relaxed,
                 )
                 .is_err()
-            }) {
+            {
                 return;
             }
 
@@ -68,8 +66,7 @@ impl Runtime {
 /// Initialize the OCaml runtime, the runtime will be
 /// freed when the value goes out of scope
 pub fn init() -> Runtime {
-    let rt = Runtime::init();
-    rt
+    Runtime::init()
 }
 
 /// Initialize the OCaml runtime
@@ -109,16 +106,19 @@ pub unsafe fn gc_compact() {
     ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
 }
 
+#[cfg(not(feature = "no-std"))]
 thread_local! {
-    static GUARD_COUNT: std::cell::Cell<usize> = std::cell::Cell::new(0);
+    #[allow(clippy::missing_const_for_thread_local)]
+    static GUARD_COUNT: core::cell::Cell<usize> = const { core::cell::Cell::new(0) };
 }
 
+#[cfg(not(feature = "no-std"))]
 static INIT: std::sync::Once = std::sync::Once::new();
 
 struct PanicGuard;
 
 impl PanicGuard {
-    #[cfg(not(feature = "no-panic-hook"))]
+    #[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]
     pub(crate) fn new() -> Self {
         INIT.call_once(|| {
             let original_hook = std::panic::take_hook();
@@ -143,13 +143,13 @@ impl PanicGuard {
         PanicGuard
     }
 
-    #[cfg(feature = "no-panic-hook")]
+    #[cfg(any(feature = "no-panic-hook", feature = "no-std"))]
     pub(crate) fn new() -> Self {
         PanicGuard
     }
 }
 
-#[cfg(not(feature = "no-panic-hook"))]
+#[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]
 impl Drop for PanicGuard {
     fn drop(&mut self) {
         GUARD_COUNT.with(|count| count.set(count.get() - 1));
