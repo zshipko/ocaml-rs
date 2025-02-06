@@ -1,37 +1,3 @@
-static PANIC_HANDLER_INIT: core::sync::atomic::AtomicBool =
-    core::sync::atomic::AtomicBool::new(false);
-
-#[doc(hidden)]
-pub fn initial_setup() {
-    if PANIC_HANDLER_INIT
-        .compare_exchange(
-            false,
-            true,
-            core::sync::atomic::Ordering::Relaxed,
-            core::sync::atomic::Ordering::Relaxed,
-        )
-        .is_err()
-    {
-        return;
-    }
-
-    #[cfg(not(feature = "no-panic-hook"))]
-    {
-        ::std::panic::set_hook(Box::new(|info| {
-            let err = info.payload();
-            let msg = if err.is::<&str>() {
-                err.downcast_ref::<&str>().unwrap().to_string()
-            } else if err.is::<String>() {
-                err.downcast_ref::<String>().unwrap().clone()
-            } else {
-                format!("{:?}", err)
-            };
-
-            crate::Error::raise_failure(&msg)
-        }))
-    }
-}
-
 /// `body!` is needed to help the OCaml runtime to manage garbage collection, it should
 /// be used to wrap the body of each function exported to OCaml. Panics from Rust code
 /// will automatically be unwound/caught here (unless the `no-std` feature is enabled)
@@ -49,10 +15,7 @@ pub fn initial_setup() {
 #[macro_export]
 macro_rules! body {
     ($gc:ident: $code:block) => {{
-        let $gc = unsafe { $crate::Runtime::recover_handle() };
-
-        // Ensure panic handler is initialized
-        $crate::initial_setup();
+        let $gc = unsafe { &$crate::Runtime::init() };
 
         {
             $code

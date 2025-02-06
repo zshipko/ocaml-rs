@@ -162,8 +162,6 @@ pub use crate::tag::Tag;
 pub use crate::types::{bigarray, Array, List, Seq};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
-pub use crate::macros::initial_setup;
-
 /// OCaml `float`
 pub type Float = f64;
 
