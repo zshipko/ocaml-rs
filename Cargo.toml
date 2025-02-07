@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -15,7 +15,7 @@ no-default-features = true
 features = [ "derive", "without-ocamlopt", "ocaml5" ]
 
 [dependencies]
-ocaml-sys = {path = "./sys", version = ">=0.25"}
+ocaml-sys = {path = "./sys", version = ">=0.26"}
 ocaml-boxroot-sys = {version = "0.4.0", default-features = false}
 ocaml-derive = {path = "./derive", optional = true, version = "^1.0.0"}
 cstr_core = {version = "0.2", optional = true}

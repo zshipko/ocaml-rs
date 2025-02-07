@@ -1,3 +1,11 @@
+## 1.2.0
+
+- Improve panic handler registration and update ocaml-boxroot-sys to 0.4.0 https://github.com/zshipko/ocaml-rs/pull/160
+
+## 1.1.0
+
+- Support Caml_state definition as a macro by @Lupus in https://github.com/zshipko/ocaml-rs/pull/157
+
 ## 1.0.0
 
 - Minor improvements https://github.com/zshipko/ocaml-rs/pull/154
