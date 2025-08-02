@@ -123,7 +123,7 @@ pub fn pair_vec() -> ocaml::Value {
 pub fn string_array() -> ocaml::Value {
     let mut v = vec![];
     for i in 1..10000000 {
-        v.push(format!("foo {}", i));
+        v.push(format!("foo {i}"));
     }
     v.to_value(gc)
 }
@@ -156,19 +156,13 @@ pub fn result_error(x: ocaml::Value) -> Result<ocaml::Value, ocaml::Value> {
 #[ocaml::func]
 #[ocaml::sig("('a, 'b) result -> 'a option")]
 pub fn result_get_ok(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::Value> {
-    match x {
-        Ok(x) => Some(x),
-        Err(_) => None,
-    }
+    x.ok()
 }
 
 #[ocaml::func]
 #[ocaml::sig("('a, 'b) result -> 'b option")]
 pub fn result_get_error(x: Result<ocaml::Value, ocaml::Value>) -> Option<ocaml::Value> {
-    match x {
-        Ok(_) => None,
-        Err(x) => Some(x),
-    }
+    x.err()
 }
 
 #[derive(ocaml::ToValue, ocaml::FromValue, Debug)]
