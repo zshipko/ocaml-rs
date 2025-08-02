@@ -18,14 +18,16 @@ impl Runtime {
     ///
     /// After the first invocation, this method does nothing.
     pub fn init_persistent() {
-        #[cfg(not(feature = "no-caml-startup"))]
+        #[cfg(not(feature = "no-std"))]
         {
             let no_caml_startup = std::env::var("NO_CAML_STARTUP");
-
             if no_caml_startup.is_ok() {
                 return;
             }
+        }
 
+        #[cfg(not(feature = "no-caml-startup"))]
+        {
             if RUNTIME_INIT
                 .compare_exchange(
                     false,
