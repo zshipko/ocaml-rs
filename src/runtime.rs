@@ -39,8 +39,6 @@ impl Runtime {
                 assert!(ocaml_boxroot_sys::boxroot_setup());
             }
         }
-        #[cfg(feature = "no-caml-startup")]
-        panic!("Rust code that is called from an OCaml program should not try to initialize the runtime.");
     }
 
     #[doc(hidden)]
