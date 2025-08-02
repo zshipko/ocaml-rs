@@ -7,7 +7,7 @@ const FLAT_FLOAT_ARRAY: &str = "FLAT_FLOAT_ARRAY=";
 
 #[allow(unused)]
 fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
-    let path = format!("{}/Makefile.config", ocaml_path);
+    let path = format!("{ocaml_path}/Makefile.config");
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut output = Vec::new();
 
@@ -31,7 +31,7 @@ fn cc_libs(ocaml_path: &str) -> std::io::Result<Vec<String>> {
 
 #[allow(unused)]
 fn flat_float_array(ocaml_path: &str) -> std::io::Result<String> {
-    let path = format!("{}/Makefile.config", ocaml_path);
+    let path = format!("{ocaml_path}/Makefile.config");
     let f = std::io::BufReader::new(std::fs::File::open(path)?);
     let mut flat_float_array = String::new();
 
@@ -65,13 +65,13 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
         .success());
 
     for lib in cc_libs(ocaml_path)? {
-        println!("cargo:rustc-link-lib={}", lib);
+        println!("cargo:rustc-link-lib={lib}");
     }
 
     println!("cargo:rustc-link-search={}", out_dir.display());
     println!("cargo:rustc-link-lib=static=runtime");
 
-    println!("cargo:rustc-link-search={}", ocaml_path);
+    println!("cargo:rustc-link-search={ocaml_path}");
 
     println!("cargo:rustc-link-lib=static=asmrun");
 
@@ -123,7 +123,7 @@ fn run() -> std::io::Result<()> {
         }
     }
 
-    let bin_path = format!("{}/../../bin/ocamlopt", ocaml_path);
+    let bin_path = format!("{ocaml_path}/../../bin/ocamlopt");
 
     let mut f = std::fs::File::create(out_dir.join("ocaml_compiler")).unwrap();
     std::io::Write::write_all(&mut f, bin_path.as_bytes()).unwrap();

@@ -130,7 +130,7 @@ impl PanicGuard {
                     } else if let Some(s) = err.downcast_ref::<String>() {
                         s.clone()
                     } else {
-                        format!("{:?}", err)
+                        format!("{err:?}")
                     };
                     crate::Error::raise_failure(&msg);
                 } else {
