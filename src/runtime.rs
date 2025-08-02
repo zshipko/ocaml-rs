@@ -20,6 +20,12 @@ impl Runtime {
     pub fn init_persistent() {
         #[cfg(not(feature = "no-caml-startup"))]
         {
+            let no_caml_startup = std::env::var("NO_CAML_STARTUP");
+
+            if no_caml_startup.is_ok() {
+                return;
+            }
+
             if RUNTIME_INIT
                 .compare_exchange(
                     false,
