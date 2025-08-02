@@ -268,7 +268,7 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
                     .join("::");
                 s != "ocaml::sig" && s != "sig"
             });
-            bc.sig.ident = syn::Ident::new(&format!("{}_bytecode", name), name.span());
+            bc.sig.ident = syn::Ident::new(&format!("{name}_bytecode"), name.span());
             ocaml_bytecode_func_impl(bc, gc_name, use_gc, Some(name))
         };
 

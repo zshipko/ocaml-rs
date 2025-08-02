@@ -53,7 +53,7 @@ fn boxroot_raise_error() -> ! {
         _ => "Unknown ocaml_boxroot_sys::Status",
     };
 
-    panic!("Boxroot error: {}", error_message);
+    panic!("Boxroot error: {error_message}");
 }
 
 impl Root {

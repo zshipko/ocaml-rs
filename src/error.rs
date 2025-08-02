@@ -220,7 +220,7 @@ unsafe impl<T: ToValue> ToValue for Result<T, Error> {
             }
             #[cfg(not(feature = "no-std"))]
             Err(Error::Error(e)) => {
-                let s = format!("{:?}\0", e);
+                let s = format!("{e:?}\0");
                 unsafe { crate::sys::caml_failwith(s.as_ptr() as *const ocaml_sys::Char) };
             }
             Err(Error::NotDoubleArray) => {

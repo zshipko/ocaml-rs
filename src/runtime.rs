@@ -39,8 +39,6 @@ impl Runtime {
                 assert!(ocaml_boxroot_sys::boxroot_setup());
             }
         }
-        #[cfg(feature = "no-caml-startup")]
-        panic!("Rust code that is called from an OCaml program should not try to initialize the runtime.");
     }
 
     #[doc(hidden)]
@@ -130,7 +128,7 @@ impl PanicGuard {
                     } else if let Some(s) = err.downcast_ref::<String>() {
                         s.clone()
                     } else {
-                        format!("{:?}", err)
+                        format!("{err:?}")
                     };
                     crate::Error::raise_failure(&msg);
                 } else {
