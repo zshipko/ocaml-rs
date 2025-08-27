@@ -488,7 +488,7 @@ pub(crate) mod bigarray_ext {
 
     impl<T: Copy + Kind> Array2<T> {
         /// Returns array view
-        pub fn view(&self) -> ArrayView2<T> {
+        pub fn view(&self) -> ArrayView2<'_, T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ArrayView2::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *const T)
@@ -496,7 +496,7 @@ pub(crate) mod bigarray_ext {
         }
 
         /// Returns mutable array view
-        pub fn view_mut(&mut self) -> ArrayViewMut2<T> {
+        pub fn view_mut(&mut self) -> ArrayViewMut2<'_, T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ArrayViewMut2::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *mut T)
@@ -572,7 +572,7 @@ pub(crate) mod bigarray_ext {
 
     impl<T: Copy + Kind> Array3<T> {
         /// Returns array view
-        pub fn view(&self) -> ArrayView3<T> {
+        pub fn view(&self) -> ArrayView3<'_, T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ArrayView3::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *const T)
@@ -580,7 +580,7 @@ pub(crate) mod bigarray_ext {
         }
 
         /// Returns mutable array view
-        pub fn view_mut(&mut self) -> ArrayViewMut3<T> {
+        pub fn view_mut(&mut self) -> ArrayViewMut3<'_, T> {
             let ba = unsafe { self.0.custom_ptr_val::<bigarray::Bigarray>() };
             unsafe {
                 ArrayViewMut3::from_shape_ptr(build_shape(ba, self.shape()), (*ba).data as *mut T)
