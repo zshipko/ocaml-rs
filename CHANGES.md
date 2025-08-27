@@ -1,3 +1,7 @@
+## 1.2.1
+
+- fix `dune utop` with `no-caml-startup` feature, update ci for ocaml 5.3.0, clippy by @zshipko in https://github.com/zshipko/ocaml-rs/pull/163
+
 ## 1.2.0
 
 - Improve panic handler registration and update ocaml-boxroot-sys to 0.4.0 https://github.com/zshipko/ocaml-rs/pull/160
