@@ -1,6 +1,6 @@
 [package]
 name = "ocaml"
-version = "1.2.1"
+version = "1.3.0"
 authors = ["Zach Shipko <zachshipko@gmail.com>"]
 readme = "README.md"
 keywords = ["ocaml", "rust", "ffi"]
@@ -30,7 +30,7 @@ link = ["ocaml-sys/link", "boxroot"]
 without-ocamlopt = [
   "ocaml-sys/without-ocamlopt",
 ]
-no-std = ["cstr_core/alloc", "no-panic-hook", "boxroot"]
+no-std = ["cstr_core/alloc", "boxroot", "no-panic-hook"]
 bigarray-ext = ["ndarray"]
 no-caml-startup = []
 no-panic-hook = []

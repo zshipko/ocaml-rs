@@ -1,6 +1,5 @@
 [book]
 authors = ["Zach Shipko"]
 language = "en"
-multilingual = false
 src = "./src"
 title = "ocaml-rs"

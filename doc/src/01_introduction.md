@@ -92,7 +92,7 @@ By default, building `ocaml-sys` will invoke the `ocamlopt` command to figure ou
 - `OCAMLOPT` (default: `ocamlopt`) is the command that will invoke `ocamlopt`
 - `OCAML_VERSION` (default: result of `$OCAMLOPT -version`) is the target runtime OCaml version.
 - `OCAML_WHERE_PATH` (default: result of `$OCAMLOPT -where`) is the path of the OCaml standard library.
-- `OCAML_INTEROP_NO_CAML_STARTUP` (default: unset) can be set when loading an `ocaml-rs` library into an OCaml
+- `NO_CAML_STARTUP` (default: unset) can be set when loading an `ocaml-rs` library into an OCaml
   bytecode runtime (such as `utop`) to avoid linking issues with `caml_startup`
 
 If both `OCAML_VERSION` and `OCAML_WHERE_PATH` are present, their values are used without invoking `ocamlopt`. If any of those two env variables is undefined, then `ocamlopt` will be invoked to obtain both values.

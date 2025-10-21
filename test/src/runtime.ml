@@ -38,16 +38,6 @@ type hash_variant = [
 let%test "hash variant `Abc" = Util.check_leaks (fun () -> let a = hash_variant_abc 123 in Util.gc (); a = `Abc 123)
 let%test "hash variant `Def" = Util.check_leaks (fun () -> let a = hash_variant_def 9. in Util.gc (); a = `Def 9.)
 
-let%test "test panic" = Util.check_leaks (fun () -> try
-  let _ = test_panic () in
-  false
-with
-  | Failure s -> begin
-    Util.gc ();
-    s = "XXX"
-  end
-  | _ -> false)
-
 
 let () = Callback.register "call_named" (fun x -> x *. 2.)
 
@@ -74,3 +64,20 @@ let%test "GC" =
     s = string_of_int i
   in
   List.for_all test [gc_minor; gc_major; gc_full_major; gc_compact]
+
+let panic_detected = ref false
+
+let panic_hook _ =
+  panic_detected := true;
+  failwith "panic"
+
+let () = Callback.register "rust_panic_hook" panic_hook
+
+let%test "test panic" = Util.check_leaks (fun () ->
+  try
+    let _ = test_panic () in
+    false
+  with
+    | Failure s -> s = "panic" && !panic_detected
+    | _ -> false)
+
