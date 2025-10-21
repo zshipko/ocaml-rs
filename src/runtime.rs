@@ -112,14 +112,17 @@ pub unsafe fn gc_compact() {
     ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
 }
 
-#[cfg(not(feature = "no-std"))]
+#[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]
 thread_local! {
     #[allow(clippy::missing_const_for_thread_local)]
     static GUARD_COUNT: core::cell::Cell<usize> = const { core::cell::Cell::new(0) };
 }
 
-#[cfg(not(feature = "no-std"))]
+#[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]
 static INIT: std::sync::Once = std::sync::Once::new();
+
+#[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]
+const RUST_PANIC_HOOK: &core::ffi::CStr = c"rust_panic_hook";
 
 struct PanicGuard;
 
@@ -132,13 +135,23 @@ impl PanicGuard {
                 if GUARD_COUNT.with(|count| count.get()) > 0 {
                     let err = panic_info.payload();
                     let msg = if let Some(s) = err.downcast_ref::<&str>() {
-                        s.to_string()
+                        format!("rust panic: {s}")
                     } else if let Some(s) = err.downcast_ref::<String>() {
-                        s.clone()
+                        format!("rust panic: {s}")
                     } else {
-                        format!("{err:?}")
+                        format!("rust panic: {err:?}")
                     };
-                    crate::Error::raise_failure(&msg);
+
+                    unsafe {
+                        let f = crate::sys::caml_named_value(RUST_PANIC_HOOK.as_ptr() as *const _);
+                        if !f.is_null() {
+                            let value = crate::sys::caml_alloc_string(msg.len());
+                            let ptr = crate::sys::string_val(value);
+                            core::ptr::copy_nonoverlapping(msg.as_ptr(), ptr, msg.len());
+                            crate::sys::caml_callback(*f, value);
+                        }
+                        crate::Error::raise_failure(&msg);
+                    }
                 } else {
                     original_hook(panic_info);
                 }

@@ -136,22 +136,7 @@ Once this value is garbage collected, the default finalizer will call `Pointer::
 
 ## Raising an exception
 
-Raising an exception is accomplished by panicking:
-
-
-```rust
-# extern crate ocaml;
-
-#[ocaml::func]
-#[ocaml::sig("int -> unit")]
-pub unsafe fn fail_if_even_panic(i: ocaml::Int) {
-  if i % 2 == 0 {
-    panic!("even")
-  }
-}
-```
-
-or returning a `Result<_, ocaml::Error>` value:
+Raising an OCaml exception is accomplished by returning a `Result<_, ocaml::Error>` value:
 
 
 ```rust
@@ -206,7 +191,8 @@ pub unsafe fn array_set(mut array: ocaml::Value, index: ocaml::Value, s: ocaml::
 
 ## Unboxed arguments
 
-Unfortunately `ocaml::func` doesn't support unboxed/noalloc functions, however it is still possible to create them using `ocaml-rs`:
+Unfortunately `ocaml::func` doesn't support unboxed/noalloc functions, however it is still possible to create them using a lower
+level interface:
 
 ```rust
 # extern crate ocaml;
@@ -227,3 +213,18 @@ In this case you will also need to write the signature manually:
 ```ocaml
 external unboxed_float_avg: float -> float -> float = "unboxed_float_avg_bytecode" "unboxed_float_avg" [@@unboxed] [@@noalloc]
 ```
+
+## Panics
+
+Rust panics are typically unrecoverable but some cleanup might be needed on the OCaml side before existing. Unless the `no-panic-hook`
+feature is enabled, it is possible to catch Rust panics in OCaml. Note: calling an OCaml function that calls another Rust function in
+the panic hook can lead to a segfault, so this API should be used with care.
+
+Registering the panic hook:
+
+```ocaml
+let () = Callback.register "rust_panic_hook" failwith
+```
+
+This will register `failwith` as the function the gets invoked when a Rust panic occurs, this function should only be used to clean up
+resources before exiting the program and will receive a single argument, which is a string containing the panic message.
