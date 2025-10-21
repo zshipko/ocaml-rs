@@ -1,3 +1,7 @@
+## 1.3.0
+
+- Added ability to hook into Rust panics using `rust_panic_hook` callback from OCaml by @zshipko in https://github.com/zshipko/ocaml-rs/pull/165
+
 ## 1.2.1
 
 - fix `dune utop` with `no-caml-startup` feature, update ci for ocaml 5.3.0, clippy by @zshipko in https://github.com/zshipko/ocaml-rs/pull/163
