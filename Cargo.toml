@@ -35,6 +35,7 @@ bigarray-ext = ["ndarray"]
 no-caml-startup = []
 no-panic-hook = []
 ocaml5 = ["ocaml-sys/ocaml5"]
+debug = ["ocaml-sys/debug"]
 
 [workspace]
 members = [

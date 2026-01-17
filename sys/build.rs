@@ -73,6 +73,10 @@ fn link(out_dir: std::path::PathBuf, ocamlopt: String, ocaml_path: &str) -> std:
 
     println!("cargo:rustc-link-search={ocaml_path}");
 
+    #[cfg(feature = "debug")]
+    println!("cargo:rustc-link-lib=static=asmrund");
+
+    #[cfg(not(feature = "debug"))]
     println!("cargo:rustc-link-lib=static=asmrun");
 
     Ok(())
@@ -153,7 +157,6 @@ fn run() -> std::io::Result<()> {
 
     // Build C bindings
     cc::Build::new()
-        .static_flag(true)
         .file("src/ocaml-sys.c")
         .include(&ocaml_path)
         .compile("ocaml-sys");
