@@ -6,8 +6,8 @@ mod dune;
 
 #[cfg(feature = "dune")]
 pub use dune::Dune;
-use syn::MetaList;
 use syn::__private::ToTokens;
+use syn::MetaList;
 
 struct Source {
     path: PathBuf,
@@ -55,7 +55,7 @@ fn handle(attrs: Vec<syn::Attribute>, mut f: impl FnMut(&str)) {
                     delimiter: _,
                     tokens,
                 }) => match &tokens.clone().into_iter().collect::<Vec<_>>()[..] {
-                    [proc_macro2::TokenTree::Literal(ref sig)] => {
+                    [proc_macro2::TokenTree::Literal(sig)] => {
                         let s = sig.to_string();
                         let ty = strip_quotes(&s);
                         f(ty)
