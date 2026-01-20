@@ -75,8 +75,10 @@ pub trait Custom: Sized {
 
     /// Automatically calls `Pointer::drop_in_place`
     unsafe extern "C" fn finalize(v: Raw) {
-        let p = v.as_pointer::<Self>();
-        p.drop_in_place();
+        unsafe {
+            let p = v.as_pointer::<Self>();
+            p.drop_in_place();
+        }
     }
 
     /// Get a static reference the this type's `CustomOps` implementation

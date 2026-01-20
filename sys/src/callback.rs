@@ -4,7 +4,7 @@
 
 use crate::mlvalues::Value;
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_callback(closure: Value, arg: Value) -> Value;
     pub fn caml_callback2(closure: Value, arg1: Value, arg2: Value) -> Value;
     pub fn caml_callback3(closure: Value, arg1: Value, arg2: Value, arg3: Value) -> Value;

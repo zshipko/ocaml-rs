@@ -1,12 +1,12 @@
 //! External definitions for allocating values in the OCaml runtime
 
 use crate::{
+    Char,
     mlvalues::{Size, Value},
     tag::Tag,
-    Char,
 };
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_alloc(size: Size, tag: Tag) -> Value;
     pub fn caml_alloc_small(size: Size, tag: Tag) -> Value;
     pub fn caml_alloc_tuple(size: Size) -> Value;

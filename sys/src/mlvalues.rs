@@ -53,17 +53,17 @@ pub const unsafe fn tag_val(val: Value) -> Tag {
 #[cfg(target_endian = "little")]
 #[inline]
 pub unsafe fn tag_val(val: Value) -> Tag {
-    *(val as *const u8).offset(-(core::mem::size_of::<Value>() as isize))
+    unsafe { *(val as *const u8).offset(-(core::mem::size_of::<Value>() as isize)) }
 }
 
 #[inline]
 pub unsafe fn hd_val(val: Value) -> Header {
-    *(val as *const Header).offset(-1)
+    unsafe { *(val as *const Header).offset(-1) }
 }
 
 #[inline]
 pub unsafe fn wosize_val(val: Value) -> Size {
-    hd_val(val) >> 10
+    unsafe { hd_val(val) >> 10 }
 }
 
 /// `(((intnat)(x) << 1) + 1)`
@@ -98,7 +98,7 @@ pub const MIN_FIXNUM: Intnat = -(1 << (8 * core::mem::size_of::<Intnat>() - 2));
 ///
 /// This function does no bounds checking or validation of the OCaml values
 pub unsafe fn field(block: Value, index: usize) -> *mut Value {
-    (block as *mut Value).add(index)
+    unsafe { (block as *mut Value).add(index) }
 }
 
 /// The OCaml `()` (`unit`) value
@@ -134,7 +134,7 @@ pub const unsafe fn string_val(val: Value) -> *mut u8 {
     val as *mut u8
 }
 
-extern "C" {
+unsafe extern "C" {
     /// Returns size of the string in `value` in bytes
     pub fn caml_string_length(value: Value) -> Size;
     pub fn caml_array_length(value: Value) -> Size;

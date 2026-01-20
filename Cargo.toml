@@ -8,7 +8,7 @@ repository = "https://github.com/zshipko/ocaml-rs"
 license = "ISC"
 description = "OCaml bindings for Rust"
 documentation = "https://docs.rs/ocaml"
-edition = "2021"
+edition = "2024"
 
 [package.metadata.docs.rs]
 no-default-features = true

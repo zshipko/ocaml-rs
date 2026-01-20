@@ -1,6 +1,6 @@
 use crate::error::{CamlError, Error};
 use crate::tag::Tag;
-use crate::{root::Root, sys, util, Pointer, Runtime};
+use crate::{Pointer, Runtime, root::Root, sys, util};
 
 /// Size is an alias for the platform specific integer type used to store size values
 pub type Size = sys::Size;
@@ -32,7 +32,7 @@ impl Raw {
 
     /// Convenience function to access a custom pointer value
     pub unsafe fn as_pointer<T>(&self) -> Pointer<T> {
-        Pointer::from_value(self.as_value())
+        unsafe { Pointer::from_value(self.as_value()) }
     }
 }
 
@@ -136,17 +136,17 @@ impl Value {
             Ok(s) => s,
             Err(_) => return None,
         };
-        let named = sys::caml_named_value(s.as_ptr());
+        let named = unsafe { sys::caml_named_value(s.as_ptr()) };
         if named.is_null() {
             return None;
         }
 
-        Some(Value::new(*named))
+        Some(Value::new(unsafe { *named }))
     }
 
     /// Allocate a new value with the given size and tag.
     pub unsafe fn alloc(n: usize, tag: Tag) -> Value {
-        Value::new(sys::caml_alloc(n, tag.into()))
+        unsafe { Value::new(sys::caml_alloc(n, tag.into())) }
     }
 
     /// Allocate a new float array

@@ -1,6 +1,6 @@
 use crate::{Char, Value};
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_main(argv: *const *const Char);
     pub fn caml_startup(argv: *const *const Char);
     pub fn caml_shutdown();
@@ -11,7 +11,7 @@ extern "C" {
 }
 
 // GC control
-extern "C" {
+unsafe extern "C" {
     pub fn caml_gc_minor(v: Value);
     pub fn caml_gc_major(v: Value);
     pub fn caml_gc_full_major(v: Value);

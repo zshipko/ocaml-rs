@@ -3,7 +3,7 @@
 
 //! OCaml types represented in Rust, these are zero-copy and incur no additional overhead
 
-use crate::{sys, CamlError, Error, Raw, Runtime, Tag};
+use crate::{CamlError, Error, Raw, Runtime, Tag, sys};
 
 use core::{
     iter::{IntoIterator, Iterator},
@@ -88,7 +88,7 @@ impl Array<crate::Float> {
     /// This function performs no bounds checking
     #[inline]
     pub unsafe fn set_f64_unchecked(&mut self, i: usize, f: f64) {
-        self.0.store_double_field(i, f)
+        unsafe { self.0.store_double_field(i, f) }
     }
 
     /// Get a value from a double array
@@ -110,14 +110,14 @@ impl Array<crate::Float> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_double_unchecked(&self, i: usize) -> f64 {
-        self.0.double_field(i)
+        unsafe { self.0.double_field(i) }
     }
 }
 
 impl<T: ToValue + FromValue> Array<T> {
     /// Allocate a new Array
     pub unsafe fn alloc(n: usize) -> Array<T> {
-        let x = Value::alloc(n, Tag(0));
+        let x = unsafe { Value::alloc(n, Tag(0)) };
         Array(x, PhantomData)
     }
 
@@ -143,10 +143,12 @@ impl<T: ToValue + FromValue> Array<T> {
             return Err(CamlError::ArrayBoundError.into());
         }
 
-        if self.is_f64() {
-            self.0.store_double_field(i, v.to_value(rt).double_val())
-        } else {
-            self.set_unchecked(rt, i, v);
+        unsafe {
+            if self.is_f64() {
+                self.0.store_double_field(i, v.to_value(rt).double_val())
+            } else {
+                self.set_unchecked(rt, i, v);
+            }
         }
         Ok(())
     }
@@ -158,7 +160,9 @@ impl<T: ToValue + FromValue> Array<T> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn set_unchecked(&mut self, rt: &Runtime, i: usize, v: &T) {
-        self.0.store_field(rt, i, v);
+        unsafe {
+            self.0.store_field(rt, i, v);
+        }
     }
 
     /// Get array index
@@ -167,11 +171,13 @@ impl<T: ToValue + FromValue> Array<T> {
             return Err(CamlError::ArrayBoundError.into());
         }
 
-        if self.is_f64() {
-            return Ok(FromValue::from_value(self.0.double_field(i).to_value(rt)));
-        }
+        unsafe {
+            if self.is_f64() {
+                return Ok(FromValue::from_value(self.0.double_field(i).to_value(rt)));
+            }
 
-        Ok(self.get_unchecked(i))
+            Ok(self.get_unchecked(i))
+        }
     }
 
     /// Get array index without bounds checking
@@ -181,7 +187,7 @@ impl<T: ToValue + FromValue> Array<T> {
     /// This function does not perform bounds checking
     #[inline]
     pub unsafe fn get_unchecked(&self, i: usize) -> T {
-        FromValue::from_value(self.0.field(i))
+        FromValue::from_value(unsafe { self.0.field(i) })
     }
 
     #[doc(hidden)]
@@ -207,7 +213,7 @@ impl<T: ToValue + FromValue> Array<T> {
         let len = self.len();
 
         for i in 0..len {
-            let x = self.get(rt, i)?;
+            let x = unsafe { self.get(rt, i)? };
             dest.push(x)
         }
 
@@ -244,13 +250,15 @@ impl<T: ToValue + FromValue> List<T> {
     pub unsafe fn len(&self) -> usize {
         let mut length = 0;
         let mut tmp = self.0.raw();
-        while tmp.0 != sys::EMPTY_LIST {
-            let p = sys::field(tmp.0, 1);
-            if p.is_null() {
-                break;
+        unsafe {
+            while tmp.0 != sys::EMPTY_LIST {
+                let p = sys::field(tmp.0, 1);
+                if p.is_null() {
+                    break;
+                }
+                tmp = (*p).into();
+                length += 1;
             }
-            tmp = (*p).into();
-            length += 1;
         }
         length
     }
@@ -264,11 +272,13 @@ impl<T: ToValue + FromValue> List<T> {
     #[must_use]
     #[allow(clippy::should_implement_trait)]
     pub unsafe fn add(self, rt: &Runtime, v: &T) -> List<T> {
-        let item = v.to_value(rt);
-        let mut dest = Value::alloc(2, Tag(0));
-        dest.store_field(rt, 0, &item);
-        dest.store_field(rt, 1, &self.0);
-        List(dest, PhantomData)
+        unsafe {
+            let item = v.to_value(rt);
+            let mut dest = Value::alloc(2, Tag(0));
+            dest.store_field(rt, 0, &item);
+            dest.store_field(rt, 1, &self.0);
+            List(dest, PhantomData)
+        }
     }
 
     /// List head
@@ -399,13 +409,16 @@ pub mod bigarray {
         /// no guarantee the data will be valid. Use `Array1::from_slice` to clone the
         /// contents of a slice.
         pub unsafe fn of_slice(data: &mut [T]) -> Array1<T> {
-            let x = Value::new(bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::EXTERNAL as i32,
-                1,
-                data.as_mut_ptr() as bigarray::Data,
-                data.len() as sys::Intnat,
-            ));
-            Array1(x, PhantomData)
+            unsafe {
+                let x = Value::new(bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    1,
+                    data.as_mut_ptr() as bigarray::Data,
+                    data.len() as sys::Intnat,
+                ));
+
+                Array1(x, PhantomData)
+            }
         }
 
         /// Convert from a slice to OCaml Bigarray, copying the array. This is the implemtation
@@ -413,7 +426,7 @@ pub mod bigarray {
         #[cfg(not(feature = "no-std"))]
         pub unsafe fn from_slice(data: impl AsRef<[T]>) -> Array1<T> {
             let x = data.as_ref();
-            let mut arr = Array1::<T>::create(x.len());
+            let mut arr = unsafe { Array1::<T>::create(x.len()) };
             let data = arr.data_mut();
             data.copy_from_slice(x);
             arr
@@ -421,14 +434,16 @@ pub mod bigarray {
 
         /// Create a new OCaml `Bigarray.Array1` with the given type and size
         pub unsafe fn create(n: Size) -> Array1<T> {
-            let data = { bigarray::malloc(n * mem::size_of::<T>()) };
-            let x = Value::new(bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::EXTERNAL as i32,
-                1,
-                data as bigarray::Data,
-                n as sys::Intnat,
-            ));
-            Array1(x, PhantomData)
+            unsafe {
+                let data = bigarray::malloc(n * mem::size_of::<T>());
+                let x = Value::new(bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    1,
+                    data as bigarray::Data,
+                    n as sys::Intnat,
+                ));
+                Array1(x, PhantomData)
+            }
         }
 
         /// Returns the number of items in `self`
@@ -475,9 +490,9 @@ pub(crate) mod bigarray_ext {
     use core::{marker::PhantomData, mem, ptr, slice};
 
     use crate::{
+        FromValue, Runtime, ToValue, Value,
         bigarray::Kind,
         sys::{self, bigarray},
-        FromValue, Runtime, ToValue, Value,
     };
 
     /// OCaml Bigarray.Array2 type, this introduces no
@@ -541,26 +556,30 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array2<T> {
         /// Create a new OCaml `Bigarray.Array2` with the given type and shape
         pub unsafe fn create(dim: ndarray::Ix2) -> Array2<T> {
-            let data = bigarray::malloc(dim.size() * mem::size_of::<T>());
-            let x = Value::new(bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::EXTERNAL as i32,
-                2,
-                data as bigarray::Data,
-                dim[0] as sys::Intnat,
-                dim[1] as sys::Intnat,
-            ));
-            Array2(x, PhantomData)
+            unsafe {
+                let data = bigarray::malloc(dim.size() * mem::size_of::<T>());
+                let x = Value::new(bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::EXTERNAL as i32,
+                    2,
+                    data as bigarray::Data,
+                    dim[0] as sys::Intnat,
+                    dim[1] as sys::Intnat,
+                ));
+                Array2(x, PhantomData)
+            }
         }
 
         /// Create Array2 from ndarray
         pub unsafe fn from_ndarray(data: ndarray::Array2<T>) -> Array2<T> {
-            let dim = data.raw_dim();
-            let array = Array2::create(dim);
-            let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
-            {
-                ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+            unsafe {
+                let dim = data.raw_dim();
+                let array = Array2::create(dim);
+                let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
+                {
+                    ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+                }
+                array
             }
-            array
         }
     }
 
@@ -625,27 +644,31 @@ pub(crate) mod bigarray_ext {
     impl<T: Copy + Kind> Array3<T> {
         /// Create a new OCaml `Bigarray.Array3` with the given type and shape
         pub unsafe fn create(dim: ndarray::Ix3) -> Array3<T> {
-            let data = { bigarray::malloc(dim.size() * mem::size_of::<T>()) };
-            let x = Value::new(bigarray::caml_ba_alloc_dims(
-                T::kind() | bigarray::Managed::MANAGED as i32,
-                3,
-                data,
-                dim[0] as sys::Intnat,
-                dim[1] as sys::Intnat,
-                dim[2] as sys::Intnat,
-            ));
-            Array3(x, PhantomData)
+            unsafe {
+                let data = bigarray::malloc(dim.size() * mem::size_of::<T>());
+                let x = Value::new(bigarray::caml_ba_alloc_dims(
+                    T::kind() | bigarray::Managed::MANAGED as i32,
+                    3,
+                    data,
+                    dim[0] as sys::Intnat,
+                    dim[1] as sys::Intnat,
+                    dim[2] as sys::Intnat,
+                ));
+                Array3(x, PhantomData)
+            }
         }
 
         /// Create Array3 from ndarray
         pub unsafe fn from_ndarray(data: ndarray::Array3<T>) -> Array3<T> {
-            let dim = data.raw_dim();
-            let array = Array3::create(dim);
-            let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
-            {
-                ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+            unsafe {
+                let dim = data.raw_dim();
+                let array = Array3::create(dim);
+                let ba = { array.0.custom_ptr_val::<bigarray::Bigarray>() };
+                {
+                    ptr::copy_nonoverlapping(data.as_ptr(), (*ba).data as *mut T, dim.size());
+                }
+                array
             }
-            array
         }
     }
 

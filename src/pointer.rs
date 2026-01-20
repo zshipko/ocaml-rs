@@ -32,8 +32,10 @@ impl<T: Custom> From<T> for Pointer<T> {
 }
 
 unsafe extern "C" fn drop_value<T>(raw: Raw) {
-    let p = raw.as_pointer::<T>();
-    p.drop_in_place();
+    unsafe {
+        let p = raw.as_pointer::<T>();
+        p.drop_in_place();
+    }
 }
 
 impl<T: Custom> Pointer<T> {
@@ -82,7 +84,7 @@ impl<T> Pointer<T> {
     /// This should only be used when you're in control of the underlying value and want to drop
     /// it. It should only be called once.
     pub unsafe fn drop_in_place(mut self) {
-        core::ptr::drop_in_place(self.as_mut_ptr())
+        unsafe { core::ptr::drop_in_place(self.as_mut_ptr()) }
     }
 
     /// Replace the inner value with the provided argument

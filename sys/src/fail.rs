@@ -1,6 +1,6 @@
 use crate::{Char, Value};
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_raise(bucket: Value);
     pub fn caml_raise_constant(tag: Value);
     pub fn caml_raise_with_arg(tag: Value, arg: Value);

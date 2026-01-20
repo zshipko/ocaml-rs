@@ -87,7 +87,7 @@ impl Error {
             None => {
                 return Err(Error::Message(
                     "Value has not been registered with the OCaml runtime",
-                ))
+                ));
             }
         };
         Err(CamlError::Exception(value).into())
@@ -101,7 +101,7 @@ impl Error {
             None => {
                 return Err(Error::Message(
                     "Value has not been registered with the OCaml runtime",
-                ))
+                ));
             }
         };
 

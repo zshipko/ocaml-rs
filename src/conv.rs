@@ -1,9 +1,8 @@
 use core::convert::TryInto;
 
 use crate::{
-    sys,
+    Raw, Runtime, Tag, sys,
     value::{FromValue, ToValue, Value},
-    Raw, Runtime, Tag,
 };
 
 unsafe impl<T: ToValue> ToValue for &T {

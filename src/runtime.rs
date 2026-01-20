@@ -99,17 +99,23 @@ pub fn gc_minor() {
 
 /// Run major GC collection
 pub unsafe fn gc_major() {
-    ocaml_sys::caml_gc_major(ocaml_sys::UNIT);
+    unsafe {
+        ocaml_sys::caml_gc_major(ocaml_sys::UNIT);
+    }
 }
 
 /// Run full major GC collection
 pub unsafe fn gc_full_major() {
-    ocaml_sys::caml_gc_full_major(ocaml_sys::UNIT);
+    unsafe {
+        ocaml_sys::caml_gc_full_major(ocaml_sys::UNIT);
+    }
 }
 
 /// Run compaction
 pub unsafe fn gc_compact() {
-    ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
+    unsafe {
+        ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
+    }
 }
 
 #[cfg(not(any(feature = "no-panic-hook", feature = "no-std")))]

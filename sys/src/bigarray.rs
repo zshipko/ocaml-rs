@@ -60,7 +60,7 @@ pub enum Layout {
     FORTRAN_LAYOUT = 0x100, /* Column major, indices start at 1 */
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn malloc(size: usize) -> Data;
     pub fn caml_ba_alloc(flags: i32, num_dims: i32, data: Data, dim: *const i32) -> Value;
     pub fn caml_ba_alloc_dims(flags: i32, num_dims: i32, data: Data, ...) -> Value;

@@ -35,7 +35,7 @@
 use core::default::Default;
 use core::ptr;
 
-use crate::mlvalues::{field, Size, Value};
+use crate::mlvalues::{Size, Value, field};
 
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -57,7 +57,7 @@ impl Default for CamlRootsBlock {
     }
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_modify(addr: *mut Value, value: Value);
     pub fn caml_initialize(addr: *mut Value, value: Value);
 }
@@ -84,7 +84,10 @@ macro_rules! store_field {
         let offset = $offset;
         let val = $val;
         let block = $block;
-        $crate::memory::caml_modify(field(block, offset), val);
+        #[allow(unused_unsafe)]
+        unsafe {
+            $crate::memory::caml_modify(field(block, offset), val);
+        }
     };
 }
 
@@ -97,7 +100,7 @@ pub unsafe fn store_field(block: Value, offset: Size, value: Value) {
     store_field!(block, offset, value);
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn caml_register_global_root(value: *mut Value);
     pub fn caml_remove_global_root(value: *mut Value);
     pub fn caml_register_generational_global_root(value: *mut Value);

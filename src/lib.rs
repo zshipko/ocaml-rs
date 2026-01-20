@@ -129,8 +129,8 @@ pub use ocaml_sys as sys;
 
 #[cfg(feature = "derive")]
 pub use ocaml_derive::{
-    ocaml_bytecode_func as bytecode_func, ocaml_func as func, ocaml_native_func as native_func,
-    ocaml_sig as sig, FromValue, ToValue,
+    FromValue, ToValue, ocaml_bytecode_func as bytecode_func, ocaml_func as func,
+    ocaml_native_func as native_func, ocaml_sig as sig,
 };
 
 #[macro_use]
@@ -159,7 +159,7 @@ pub use crate::pointer::Pointer;
 pub use crate::runtime::Runtime;
 pub use crate::runtime::*;
 pub use crate::tag::Tag;
-pub use crate::types::{bigarray, Array, List, Seq};
+pub use crate::types::{Array, List, Seq, bigarray};
 pub use crate::value::{FromValue, Raw, ToValue, Value};
 
 /// OCaml `float`

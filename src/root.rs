@@ -30,7 +30,9 @@ fn boxroot_raise_error() -> ! {
     let status = unsafe { ocaml_boxroot_sys::boxroot_status() };
     let error_message = match status {
         Status::ToreDown => "boxroot_teardown has previously been called",
-        Status::Invalid => "With systhreads, boxroot_setup must be called after caml_thread_initialize but before any thread is created",
+        Status::Invalid => {
+            "With systhreads, boxroot_setup must be called after caml_thread_initialize but before any thread is created"
+        }
         Status::Running | Status::NotSetup => {
             #[cfg(not(feature = "no-std"))]
             {
@@ -39,9 +41,7 @@ fn boxroot_raise_error() -> ! {
                     ErrorKind::PermissionDenied => {
                         "You tried calling boxroot_create or boxroot_modify without holding the domain lock"
                     }
-                    ErrorKind::OutOfMemory => {
-                        "Allocation failure of the backing store"
-                    }
+                    ErrorKind::OutOfMemory => "Allocation failure of the backing store",
                     _ => "Unknown Error::last_os_error().kind()",
                 }
             }
@@ -59,21 +59,25 @@ fn boxroot_raise_error() -> ! {
 impl Root {
     /// Create a new root
     pub unsafe fn new(v: sys::Value) -> Root {
-        match ocaml_boxroot_sys::boxroot_create(v) {
-            Some(root) => Root(root),
-            None => boxroot_raise_error(),
+        unsafe {
+            match ocaml_boxroot_sys::boxroot_create(v) {
+                Some(root) => Root(root),
+                None => boxroot_raise_error(),
+            }
         }
     }
 
     /// Get value from root
     pub unsafe fn get(&self) -> sys::Value {
-        ocaml_boxroot_sys::boxroot_get(self.0)
+        unsafe { ocaml_boxroot_sys::boxroot_get(self.0) }
     }
 
     /// Modify root
     pub unsafe fn modify(&mut self, v: sys::Value) {
-        if !ocaml_boxroot_sys::boxroot_modify(&mut self.0, v) {
-            panic!("boxroot_modify failed")
+        unsafe {
+            if !ocaml_boxroot_sys::boxroot_modify(&mut self.0, v) {
+                panic!("boxroot_modify failed")
+            }
         }
     }
 }
