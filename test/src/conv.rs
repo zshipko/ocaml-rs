@@ -20,12 +20,14 @@ pub unsafe fn enum1_first(i: ocaml::Int) -> Enum1 {
     Enum1::First(i)
 }
 
-#[ocaml::func(test)]
+#[ocaml::func(runtime)]
 #[ocaml::sig("string -> enum1")]
 pub unsafe fn enum1_make_second(s: String) -> Enum1 {
-    let mut arr = ocaml::Array::alloc(1);
-    let _ = arr.set(test, 0, &s);
-    Enum1::Second(arr)
+    unsafe {
+        let mut arr = ocaml::Array::alloc(1);
+        let _ = arr.set(runtime, 0, &s);
+        Enum1::Second(arr)
+    }
 }
 
 #[ocaml::func]
@@ -100,7 +102,7 @@ pub unsafe fn string_non_copying(s: ocaml::Value) -> ocaml::Value {
 pub unsafe fn direct_slice(data: &[ocaml::Raw]) -> i64 {
     let mut total = 0;
     for i in data {
-        total += ocaml::Value::new(*i).int64_val();
+        total += unsafe { ocaml::Value::new(*i).int64_val() };
     }
     total
 }
@@ -108,8 +110,8 @@ pub unsafe fn direct_slice(data: &[ocaml::Raw]) -> i64 {
 #[ocaml::func]
 #[ocaml::sig("'a -> 'a")]
 pub unsafe fn deep_clone(a: ocaml::Value) -> ocaml::Value {
-    let b = a.deep_clone_to_rust();
-    b.deep_clone_to_ocaml()
+    let b = unsafe { a.deep_clone_to_rust() };
+    unsafe { b.deep_clone_to_ocaml() }
 }
 
 #[ocaml::func]

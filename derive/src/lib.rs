@@ -115,7 +115,9 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                         n_variants -= 1;
                     }
                     if n != n_variants {
-                        panic!("{name}: Signature and enum do not have the same number of variants (expected: {n}, got {n_variants})")
+                        panic!(
+                            "{name}: Signature and enum do not have the same number of variants (expected: {n}, got {n_variants})"
+                        )
                     }
                 }
             }
@@ -123,7 +125,9 @@ pub fn ocaml_sig(attribute: TokenStream, item: TokenStream) -> TokenStream {
                 if !s.is_empty() {
                     let n_fields = s.matches(':').count();
                     if n != n_fields {
-                        panic!("{name}: Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})")
+                        panic!(
+                            "{name}: Signature and struct do not have the same number of fields (expected: {n}, got {n_fields})"
+                        )
                     }
                 }
             }
@@ -237,8 +241,8 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let where_clause = &item_fn.sig.generics.where_clause;
     let attr: Vec<_> = item_fn.attrs.iter().collect();
 
-    let gen = quote! {
-        #[no_mangle]
+    let r#gen = quote! {
+        #[unsafe(no_mangle)]
         #(
             #attr
         )*
@@ -248,9 +252,9 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
             ocaml::body!(#gc_name: {
                 #(#convert_params);*
                 let res = inner(#gc_name, #param_names);
-                #[allow(unused_unsafe)]
+                #[allow(unused_unsafe, unused_mut)]
                 let mut gc_ = unsafe { ocaml::Runtime::recover_handle() };
-                unsafe { ocaml::ToValue::to_value(&res, &gc_).raw() }
+                ocaml::ToValue::to_value(&res, &gc_).raw()
             })
         }
     };
@@ -273,14 +277,14 @@ pub fn ocaml_func(attribute: TokenStream, item: TokenStream) -> TokenStream {
         };
 
         let r = quote! {
-            #gen
+            #r#gen
 
             #bytecode
         };
         return r.into();
     }
 
-    gen.into()
+    r#gen.into()
 }
 
 /// `native_func` is used export Rust functions to OCaml, it has much lower overhead than `func`
@@ -341,8 +345,8 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
         syn::ReturnType::Type(_, _t) => (true, Some(quote! {ocaml::Raw})),
     };
 
-    let gen = quote! {
-        #[no_mangle]
+    let r#gen = quote! {
+        #[unsafe(no_mangle)]
         #(
             #attr
         )*
@@ -354,7 +358,7 @@ pub fn ocaml_native_func(attribute: TokenStream, item: TokenStream) -> TokenStre
             r.raw()
         }
     };
-    gen.into()
+    r#gen.into()
 }
 
 /// `bytecode_func` is used export Rust functions to OCaml, performing the necessary wrapping/unwrapping
@@ -493,7 +497,7 @@ fn ocaml_bytecode_func_impl(
             })
             .collect();
         quote! {
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             #(
                 #attr
             )*
@@ -522,7 +526,7 @@ fn ocaml_bytecode_func_impl(
             })
             .collect();
         quote! {
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             #(
                 #attr
             )*

@@ -19,12 +19,14 @@ pub unsafe fn apply3(f: Value, x: Value) -> Result<Value, Error> {
 #[ocaml::func]
 #[ocaml::sig("(int list -> 'a) -> int -> int -> 'a")]
 pub unsafe fn apply_range(f: Value, start: ocaml::Int, stop: ocaml::Int) -> Result<Value, Error> {
-    let mut l = ocaml::List::empty();
-    for i in start..stop {
-        let v = stop - 1 - i;
-        l = l.add(gc, &v)
-    }
+    unsafe {
+        let mut l = ocaml::List::empty();
+        for i in start..stop {
+            let v = stop - 1 - i;
+            l = l.add(gc, &v)
+        }
 
-    let f = ocaml::function!(f, (a: ocaml::List<ocaml::Int>) -> Value);
-    f(gc, &l)
+        let f = ocaml::function!(f, (a: ocaml::List<ocaml::Int>) -> Value);
+        f(gc, &l)
+    }
 }

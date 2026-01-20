@@ -3,7 +3,7 @@ use ocaml::Value;
 #[ocaml::func]
 #[ocaml::sig("'a list -> int")]
 pub unsafe fn list_length(x: ocaml::List<ocaml::Value>) -> ocaml::Int {
-    x.len() as ocaml::Int
+    unsafe { x.len() as ocaml::Int }
 }
 
 #[ocaml::func]
@@ -18,7 +18,7 @@ pub unsafe fn list_cons(
     l: ocaml::List<ocaml::Value>,
     x: ocaml::Value,
 ) -> ocaml::List<ocaml::Value> {
-    l.add(gc, &x)
+    unsafe { l.add(gc, &x) }
 }
 
 #[ocaml::func]
@@ -27,13 +27,15 @@ pub unsafe fn array_make_range(
     start: ocaml::Uint,
     stop: ocaml::Uint,
 ) -> Result<ocaml::Array<ocaml::Value>, ocaml::Error> {
-    let len = stop - start;
-    let mut arr = ocaml::Array::alloc(len);
+    unsafe {
+        let len = stop - start;
+        let mut arr = ocaml::Array::alloc(len);
 
-    for i in 0..len {
-        arr.set(gc, i, &Value::uint(i + start))?;
+        for i in 0..len {
+            arr.set(gc, i, &Value::uint(i + start))?;
+        }
+        Ok(arr)
     }
-    Ok(arr)
 }
 
 #[ocaml::func]
@@ -49,38 +51,42 @@ pub unsafe fn array_replace(
     index: ocaml::Uint,
     x: Value,
 ) -> Result<Option<Value>, ocaml::Error> {
-    let y = arr.get(gc, index)?;
-    arr.set(gc, index, &x)?;
-    Ok(Some(y))
+    unsafe {
+        let y = arr.get(gc, index)?;
+        arr.set(gc, index, &x)?;
+        Ok(Some(y))
+    }
 }
 
 #[ocaml::func]
 #[ocaml::sig("string -> (int, int8_unsigned_elt, c_layout) Array1.t")]
 pub unsafe fn array1_of_string(x: String) -> ocaml::bigarray::Array1<u8> {
-    ocaml::bigarray::Array1::from_slice(x.as_bytes())
+    unsafe { ocaml::bigarray::Array1::from_slice(x.as_bytes()) }
 }
 
 #[ocaml::func]
 #[ocaml::sig("int -> init:int -> (int, int8_unsigned_elt, c_layout) Array1.t")]
 pub unsafe fn array1_new(len: ocaml::Uint, init: u8) -> ocaml::bigarray::Array1<u8> {
-    let mut ba = ocaml::bigarray::Array1::<u8>::create(len);
-    let data = ba.data_mut();
-    for i in data {
-        *i = init;
+    unsafe {
+        let mut ba = ocaml::bigarray::Array1::<u8>::create(len);
+        let data = ba.data_mut();
+        for i in data {
+            *i = init;
+        }
+        ba
     }
-    ba
 }
 
 #[ocaml::func]
 #[ocaml::sig("unit -> (float, float32_elt, c_layout) Array1.t")]
 pub unsafe fn array1_from_rust_vec() -> ocaml::bigarray::Array1<f32> {
-    ocaml::bigarray::Array1::from_slice([1f32, 2f32, 3f32, 4f32, 5f32])
+    unsafe { ocaml::bigarray::Array1::from_slice([1f32, 2f32, 3f32, 4f32, 5f32]) }
 }
 
 #[ocaml::func]
 pub unsafe fn make_array2(dim1: usize, dim2: usize) -> ocaml::bigarray::Array2<f32> {
     let arr = ndarray::Array2::zeros((dim1, dim2));
-    ocaml::bigarray::Array2::from_ndarray(arr)
+    unsafe { ocaml::bigarray::Array2::from_ndarray(arr) }
 }
 
 #[ocaml::func]
@@ -108,19 +114,23 @@ struct Abstract {
 #[ocaml::func]
 pub unsafe fn alloc_abstract_pointer(f: ocaml::Float) -> Value {
     let a = Box::into_raw(Box::new(Abstract { f }));
-    Value::alloc_abstract_ptr(a)
+    unsafe { Value::alloc_abstract_ptr(a) }
 }
 
 #[ocaml::func]
 pub unsafe fn abstract_pointer_value(f: Value) -> f64 {
-    let f = f.abstract_ptr_val::<Abstract>();
-    (*f).f
+    unsafe {
+        let f = f.abstract_ptr_val::<Abstract>();
+        (*f).f
+    }
 }
 
 #[ocaml::func]
 pub unsafe fn abstract_pointer_free(f: Value) {
-    let f = f.abstract_ptr_val_mut::<Abstract>();
-    drop(Box::from_raw(f));
+    unsafe {
+        let f = f.abstract_ptr_val_mut::<Abstract>();
+        drop(Box::from_raw(f));
+    }
 }
 
 #[ocaml::func]

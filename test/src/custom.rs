@@ -8,12 +8,14 @@ struct Testing {
 }
 
 unsafe extern "C" fn testing_compare(a: Raw, b: Raw) -> i32 {
-    let t0 = a.as_pointer::<Testing>();
-    let t1 = b.as_pointer::<Testing>();
-    match (t0.as_ref().b, t1.as_ref().b) {
-        (x, y) if x == y => 0,
-        (x, y) if x < y => -1,
-        _ => 1,
+    unsafe {
+        let t0 = a.as_pointer::<Testing>();
+        let t1 = b.as_pointer::<Testing>();
+        match (t0.as_ref().b, t1.as_ref().b) {
+            (x, y) if x == y => 0,
+            (x, y) if x < y => -1,
+            _ => 1,
+        }
     }
 }
 
@@ -56,8 +58,10 @@ struct TestingCallback {
 }
 
 unsafe extern "C" fn testing_callback_finalize(a: ocaml::Raw) {
-    let t0 = a.as_pointer::<TestingCallback>();
-    t0.drop_in_place();
+    unsafe {
+        let t0 = a.as_pointer::<TestingCallback>();
+        t0.drop_in_place();
+    }
 }
 
 ocaml::custom_finalize!(TestingCallback, testing_callback_finalize);
@@ -104,5 +108,7 @@ pub fn file_read(mut file: ocaml::Pointer<File>) -> Result<String, ocaml::Error>
 #[ocaml::func]
 #[ocaml::sig("file -> unit")]
 pub unsafe fn file_close(file: ocaml::Pointer<File>) {
-    file.drop_in_place();
+    unsafe {
+        file.drop_in_place();
+    }
 }

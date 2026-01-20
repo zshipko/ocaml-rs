@@ -15,7 +15,7 @@
 #[macro_export]
 macro_rules! body {
     ($gc:ident: $code:block) => {{
-        let $gc = unsafe { &$crate::Runtime::init() };
+        let $gc = &$crate::Runtime::init();
 
         { $code }
     }};

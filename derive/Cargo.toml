@@ -8,7 +8,7 @@ repository = "https://github.com/zshipko/ocaml-rs"
 description = "OCaml procedural macros"
 documentation = "https://docs.rs/ocaml-derive"
 readme = "./README.md"
-edition = "2021"
+edition = "2024"
 
 [lib]
 proc-macro = true

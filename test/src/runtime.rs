@@ -1,6 +1,6 @@
 use ocaml::{ToValue, Value};
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn unboxed_float_avg(a: f64, b: f64) -> f64 {
     (a + b) / 2.0
 }
@@ -62,14 +62,16 @@ pub fn raise_failure() -> Result<(), ocaml::Error> {
 #[ocaml::func]
 #[ocaml::sig("int -> [`Abc of int]")]
 pub unsafe fn hash_variant_abc(i: ocaml::Int) -> Value {
-    Value::hash_variant(gc, "Abc", Some(Value::int(i)))
+    unsafe { Value::hash_variant(gc, "Abc", Some(Value::int(i))) }
 }
 
 #[ocaml::func]
 #[ocaml::sig("float -> [`Def of float]")]
 pub unsafe fn hash_variant_def(i: ocaml::Float) -> Value {
-    let f = Some(Value::double(i));
-    Value::hash_variant(gc, "Def", f)
+    unsafe {
+        let f = Some(Value::double(i));
+        Value::hash_variant(gc, "Def", f)
+    }
 }
 
 #[ocaml::func]
@@ -85,7 +87,7 @@ ocaml::import! {
 #[ocaml::func]
 #[ocaml::sig("float -> float")]
 pub unsafe fn test_call_named(g: f64) -> Result<f64, ocaml::Error> {
-    call_named(gc, g)
+    unsafe { call_named(gc, g) }
 }
 
 #[ocaml::func]
@@ -101,7 +103,7 @@ pub unsafe fn bench_native_func() -> ocaml::Value {
 #[ocaml::func]
 #[ocaml::sig("exn -> string")]
 pub unsafe fn exn_to_string(exn: ocaml::Value) -> String {
-    exn.exception_to_string().unwrap()
+    unsafe { exn.exception_to_string().unwrap() }
 }
 
 #[ocaml::func]
@@ -113,17 +115,17 @@ pub unsafe fn gc_minor() {
 #[ocaml::func]
 #[ocaml::sig("unit -> unit")]
 pub unsafe fn gc_major() {
-    ocaml::runtime::gc_major();
+    unsafe { ocaml::runtime::gc_major() };
 }
 
 #[ocaml::func]
 #[ocaml::sig("unit -> unit")]
 pub unsafe fn gc_full_major() {
-    ocaml::runtime::gc_full_major();
+    unsafe { ocaml::runtime::gc_full_major() };
 }
 
 #[ocaml::func]
 #[ocaml::sig("unit -> unit")]
 pub unsafe fn gc_compact() {
-    ocaml::runtime::gc_compact();
+    unsafe { ocaml::runtime::gc_compact() };
 }
