@@ -28,7 +28,7 @@ Below is a list of types that implement these traits in `ocaml-rs` and their cor
 | `(A, B, C)`               | `'a * 'b * 'c`       |
 | `&[Value]`                | `'a array` (no copy) |
 | `Vec<A>`, `&[A]`          | `'a array`           |
-| `BTreeMap<A, B>`          | `('a, 'b) list`      |
+| `BTreeMap<A, B>`          | `('a * 'b) list`      |
 | `LinkedList<A>`           | `'a list`            |
 | `Seq<A>`                  | `'a Seq.t`           |
 
