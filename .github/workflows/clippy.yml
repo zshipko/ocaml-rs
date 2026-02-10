@@ -1,0 +1,22 @@
+name: Clippy
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Nightly
+      run: rustup toolchain install nightly --profile=default
+
+    - name: Run clippy
+      env:
+        OCAML_VERSION: 4.13.1
+        OCAML_WHERE_PATH: /ignored
+      run: sudo apt install ocaml && cargo +nightly clippy --features=without-ocamlopt --all -- -D warnings

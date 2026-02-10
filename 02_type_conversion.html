@@ -1,0 +1,329 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Type conversion - ocaml-rs</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">ocaml-rs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="type-conversion"><a class="header" href="#type-conversion">Type conversion</a></h1>
+<p>As mentioned in the previous section, <code>ocaml-rs</code> automates the conversion between Rust and OCaml representations for many types. This is done using two traits: <a href="https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html">ToValue</a>, which is implemented for types that can be converted to an OCaml value and <a href="https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html">FromValue</a> for types that can be converted from an OCaml value.</p>
+<p>Below is a list of types that implement these traits in <code>ocaml-rs</code> and their corresponding OCaml type:</p>
+<div class="table-wrapper"><table><thead><tr><th>Rust type</th><th>OCaml type</th></tr></thead><tbody>
+<tr><td><code>()</code></td><td><code>unit</code></td></tr>
+<tr><td><code>isize</code></td><td><code>int</code></td></tr>
+<tr><td><code>usize</code></td><td><code>int</code></td></tr>
+<tr><td><code>i8</code></td><td><code>int</code></td></tr>
+<tr><td><code>u8</code></td><td><code>int</code></td></tr>
+<tr><td><code>i16</code></td><td><code>int</code></td></tr>
+<tr><td><code>u16</code></td><td><code>int</code></td></tr>
+<tr><td><code>i32</code></td><td><code>int32</code></td></tr>
+<tr><td><code>u32</code></td><td><code>int32</code></td></tr>
+<tr><td><code>i64</code></td><td><code>int64</code></td></tr>
+<tr><td><code>u64</code></td><td><code>int64</code></td></tr>
+<tr><td><code>f32</code></td><td><code>float</code></td></tr>
+<tr><td><code>f64</code></td><td><code>float</code></td></tr>
+<tr><td><code>str</code></td><td><code>string</code></td></tr>
+<tr><td><code>[u8]</code></td><td><code>bytes</code></td></tr>
+<tr><td><code>String</code></td><td><code>string</code></td></tr>
+<tr><td><code>Option&lt;A&gt;</code></td><td><code>'a option</code></td></tr>
+<tr><td><code>Result&lt;A, ocaml::Error&gt;</code></td><td><code>'a</code> or <code>exception</code></td></tr>
+<tr><td><code>Result&lt;A, B&gt;</code></td><td><code>('a, 'b) Result.t</code></td></tr>
+<tr><td><code>(A, B, C)</code></td><td><code>'a * 'b * 'c</code></td></tr>
+<tr><td><code>&amp;[Value]</code></td><td><code>'a array</code> (no copy)</td></tr>
+<tr><td><code>Vec&lt;A&gt;</code>, <code>&amp;[A]</code></td><td><code>'a array</code></td></tr>
+<tr><td><code>BTreeMap&lt;A, B&gt;</code></td><td><code>('a * 'b) list</code></td></tr>
+<tr><td><code>LinkedList&lt;A&gt;</code></td><td><code>'a list</code></td></tr>
+<tr><td><code>Seq&lt;A&gt;</code></td><td><code>'a Seq.t</code></td></tr>
+</tbody></table>
+</div>
+<p>NOTE: Even though <code>&amp;[Value]</code> is specifically marked as no copy, any type like <code>Option&lt;Value&gt;</code> would also qualify since the inner value is not converted to a Rust type. However, <code>Option&lt;String&gt;</code> will do full unmarshaling into Rust types. Another thing to note: <code>FromValue</code> for <code>str</code> and <code>&amp;[u8]</code> is zero-copy, however <code>ToValue</code> for <code>str</code> and <code>&amp;[u8]</code> creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.</p>
+<p>If you're concerned with minimizing allocations/conversions you should use <code>Value</code> type directly.</p>
+<h2 id="implementing-tovalue-and-fromvalue"><a class="header" href="#implementing-tovalue-and-fromvalue">Implementing <code>ToValue</code> and <code>FromValue</code></a></h2>
+<p>The <a href="https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html">ToValue</a> trait has a single function, <code>to_value</code> which takes a reference to <code>self</code>, a reference to [Runtime] and returns a <a href="https://docs.rs/ocaml/latest/ocaml/enum.Value.html">Value</a> and <a href="https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html">FromValue</a> has <code>from_value</code>, which takes a <code>Value</code> and returns <code>Self</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+pub struct MyType(i32);
+
+unsafe impl ocaml::ToValue for MyType {
+  fn to_value(&amp;self, _gc: &amp;ocaml::Runtime) -&gt; ocaml::Value {
+    unsafe { ocaml::Value::int32(self.0) }
+  }
+}
+
+unsafe impl ocaml::FromValue for MyType {
+  fn from_value(value: ocaml::Value) -&gt; MyType {
+    unsafe { MyType(value.int32_val()) }
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>This can also be accomplished using the derive macros:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+pub struct MyType(i32);
+<span class="boring">}</span></code></pre></pre>
+<p><code>derive(ToValue, FromValue)</code> will work on any struct or enum that are comprised of types that also implement <code>ToValue</code> and <code>FromValue</code></p>
+<h2 id="types-that-work-directly-on-ocaml-values"><a class="header" href="#types-that-work-directly-on-ocaml-values">Types that work directly on OCaml values</a></h2>
+<p>There are several types that work directly on OCaml values, these don't perform any copies when converting to and from <code>Value</code>.</p>
+<div class="table-wrapper"><table><thead><tr><th>Rust type</th><th>OCaml type</th></tr></thead><tbody>
+<tr><td><code>ocaml::Array&lt;T&gt;</code></td><td><code>'a array</code></td></tr>
+<tr><td><code>ocaml::List&lt;T&gt;</code></td><td><code>'a list</code></td></tr>
+<tr><td><code>ocaml::Seq&lt;T&gt;</code></td><td><code>'a Seq.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array1&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array1.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array2&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array2.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array3&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array3.t</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="wrapping-rust-values"><a class="header" href="#wrapping-rust-values">Wrapping Rust values</a></h2>
+<p>Rust values can be used as opaque values that can be shared with OCaml using <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html">ocaml::Pointer<T></a>. The <code>Pointer</code> type allows for Rust values to be allocated using the OCaml runtime, this means their lifetime will be handled by the garbage collector. <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html#method.alloc_final">Pointer::alloc_final</a> is used to move an existing Rust type into an OCaml allocated pointer, but even better is the option to implement the <code>Custom</code> trait for your type.</p>
+<p>Implementing <a href="https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html">Custom</a> allows you to define equality/comparison, finalization, hashing and serialization functions for your type that will be used by OCaml. When allocating custom values you should use <code>Pointer::from</code> or <code>Pointer::alloc_custom</code>.</p>
+<p>In either case you will need to write the allocation function in Rust because OCaml doesn't know the specifics about the layout or contents of these types, unlike when using <code>FromValue</code> or <code>ToValue</code>. <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html">Pointer</a> should primarily be used on Rust values that cannot be converted directly to OCaml types.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::sig]   // Creates an opaque type on the OCaml side
+pub struct MyType {
+  a: i32,
+  b: f64,
+  c: std::fs::File, // This can't be converted to an OCaml value
+}
+
+ocaml::custom!(MyType);
+
+#[ocaml::func]
+#[ocaml::sig("my_type -&gt; float")]
+pub unsafe fn my_type_add_a_b(t: &amp;MyType) -&gt; f64 {
+  t.a as f64 + t.b
+}
+<span class="boring">}</span></code></pre></pre>
+<p>NOTE: In this example the Rust type <code>MyType</code> has automatically been renamed to <code>my_type</code> in OCaml.</p>
+<p>Also in this example, the default finalizer is used - this will call <code>Pointer::drop_in_place</code> to call <code>drop</code> on the Rust side before freeing the memory on the OCaml heap. If you add your own <code>finalize</code> implementation you should make sure to call <code>Pointer::drop_in_place</code> any time the underlying Rust value contains dynamically allocated values, like <code>std::fs::File</code> in the example above.</p>
+<p>Now that you have some insight into how type conversion is handled, the next section will cover more details about writing OCaml functions in Rust.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="01_introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="03_writing_ocaml_functions_in_rust.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="01_introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="03_writing_ocaml_functions_in_rust.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

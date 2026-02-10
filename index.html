@@ -1,0 +1,328 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Introduction - ocaml-rs</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">ocaml-rs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p><a href="https://github.com/zshipko/ocaml-rs">ocaml-rs</a> is a Rust crate for interacting with the OCaml runtime. It allows you to write functions in Rust that can be called from OCaml and vice-versa. <code>ocaml-rs</code> also does automatic conversion between OCaml and Rust representations. There are several crates that make this possible:</p>
+<ul>
+<li><a href="https://crates.io/crates/ocaml-sys">ocaml-sys</a> - Low level bindings to the OCaml runtime</li>
+<li><a href="https://crates.io/crates/ocaml-boxroot-sys">ocaml-boxroot-sys</a> - Bindings to <a href="https://gitlab.com/ocaml-rust/ocaml-boxroot/">ocaml-boxroot</a>, which handles safe allocation of OCaml values</li>
+<li><a href="https://crates.io/crates/ocaml-derive">ocaml-derive</a> - Procedural macros: <code>ocaml::func</code>, <code>ocaml::sig</code>, <code>derive(FromValue)</code>, <code>derive(ToValue)</code></li>
+<li><a href="https://crates.io/crates/ocaml-build">ocaml-build</a> - Generate OCaml interfaces from <code>ocaml::sig</code> definitions</li>
+<li><a href="https://crates.io/crates/ocaml">ocaml</a> - Higher level bindings built using the crates listed above</li>
+</ul>
+<p>Before going any further, it may be helpful to read through the <a href="https://v2.ocaml.org/manual/intfc.html">Interfacing C with OCaml</a> from the OCaml handbook if you haven't already!</p>
+<h2 id="initial-setup"><a class="header" href="#initial-setup">Initial setup</a></h2>
+<p>This section will cover how to set up a Rust crate that is linked into an OCaml program. If you're interested in calling into an OCaml library from Rust instead, see <a href="./04_linking_an_ocaml_library_into_a_rust_program.html">Linking an OCaml library into a Rust program</a>.</p>
+<p>Add the following to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[lib]
+crate-type = ["staticlib"] # You can also use cdylib, depending on your project
+
+[dependencies]
+ocaml = "*"
+</code></pre>
+<p>Additionally, on macOS you may need to add a <code>.cargo/config</code> with the following:</p>
+<pre><code class="language-toml">[build]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
+</code></pre>
+<p>This is because macOS doesn't allow undefined symbols in dynamic libraries by default.</p>
+<p>If you plan on using <code>ocaml-build</code>:</p>
+<pre><code class="language-toml">[build-dependencies]
+ocaml-build = "*"
+</code></pre>
+<p>And add a <code>build.rs</code>:</p>
+<pre><code class="language-rust ignore"><span class="boring">extern crate ocaml_build;
+</span>pub fn main() -&gt; std::io::Result&lt;()&gt; {
+  ocaml_build::Sigs::new("src/rust.ml").generate()
+}</code></pre>
+<p>This build script will look for usages of <code>#[ocaml::sig(...)]</code> to generate OCaml bindings.</p>
+<p>Next you will need to add setup a <a href="https://dune.build">dune</a> project to handle compilation of your OCaml code. Here is an example <code>dune</code> file that will link your Rust project, in this case the Rust crate is named <code>example</code>:</p>
+<pre><code class="language-ignore">(rule
+ (targets libexample.a)
+ (deps (glob_files *.rs))
+ (action
+  (progn
+   (run cargo build --target-dir %{project_root}/../../target --release)
+   (run mv %{project_root}/../../target/release/libexample.a libexample.a))))
+
+(library
+ (name example)
+ (public_name example)
+ (foreign_archives example)
+ (c_library_flags
+  (-lpthread -lc -lm)))
+</code></pre>
+<p>You should also add the following stanza to a <code>dune</code> file at the root of your project to ignore the <code>target</code> directory:</p>
+<pre><code class="language-ignore">(dirs :standard \ target)
+</code></pre>
+<p>It can take a little trial and error to get this right depending on the specifics of your project!</p>
+<p>Additionally, if you plan on releasing to <a href="https://github.com/ocaml/opam">opam</a>, you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:</p>
+<pre><code class="language-shell">cargo vendor
+</code></pre>
+<p>then follow the instructions for editing <code>.cargo/config</code></p>
+<p>To simplify the full setup process, take a look at <a href="https://github.com/zshipko/ocaml-rust-starter">ocaml-rust-starter</a>.</p>
+<h2 id="build-options"><a class="header" href="#build-options">Build options</a></h2>
+<p>By default, building <code>ocaml-sys</code> will invoke the <code>ocamlopt</code> command to figure out the version and location of the OCaml compiler. There are a few environment variables to control this.</p>
+<ul>
+<li><code>OCAMLOPT</code> (default: <code>ocamlopt</code>) is the command that will invoke <code>ocamlopt</code></li>
+<li><code>OCAML_VERSION</code> (default: result of <code>$OCAMLOPT -version</code>) is the target runtime OCaml version.</li>
+<li><code>OCAML_WHERE_PATH</code> (default: result of <code>$OCAMLOPT -where</code>) is the path of the OCaml standard library.</li>
+<li><code>NO_CAML_STARTUP</code> (default: unset) can be set when loading an <code>ocaml-rs</code> library into an OCaml
+bytecode runtime (such as <code>utop</code>) to avoid linking issues with <code>caml_startup</code></li>
+</ul>
+<p>If both <code>OCAML_VERSION</code> and <code>OCAML_WHERE_PATH</code> are present, their values are used without invoking <code>ocamlopt</code>. If any of those two env variables is undefined, then <code>ocamlopt</code> will be invoked to obtain both values.</p>
+<p>Defining the <code>OCAML_VERSION</code> and <code>OCAML_WHERE_PATH</code> variables is useful for saving time in CI environments where an OCaml install is not really required (to run <code>clippy</code> for example).</p>
+<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<ul>
+<li><code>derive</code>
+<ul>
+<li>enabled by default, adds <code>#[ocaml::func]</code> and friends and <code>derive</code> implementations for <code>FromValue</code> and <code>ToValue</code></li>
+</ul>
+</li>
+<li><code>link</code>
+<ul>
+<li>link the native OCaml runtime, this should only be used when no OCaml code will be linked statically</li>
+</ul>
+</li>
+<li><code>no-std</code>
+<ul>
+<li>Allows <code>ocaml</code> to be used in <code>#![no_std]</code> environments like MirageOS</li>
+</ul>
+</li>
+</ul>
+<h2 id="writing-your-first-ocamlfunc"><a class="header" href="#writing-your-first-ocamlfunc">Writing your first <code>ocaml::func</code></a></h2>
+<p><a href="https://docs.rs/ocaml/latest/ocaml/attr.func.html">ocaml::func</a> is the highest-level macro that can be used to generate OCaml functions. It's built on <code>ocaml::native_func</code> which only works on <code>Value</code> parameters and <code>ocaml::bytecode_func</code> which is used for generating bytecode functions. <code>ocaml::func</code> will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime. <code>ocaml::func</code> handles using <code>CAMLparam</code>/<code>CAMLlocal</code>/<code>CAMLreturn</code> correctly for you, often making it much easier to write bindings than using the C API directly, particularly for those who haven't used the OCaml C API before.</p>
+<p>All <code>ocaml::func</code>'s have an implicit <code>gc</code> variable which is used to access the OCaml runtime. To pick another name you can provide it as an argument to the <code>ocaml::func</code> macro:</p>
+<pre><code class="language-rust ignore">#[ocaml::func(my_gc_name)]
+...</code></pre>
+<p>The following example will read a file and return the contents, we will ignore error handling for now since that will be covered later - however, one thing worth mentioning is that Rust panics will be converted into OCaml exceptions.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::func]   // This is needed to make the function compatible with OCaml
+#[ocaml::sig("string -&gt; string")] /// This is used to generate the OCaml bindings
+pub unsafe fn read_file(filename: String) -&gt; String {
+  std::fs::read_to_string(filename).unwrap()
+}
+<span class="boring">}</span></code></pre></pre>
+<p>In the above example, automatic conversion is performed between OCaml strings and Rust strings. The next section will provide a table of valid conversions before getting into more details about writing functions and calling OCaml functions from Rust.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="02_type_conversion.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="02_type_conversion.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

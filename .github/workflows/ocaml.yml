@@ -1,0 +1,64 @@
+name: OCaml tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        ocaml-compiler: ["4.14.0", "4.13.1", "4.12.1", "4.11.0", "4.10.0", "4.09.1", "4.08.1", "4.07.0", "4.06.0"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: OCaml/Opam cache
+        id: ocaml-rs-opam-cache
+        uses: actions/cache@v2
+        with:
+          path: "~/.opam"
+          key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: avsm/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+      - name: Set Opam env
+        run: opam env | tr '\n' ' ' >> $GITHUB_ENV
+      - name: Add Opam switch to PATH
+        run: opam var bin >> $GITHUB_PATH
+      - run: opam install dune ppx_inline_test
+      - name: Run OCaml tests
+        run: opam exec -- dune runtest --root=./test
+
+        #  bench:
+        #    strategy:
+        #      matrix:
+        #        os: [macos-latest, ubuntu-latest]
+        #        ocaml-compiler: ["4.13.1"]
+        #    runs-on: ${{ matrix.os }}
+        #    steps:
+        #      - name: Checkout code
+        #        uses: actions/checkout@v2
+        #      - name: OCaml/Opam cache
+        #        id: ocaml-rs-opam-cache
+        #        uses: actions/cache@v2
+        #        with:
+        #          path: "~/.opam"
+        #          key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
+        #      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        #        uses: avsm/setup-ocaml@v2
+        #        with:
+        #          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+        #      - name: Set Opam env
+        #        run: opam env | tr '\n' ' ' >> $GITHUB_ENV
+        #      - name: Add Opam switch to PATH
+        #        run: opam var bin >> $GITHUB_PATH
+        #      - run: opam install dune ppx_inline_test notty bechamel-notty
+        #      - name: Run OCaml tests
+        #        run: opam exec -- dune exec --root=./test src/bench.exe
+

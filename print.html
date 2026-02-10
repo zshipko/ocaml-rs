@@ -1,0 +1,677 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ocaml-rs</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">ocaml-rs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p><a href="https://github.com/zshipko/ocaml-rs">ocaml-rs</a> is a Rust crate for interacting with the OCaml runtime. It allows you to write functions in Rust that can be called from OCaml and vice-versa. <code>ocaml-rs</code> also does automatic conversion between OCaml and Rust representations. There are several crates that make this possible:</p>
+<ul>
+<li><a href="https://crates.io/crates/ocaml-sys">ocaml-sys</a> - Low level bindings to the OCaml runtime</li>
+<li><a href="https://crates.io/crates/ocaml-boxroot-sys">ocaml-boxroot-sys</a> - Bindings to <a href="https://gitlab.com/ocaml-rust/ocaml-boxroot/">ocaml-boxroot</a>, which handles safe allocation of OCaml values</li>
+<li><a href="https://crates.io/crates/ocaml-derive">ocaml-derive</a> - Procedural macros: <code>ocaml::func</code>, <code>ocaml::sig</code>, <code>derive(FromValue)</code>, <code>derive(ToValue)</code></li>
+<li><a href="https://crates.io/crates/ocaml-build">ocaml-build</a> - Generate OCaml interfaces from <code>ocaml::sig</code> definitions</li>
+<li><a href="https://crates.io/crates/ocaml">ocaml</a> - Higher level bindings built using the crates listed above</li>
+</ul>
+<p>Before going any further, it may be helpful to read through the <a href="https://v2.ocaml.org/manual/intfc.html">Interfacing C with OCaml</a> from the OCaml handbook if you haven't already!</p>
+<h2 id="initial-setup"><a class="header" href="#initial-setup">Initial setup</a></h2>
+<p>This section will cover how to set up a Rust crate that is linked into an OCaml program. If you're interested in calling into an OCaml library from Rust instead, see <a href="./04_linking_an_ocaml_library_into_a_rust_program.html">Linking an OCaml library into a Rust program</a>.</p>
+<p>Add the following to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[lib]
+crate-type = ["staticlib"] # You can also use cdylib, depending on your project
+
+[dependencies]
+ocaml = "*"
+</code></pre>
+<p>Additionally, on macOS you may need to add a <code>.cargo/config</code> with the following:</p>
+<pre><code class="language-toml">[build]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
+</code></pre>
+<p>This is because macOS doesn't allow undefined symbols in dynamic libraries by default.</p>
+<p>If you plan on using <code>ocaml-build</code>:</p>
+<pre><code class="language-toml">[build-dependencies]
+ocaml-build = "*"
+</code></pre>
+<p>And add a <code>build.rs</code>:</p>
+<pre><code class="language-rust ignore"><span class="boring">extern crate ocaml_build;
+</span>pub fn main() -&gt; std::io::Result&lt;()&gt; {
+  ocaml_build::Sigs::new("src/rust.ml").generate()
+}</code></pre>
+<p>This build script will look for usages of <code>#[ocaml::sig(...)]</code> to generate OCaml bindings.</p>
+<p>Next you will need to add setup a <a href="https://dune.build">dune</a> project to handle compilation of your OCaml code. Here is an example <code>dune</code> file that will link your Rust project, in this case the Rust crate is named <code>example</code>:</p>
+<pre><code class="language-ignore">(rule
+ (targets libexample.a)
+ (deps (glob_files *.rs))
+ (action
+  (progn
+   (run cargo build --target-dir %{project_root}/../../target --release)
+   (run mv %{project_root}/../../target/release/libexample.a libexample.a))))
+
+(library
+ (name example)
+ (public_name example)
+ (foreign_archives example)
+ (c_library_flags
+  (-lpthread -lc -lm)))
+</code></pre>
+<p>You should also add the following stanza to a <code>dune</code> file at the root of your project to ignore the <code>target</code> directory:</p>
+<pre><code class="language-ignore">(dirs :standard \ target)
+</code></pre>
+<p>It can take a little trial and error to get this right depending on the specifics of your project!</p>
+<p>Additionally, if you plan on releasing to <a href="https://github.com/ocaml/opam">opam</a>, you will need to vendor your Rust dependencies to avoid making network requests during the build phase, since reaching out to crates.io/github will be blocked by the opam sandbox. To do this you should run:</p>
+<pre><code class="language-shell">cargo vendor
+</code></pre>
+<p>then follow the instructions for editing <code>.cargo/config</code></p>
+<p>To simplify the full setup process, take a look at <a href="https://github.com/zshipko/ocaml-rust-starter">ocaml-rust-starter</a>.</p>
+<h2 id="build-options"><a class="header" href="#build-options">Build options</a></h2>
+<p>By default, building <code>ocaml-sys</code> will invoke the <code>ocamlopt</code> command to figure out the version and location of the OCaml compiler. There are a few environment variables to control this.</p>
+<ul>
+<li><code>OCAMLOPT</code> (default: <code>ocamlopt</code>) is the command that will invoke <code>ocamlopt</code></li>
+<li><code>OCAML_VERSION</code> (default: result of <code>$OCAMLOPT -version</code>) is the target runtime OCaml version.</li>
+<li><code>OCAML_WHERE_PATH</code> (default: result of <code>$OCAMLOPT -where</code>) is the path of the OCaml standard library.</li>
+<li><code>NO_CAML_STARTUP</code> (default: unset) can be set when loading an <code>ocaml-rs</code> library into an OCaml
+bytecode runtime (such as <code>utop</code>) to avoid linking issues with <code>caml_startup</code></li>
+</ul>
+<p>If both <code>OCAML_VERSION</code> and <code>OCAML_WHERE_PATH</code> are present, their values are used without invoking <code>ocamlopt</code>. If any of those two env variables is undefined, then <code>ocamlopt</code> will be invoked to obtain both values.</p>
+<p>Defining the <code>OCAML_VERSION</code> and <code>OCAML_WHERE_PATH</code> variables is useful for saving time in CI environments where an OCaml install is not really required (to run <code>clippy</code> for example).</p>
+<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<ul>
+<li><code>derive</code>
+<ul>
+<li>enabled by default, adds <code>#[ocaml::func]</code> and friends and <code>derive</code> implementations for <code>FromValue</code> and <code>ToValue</code></li>
+</ul>
+</li>
+<li><code>link</code>
+<ul>
+<li>link the native OCaml runtime, this should only be used when no OCaml code will be linked statically</li>
+</ul>
+</li>
+<li><code>no-std</code>
+<ul>
+<li>Allows <code>ocaml</code> to be used in <code>#![no_std]</code> environments like MirageOS</li>
+</ul>
+</li>
+</ul>
+<h2 id="writing-your-first-ocamlfunc"><a class="header" href="#writing-your-first-ocamlfunc">Writing your first <code>ocaml::func</code></a></h2>
+<p><a href="https://docs.rs/ocaml/latest/ocaml/attr.func.html">ocaml::func</a> is the highest-level macro that can be used to generate OCaml functions. It's built on <code>ocaml::native_func</code> which only works on <code>Value</code> parameters and <code>ocaml::bytecode_func</code> which is used for generating bytecode functions. <code>ocaml::func</code> will take care of generating bytecode bindings for functions with more than five parameters as required by the OCaml runtime. <code>ocaml::func</code> handles using <code>CAMLparam</code>/<code>CAMLlocal</code>/<code>CAMLreturn</code> correctly for you, often making it much easier to write bindings than using the C API directly, particularly for those who haven't used the OCaml C API before.</p>
+<p>All <code>ocaml::func</code>'s have an implicit <code>gc</code> variable which is used to access the OCaml runtime. To pick another name you can provide it as an argument to the <code>ocaml::func</code> macro:</p>
+<pre><code class="language-rust ignore">#[ocaml::func(my_gc_name)]
+...</code></pre>
+<p>The following example will read a file and return the contents, we will ignore error handling for now since that will be covered later - however, one thing worth mentioning is that Rust panics will be converted into OCaml exceptions.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::func]   // This is needed to make the function compatible with OCaml
+#[ocaml::sig("string -&gt; string")] /// This is used to generate the OCaml bindings
+pub unsafe fn read_file(filename: String) -&gt; String {
+  std::fs::read_to_string(filename).unwrap()
+}
+<span class="boring">}</span></code></pre></pre>
+<p>In the above example, automatic conversion is performed between OCaml strings and Rust strings. The next section will provide a table of valid conversions before getting into more details about writing functions and calling OCaml functions from Rust.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="type-conversion"><a class="header" href="#type-conversion">Type conversion</a></h1>
+<p>As mentioned in the previous section, <code>ocaml-rs</code> automates the conversion between Rust and OCaml representations for many types. This is done using two traits: <a href="https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html">ToValue</a>, which is implemented for types that can be converted to an OCaml value and <a href="https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html">FromValue</a> for types that can be converted from an OCaml value.</p>
+<p>Below is a list of types that implement these traits in <code>ocaml-rs</code> and their corresponding OCaml type:</p>
+<div class="table-wrapper"><table><thead><tr><th>Rust type</th><th>OCaml type</th></tr></thead><tbody>
+<tr><td><code>()</code></td><td><code>unit</code></td></tr>
+<tr><td><code>isize</code></td><td><code>int</code></td></tr>
+<tr><td><code>usize</code></td><td><code>int</code></td></tr>
+<tr><td><code>i8</code></td><td><code>int</code></td></tr>
+<tr><td><code>u8</code></td><td><code>int</code></td></tr>
+<tr><td><code>i16</code></td><td><code>int</code></td></tr>
+<tr><td><code>u16</code></td><td><code>int</code></td></tr>
+<tr><td><code>i32</code></td><td><code>int32</code></td></tr>
+<tr><td><code>u32</code></td><td><code>int32</code></td></tr>
+<tr><td><code>i64</code></td><td><code>int64</code></td></tr>
+<tr><td><code>u64</code></td><td><code>int64</code></td></tr>
+<tr><td><code>f32</code></td><td><code>float</code></td></tr>
+<tr><td><code>f64</code></td><td><code>float</code></td></tr>
+<tr><td><code>str</code></td><td><code>string</code></td></tr>
+<tr><td><code>[u8]</code></td><td><code>bytes</code></td></tr>
+<tr><td><code>String</code></td><td><code>string</code></td></tr>
+<tr><td><code>Option&lt;A&gt;</code></td><td><code>'a option</code></td></tr>
+<tr><td><code>Result&lt;A, ocaml::Error&gt;</code></td><td><code>'a</code> or <code>exception</code></td></tr>
+<tr><td><code>Result&lt;A, B&gt;</code></td><td><code>('a, 'b) Result.t</code></td></tr>
+<tr><td><code>(A, B, C)</code></td><td><code>'a * 'b * 'c</code></td></tr>
+<tr><td><code>&amp;[Value]</code></td><td><code>'a array</code> (no copy)</td></tr>
+<tr><td><code>Vec&lt;A&gt;</code>, <code>&amp;[A]</code></td><td><code>'a array</code></td></tr>
+<tr><td><code>BTreeMap&lt;A, B&gt;</code></td><td><code>('a * 'b) list</code></td></tr>
+<tr><td><code>LinkedList&lt;A&gt;</code></td><td><code>'a list</code></td></tr>
+<tr><td><code>Seq&lt;A&gt;</code></td><td><code>'a Seq.t</code></td></tr>
+</tbody></table>
+</div>
+<p>NOTE: Even though <code>&amp;[Value]</code> is specifically marked as no copy, any type like <code>Option&lt;Value&gt;</code> would also qualify since the inner value is not converted to a Rust type. However, <code>Option&lt;String&gt;</code> will do full unmarshaling into Rust types. Another thing to note: <code>FromValue</code> for <code>str</code> and <code>&amp;[u8]</code> is zero-copy, however <code>ToValue</code> for <code>str</code> and <code>&amp;[u8]</code> creates a new value - this is necessary to ensure the string is registered with the OCaml runtime.</p>
+<p>If you're concerned with minimizing allocations/conversions you should use <code>Value</code> type directly.</p>
+<h2 id="implementing-tovalue-and-fromvalue"><a class="header" href="#implementing-tovalue-and-fromvalue">Implementing <code>ToValue</code> and <code>FromValue</code></a></h2>
+<p>The <a href="https://docs.rs/ocaml/latest/ocaml/trait.ToValue.html">ToValue</a> trait has a single function, <code>to_value</code> which takes a reference to <code>self</code>, a reference to [Runtime] and returns a <a href="https://docs.rs/ocaml/latest/ocaml/enum.Value.html">Value</a> and <a href="https://docs.rs/ocaml/latest/ocaml/trait.FromValue.html">FromValue</a> has <code>from_value</code>, which takes a <code>Value</code> and returns <code>Self</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+pub struct MyType(i32);
+
+unsafe impl ocaml::ToValue for MyType {
+  fn to_value(&amp;self, _gc: &amp;ocaml::Runtime) -&gt; ocaml::Value {
+    unsafe { ocaml::Value::int32(self.0) }
+  }
+}
+
+unsafe impl ocaml::FromValue for MyType {
+  fn from_value(value: ocaml::Value) -&gt; MyType {
+    unsafe { MyType(value.int32_val()) }
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>This can also be accomplished using the derive macros:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[derive(ocaml::ToValue, ocaml::FromValue)]
+pub struct MyType(i32);
+<span class="boring">}</span></code></pre></pre>
+<p><code>derive(ToValue, FromValue)</code> will work on any struct or enum that are comprised of types that also implement <code>ToValue</code> and <code>FromValue</code></p>
+<h2 id="types-that-work-directly-on-ocaml-values"><a class="header" href="#types-that-work-directly-on-ocaml-values">Types that work directly on OCaml values</a></h2>
+<p>There are several types that work directly on OCaml values, these don't perform any copies when converting to and from <code>Value</code>.</p>
+<div class="table-wrapper"><table><thead><tr><th>Rust type</th><th>OCaml type</th></tr></thead><tbody>
+<tr><td><code>ocaml::Array&lt;T&gt;</code></td><td><code>'a array</code></td></tr>
+<tr><td><code>ocaml::List&lt;T&gt;</code></td><td><code>'a list</code></td></tr>
+<tr><td><code>ocaml::Seq&lt;T&gt;</code></td><td><code>'a Seq.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array1&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array1.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array2&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array2.t</code></td></tr>
+<tr><td><code>ocaml::bigarray::Array3&lt;T&gt;</code></td><td><code>('a, 'b, c_layout) Bigarray.Array3.t</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="wrapping-rust-values"><a class="header" href="#wrapping-rust-values">Wrapping Rust values</a></h2>
+<p>Rust values can be used as opaque values that can be shared with OCaml using <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html">ocaml::Pointer<T></a>. The <code>Pointer</code> type allows for Rust values to be allocated using the OCaml runtime, this means their lifetime will be handled by the garbage collector. <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html#method.alloc_final">Pointer::alloc_final</a> is used to move an existing Rust type into an OCaml allocated pointer, but even better is the option to implement the <code>Custom</code> trait for your type.</p>
+<p>Implementing <a href="https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html">Custom</a> allows you to define equality/comparison, finalization, hashing and serialization functions for your type that will be used by OCaml. When allocating custom values you should use <code>Pointer::from</code> or <code>Pointer::alloc_custom</code>.</p>
+<p>In either case you will need to write the allocation function in Rust because OCaml doesn't know the specifics about the layout or contents of these types, unlike when using <code>FromValue</code> or <code>ToValue</code>. <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html">Pointer</a> should primarily be used on Rust values that cannot be converted directly to OCaml types.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::sig]   // Creates an opaque type on the OCaml side
+pub struct MyType {
+  a: i32,
+  b: f64,
+  c: std::fs::File, // This can't be converted to an OCaml value
+}
+
+ocaml::custom!(MyType);
+
+#[ocaml::func]
+#[ocaml::sig("my_type -&gt; float")]
+pub unsafe fn my_type_add_a_b(t: &amp;MyType) -&gt; f64 {
+  t.a as f64 + t.b
+}
+<span class="boring">}</span></code></pre></pre>
+<p>NOTE: In this example the Rust type <code>MyType</code> has automatically been renamed to <code>my_type</code> in OCaml.</p>
+<p>Also in this example, the default finalizer is used - this will call <code>Pointer::drop_in_place</code> to call <code>drop</code> on the Rust side before freeing the memory on the OCaml heap. If you add your own <code>finalize</code> implementation you should make sure to call <code>Pointer::drop_in_place</code> any time the underlying Rust value contains dynamically allocated values, like <code>std::fs::File</code> in the example above.</p>
+<p>Now that you have some insight into how type conversion is handled, the next section will cover more details about writing OCaml functions in Rust.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="writing-ocaml-functions-in-rust"><a class="header" href="#writing-ocaml-functions-in-rust">Writing OCaml functions in Rust</a></h1>
+<p>This section requires the <code>derive</code> feature, which is enabled in <code>ocaml-rs</code> by default. This exposes <a href="https://docs.rs/ocaml/latest/ocaml/attr.func.html">ocaml::func</a>, which is the recommended way to create an OCaml function in Rust. Below are some examples using <code>ocaml::func</code></p>
+<ul>
+<li><a href="03_writing_ocaml_functions_in_rust.html#hello-world">Hello world</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#structs-and-enums">Structs and enums</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#calling-an-ocaml-function">Calling an OCaml function</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#opaque-types">Opaque types</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#raising-an-exception">Raising an exception</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#returning-ocaml-resut">Returning OCaml result</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#using-value-directly">Using <code>Value</code> directly</a></li>
+<li><a href="03_writing_ocaml_functions_in_rust.html#unboxed-arguments">Unboxed arguments</a></li>
+</ul>
+<h2 id="hello-world"><a class="header" href="#hello-world">Hello world</a></h2>
+<p>This example returns a string from Rust to OCaml</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>#[ocaml::func]
+#[ocaml::sig("unit -&gt; string")]
+pub fn hello_world() -&gt; &amp;'static str {
+  "Hello, world!"
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="structs-and-enums"><a class="header" href="#structs-and-enums">Structs and enums</a></h2>
+<p>The example uses <code>derive(ToValue)</code> and <code>derive(FromValue)</code> to create an enum and struct that can be used as parameters to <code>ocaml::func</code>s. Their names will be converted to snake case for OCaml, so the Rust type <code>BinOp</code> will become <code>bin_op</code> and <code>Expr</code> will become <code>expr</code>.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[derive(ocaml::FromValue, ocaml::ToValue, Clone, Copy)]
+#[ocaml::sig("Add | Sub | Mul | Div")]
+pub enum BinOp {
+  Add,
+  Sub,
+  Mul,
+  Div
+}
+
+#[derive(ocaml::FromValue, ocaml::ToValue)]
+#[ocaml::sig("lhs: float; rhs: float; op: bin_op")]
+pub struct Expr {
+  lhs: f64,
+  rhs: f64,
+  op: BinOp,
+}
+
+#[ocaml::func]
+#[ocaml::sig("expr -&gt; float")]
+pub fn expr_eval(expr: Expr) -&gt; f64 {
+  match expr.op {
+    BinOp::Add =&gt; expr.lhs + expr.rhs,
+    BinOp::Sub =&gt; expr.lhs - expr.rhs,
+    BinOp::Mul =&gt; expr.lhs * expr.rhs,
+    BinOp::Div =&gt; expr.lhs / expr.rhs
+  }
+}
+
+<span class="boring">}</span></code></pre></pre>
+<h2 id="calling-an-ocaml-function"><a class="header" href="#calling-an-ocaml-function">Calling an OCaml function</a></h2>
+<p>This example shows how to call an OCaml function from Rust - the OCaml function must be registered using <a href="https://ocaml.org/api/Callback.html">Callback.register</a>. In this case we're calling the OCaml function <code>my_incr</code>, which looks like this:</p>
+<pre><code class="language-ocaml">let my_incr x = x + 1
+let () = Callback.register "my_incr" my_incr
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+ocaml::import! {
+  fn my_incr(x: ocaml::Int) -&gt; ocaml::Int;
+}
+
+#[ocaml::func]
+#[ocaml::sig("int -&gt; int")]
+pub unsafe fn call_my_incr(x: ocaml::Int) -&gt; Result&lt;ocaml::Int, ocaml::Error&gt; {
+  my_incr(gc, x)
+}
+<span class="boring">}</span></code></pre></pre>
+<p>A few things to note:</p>
+<ul>
+<li>When calling the <a href="https://docs.rs/ocaml/latest/ocaml/macro.import.html">import!</a>ed function you will need to pass the OCaml runtime handle as the first parameter</li>
+<li>The return value of the function will be wrapped in <code>Result&lt;T, ocaml::Error&gt;</code> because the function may raise an exception</li>
+</ul>
+<p>For functions that aren't registered using <code>Callback.register</code> you can use the <code>ocaml::function!</code> macro to convert them into a typed closure:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::func]
+#[ocaml::sig("(int -&gt; int) -&gt; int -&gt; int")]
+pub unsafe fn call_incr(incr: ocaml::Value, a: ocaml::Int) -&gt; Result&lt;ocaml::Int, ocaml::Error&gt; {
+  let incr = ocaml::function!(incr, (a: ocaml::Int) -&gt; ocaml::Int);
+  incr(gc, &amp;a)
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="opaque-types"><a class="header" href="#opaque-types">Opaque types</a></h2>
+<p>This example shows how to wrap a Rust type using the <a href="https://docs.rs/ocaml/latest/ocaml/custom/trait.Custom.html">Custom</a> trait and <a href="https://docs.rs/ocaml/latest/ocaml/struct.Pointer.html">ocaml::Pointer</a></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+use std::io::Read;
+
+#[ocaml::sig] // Creates an opaque type on the OCaml side
+struct File(std::fs::File);
+
+ocaml::custom!(File);
+
+#[ocaml::func]
+#[ocaml::sig("string -&gt; file")]
+pub fn file_open(filename: &amp;str) -&gt; Result&lt;ocaml::Pointer&lt;File&gt;, ocaml::Error&gt; {
+  let f = std::fs::File::open(filename)?;
+  Ok(File(f).into())
+}
+
+#[ocaml::func]
+#[ocaml::sig("file -&gt; string")]
+pub fn file_read(file : &amp;mut File) -&gt; Result&lt;String, ocaml::Error&gt; {
+    let mut s = String::new();
+    file.0.read_to_string(&amp;mut s)?;
+    Ok(s)
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Once this value is garbage collected, the default finalizer will call <code>Pointer::drop_in_place</code> to run <code>drop</code> and clean up resources on the Rust side, if you write a custom finalizer make sure to include a call to <code>Pointer::drop_in_place</code>.</p>
+<h2 id="raising-an-exception"><a class="header" href="#raising-an-exception">Raising an exception</a></h2>
+<p>Raising an OCaml exception is accomplished by returning a <code>Result&lt;_, ocaml::Error&gt;</code> value:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::func]
+#[ocaml::sig("int -&gt; unit")]
+pub unsafe fn fail_if_even_result(i: ocaml::Int) -&gt; Result&lt;(), ocaml::Error&gt; {
+  if i % 2 == 0 {
+    return Err(ocaml::CamlError::Failure("even").into())
+  }
+
+  Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="returning-ocaml-result"><a class="header" href="#returning-ocaml-result">Returning OCaml result</a></h2>
+<p>In the previous example <code>Result&lt;_, ocaml::Error&gt;</code> was used to raise an exception, however <code>Result&lt;A, B&gt;</code> where <code>A</code> and <code>B</code> both implement <code>ToValue</code> will create an OCaml <code>('a, 'b) Result.t</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>use ocaml::{ToValue};
+
+#[ocaml::func]
+#[ocaml::sig("string -&gt; (int, [`Msg of string]) result")]
+pub unsafe fn try_int_of_string(s: &amp;str) -&gt; Result&lt;ocaml::Int, ocaml::Value&gt; {
+  match s.parse::&lt;isize&gt;() {
+    Ok(i) =&gt; Ok(i),
+    Err(e) =&gt; {
+      let s = format!("{e:?}");
+      let err = ocaml::Value::hash_variant(gc, "Msg", Some(s.to_value(gc)));
+      Err(err)
+    }
+  }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="using-value-directly"><a class="header" href="#using-value-directly">Using <code>Value</code> directly</a></h2>
+<p>It is also possible to use <code>ocaml::Value</code> to avoid any conversion or copying, however this can be more error prone.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[ocaml::func]
+#[ocaml::sig("string array -&gt; int -&gt; string -&gt; unit")]
+pub unsafe fn array_set(mut array: ocaml::Value, index: ocaml::Value, s: ocaml::Value) {
+  array.store_field(gc, index.int_val() as usize, s)
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="unboxed-arguments"><a class="header" href="#unboxed-arguments">Unboxed arguments</a></h2>
+<p>Unfortunately <code>ocaml::func</code> doesn't support unboxed/noalloc functions, however it is still possible to create them using a lower
+level interface:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">extern crate ocaml;
+</span>
+#[no_mangle]
+pub extern "C" fn unboxed_float_avg(a: f64, b: f64) -&gt; f64 {
+    (a + b) / 2.0
+}
+
+#[ocaml::bytecode_func]
+pub fn unboxed_float_avg_bytecode(a: f64, b: f64) -&gt; f64 {
+    unboxed_float_avg(a, b)
+}
+<span class="boring">}</span></code></pre></pre>
+<p>In this case you will also need to write the signature manually:</p>
+<pre><code class="language-ocaml">external unboxed_float_avg: float -&gt; float -&gt; float = "unboxed_float_avg_bytecode" "unboxed_float_avg" [@@unboxed] [@@noalloc]
+</code></pre>
+<h2 id="panics"><a class="header" href="#panics">Panics</a></h2>
+<p>Rust panics are typically unrecoverable but some cleanup might be needed on the OCaml side before existing. Unless the <code>no-panic-hook</code>
+feature is enabled, it is possible to catch Rust panics in OCaml. Note: calling an OCaml function that calls another Rust function in
+the panic hook can lead to a segfault, so this API should be used with care.</p>
+<p>Registering the panic hook:</p>
+<pre><code class="language-ocaml">let () = Callback.register "rust_panic_hook" failwith
+</code></pre>
+<p>This will register <code>failwith</code> as the function the gets invoked when a Rust panic occurs, this function should only be used to clean up
+resources before exiting the program and will receive a single argument, which is a string containing the panic message.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="linking-an-ocaml-library-into-a-rust-program"><a class="header" href="#linking-an-ocaml-library-into-a-rust-program">Linking an OCaml library into a Rust program</a></h1>
+<p>The section will cover how to create a program in Rust that calls functions from an OCaml library.</p>
+<p>Example project layout:</p>
+<ul>
+<li>Cargo.toml</li>
+<li>build.rs</li>
+<li><code>src</code>: contains Rust code</li>
+<li><code>lib</code>: contains OCaml code and <code>dune</code> file</li>
+<li><code>dune-project</code></li>
+<li><code>example.opam</code></li>
+</ul>
+<p>Add the following to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+ocaml = "*"
+
+[build-dependencies]
+ocaml-build = {version = "*", features=["dune"]}
+</code></pre>
+<p>And add a <code>build.rs</code>, this example assumes your OCaml library and the following <code>dune</code> file are in <code>lib</code> at the root of your Rust project:</p>
+<pre><code class="language-rust ignore"><span class="boring">extern crate ocaml_build;
+</span>pub fn main() {
+  ocaml_build::Dune::new("lib").build()
+}</code></pre>
+<p>If the <code>dune</code> root is not the root of your project you can use <code>Dune::with_root</code> to set the correct path.</p>
+<p>Next you will need to add setup a <a href="https://dune.build">dune</a> project to handle compilation of your OCaml code. Here is an example <code>dune</code> file that will generate object files that can be linked into your Rust program, in this case the OCaml library is named <code>example</code>:</p>
+<pre><code class="language-ignore">(executable
+ (name example)
+ (public_name example)
+ (modes exe object))
+</code></pre>
+<p>NOTE: The OCaml code needs to be built with dune in <code>object</code> mode</p>
+<p>In <code>lib/example.ml</code></p>
+<pre><code class="language-ocaml">let hello_world () = "Hello, world"
+let () = Callback.register "hello_world" hello_world
+</code></pre>
+<p>In <code>lib/main.rs</code>:</p>
+<pre><code class="language-rust ignore"><span class="boring">extern crate ocaml;
+</span>
+ocaml::import! {
+  fn hello_world() -&gt; String;
+}
+
+pub fn main() {
+  let gc = ocaml::init(); // Initialize OCaml runtime
+
+  let s = unsafe { hello_world(&amp;gc).unwrap() };
+  println!("{s}");
+}</code></pre>
+<p>NOTE: <a href="https://docs.rs/ocaml/latest/ocaml/runtime/fn.init.html">ocaml::init</a> needs to be called before attempting to access any OCaml functions.</p>
+<p>To simplify the full setup process, take a look at <a href="https://github.com/zshipko/rust-ocaml-starter">rust-ocaml-starter</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
