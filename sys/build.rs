@@ -153,7 +153,6 @@ fn run() -> std::io::Result<()> {
 
     // Build C bindings
     cc::Build::new()
-        .static_flag(true)
         .file("src/ocaml-sys.c")
         .include(&ocaml_path)
         .compile("ocaml-sys");
