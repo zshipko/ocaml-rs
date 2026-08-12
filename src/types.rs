@@ -15,7 +15,7 @@ use crate::value::{FromValue, Size, ToValue, Value};
 
 #[derive(Clone, PartialEq, Eq)]
 #[repr(transparent)]
-/// Seq<A> wraps `'a Seq.t` without converting it to Rust
+/// `Seq<A>` wraps `'a Seq.t` without converting it to Rust
 pub struct Seq<T: FromValue>(Value, PhantomData<T>);
 
 unsafe impl<T: FromValue> ToValue for Seq<T> {
